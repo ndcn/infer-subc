@@ -1,5 +1,5 @@
-from project_name.base import NAME
+from infer_subc.base import NAME
 
 
 def test_base():
-    assert NAME == "project_name"
+    assert NAME == "infer_subc"
