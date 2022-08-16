@@ -6,6 +6,11 @@ here you put your main classes and objects.
 """
 import numpy as np
 
+from aicssegmentation.core.utils import size_filter
+from skimage.morphology import remove_small_objects, ball, dilation
+from skimage.filters import threshold_triangle, threshold_otsu
+from skimage.measure import label
+
 # example constant variable
 NAME = "infer_subc"
 
@@ -14,8 +19,77 @@ NAME = "infer_subc"
 # notebook workflow will produce the in_params dictionary nescessary 
 # so all the images can be pushed through these functions (procedures)
 
-def infer_NUCLEI(struct_img, out_path, in_params):
-    pass
+
+
+def infer_NUCLEI(struct_img, in_params) -> tuple:
+    """
+    Procedure to infer NUCLEI from linearly unmixed input.
+
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the NUCLEI signal
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of NU
+        label
+            label (could be more than 1)
+        signal
+            scaled/filtered (pre-processed) flourescence image
+        parameters: dict
+            updated parameters in case any needed were missing
+    
+    """
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+
+    #TODO: replace params below with the input params
+    struct_img = intensity_normalization(raw_nuclei.copy(), scaling_param=[0])
+    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
+    # # very little difference in 2D vs 3D
+    struct_img = median_filter_slice_by_slice( 
+                                                                    struct_img,
+                                                                    size=med_filter_size  )
+    ###################
+    # CORE_PROCESSING
+    ###################
+    struct_obj = struct_img > threshold_li(struct_img)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    out_p= in_params.copy()
+
+    hole_width = 5  
+    out_p['hole_width'] = hole_width
+    # # wrapper to remoce_small_objects
+    struct_obj = remove_small_holes(struct_obj, hole_width ** 3 )
+
+    small_object_max = 5
+    out_p['small_object_max'] = small_object_max
+
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+                                                            min_size= small_object_max**3, 
+                                                            method = "3D", #"slice_by_slice" 
+                                                            connectivity=1)
+
+    ###################
+    # OUTPUT
+    ###################
+    NU_object = struct_obj
+    NU_labels = label(struct_obj)
+    NU_signal = struct_img
+
+    retval = (NU_object, NU_label, NU_signal, out_p)
+    return retval
+
 
 def infer_SOMA(struct_img,  nuclei_labels, out_path, in_params):
     pass
