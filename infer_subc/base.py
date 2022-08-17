@@ -5,11 +5,20 @@ This is the principal module of the infer_subc project.
 here you put your main classes and objects.
 """
 import numpy as np
+    
+from platform import system
+from collections import defaultdict
 
-from aicssegmentation.core.utils import size_filter
+
+from scipy.ndimage import median_filter, extrema
 from skimage.morphology import remove_small_objects, ball, dilation
-from skimage.filters import threshold_triangle, threshold_otsu
+from skimage.filters import threshold_triangle, threshold_otsu,threshold_li
 from skimage.measure import label
+
+from aicsimageio.writers import OmeTiffWriter
+from napari_aicsimageio.core import  reader_function
+from aicssegmentation.core.utils import size_filter
+
 
 # example constant variable
 NAME = "infer_subc"
@@ -51,7 +60,7 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     ###################                         
 
     #TODO: replace params below with the input params
-    struct_img = intensity_normalization(raw_nuclei.copy(), scaling_param=[0])
+    struct_img = intensity_normalization(struct_img, scaling_param=[0])
     # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
     # # very little difference in 2D vs 3D
     struct_img = median_filter_slice_by_slice( 
@@ -126,7 +135,6 @@ def median_filter_slice_by_slice(struct_img, size):
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
     """
-    from scipy.ndimage import median_filter
     structure_img_denoise = np.zeros_like(struct_img)
     for zz in range(struct_img.shape[0]):
         structure_img_denoise[zz, :, :] = median_filter(struct_img[zz, :, :], size=size) 
@@ -165,7 +173,6 @@ def read_input_image(image_name):
 
     # prefer this wrapper because it returns numpy arrays
     # or more simply with napari_aicsimagie io
-    from napari_aicsimageio.core import  reader_function
     data_out, meta_out, layer_type = reader_function(image_name)[0]
     return (data_out,meta_out)
 
@@ -179,7 +186,8 @@ def log_transform(image):
     can be applied to an image by the inverse_log_transform to 
     convert it back to its former intensity values.
     """
-    orig_min, orig_max = scipy.ndimage.extrema(image)[:2]
+
+    orig_min, orig_max = extrema(image)[:2]
     #
     # We add 1/2 bit noise to an 8 bit image to give the log a bottom
     #
@@ -188,7 +196,7 @@ def log_transform(image):
     limage[limage < noise_min] = noise_min
     d = {"noise_min": noise_min}
     limage = np.log(limage)
-    log_min, log_max = scipy.ndimage.extrema(limage)[:2]
+    log_min, log_max = extrema(limage)[:2]
     d["log_min"] = log_min
     d["log_max"] = log_max
     return stretch(limage), d
@@ -251,7 +259,6 @@ def threshold_li_log( image_in ):
     """
     thin wrapper to log-scale and inverse log image for threshold finding using li minimum cross-entropy
     """
-    from skimage.filters import threshold_li
 
     image, d = log_transform(image_in.copy())
     threshold =  threshold_li(image)
@@ -265,7 +272,6 @@ def threshold_otsu_log( image_in ):
     """
     thin wrapper to log-scale and inverse log image for threshold finding using otsu
     """
-    from skimage.filters import threshold_otsu
 
     image, d = log_transform(image_in.copy())
     threshold =  threshold_otsu(image)
@@ -279,7 +285,7 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) ->  str:
     # out_path: types.PathLike,
     # curr_chan: int
     # assumes a single image
-    from aicsimageio.writers import OmeTiffWriter
+
 
     out_name = out_path + img_name + ".ome.tiff"
    
@@ -320,7 +326,6 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) ->  str:
 
 
 ### UTILS
-from collections import defaultdict
 def etree_to_dict(t):
     d = {t.tag: {} if t.attrib else None}
     children = list(t)
@@ -346,7 +351,6 @@ def etree_to_dict(t):
 
 
 def get_raw_meta_data(meta_dict):
-    from platform import system
     curr_platform = system()
 
     if curr_platform=='Linux':

@@ -23,16 +23,40 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 
 ### summary of _OBJECTIVES_
 - Infer subcellular objects:
-  -  #### #1. [infer NUCLEI ](#image-processing-objective-1-infer-nucleii) - NU, ch 0
-  -  #### #2. [Infer SOMA](#image-processing-objective-2-infer-soma) (extent of single brightest cell)- SO, composite icluding ch 1, ch 4,ch 5, and ch 7 "residuals"
-  -  #### #3. [Infer CYTOSOL](#image-processing-objective-3-infer-cytosol)- CY 
-  -  #### #4. [Infer LYSOSOMES](#image-processing-objective-4-infer-lysosomes)  - LS, ch 1
-  -  #### #5. [Infer MITOCHONDRIA](#image-processing-objective-5-infer-mitochondria) - MT, ch 2
-  -  #### #6. [Infer GOLGI complex](#image-processing-objective-6-infer-golgi-complex) - GL, ch 3
-  -  #### #7. [Infer PEROXISOMES](#image-processing-objective-7-infer-peroxisomes) - PO, ch  4
-  -  #### #8. [Infer ENDOPLASMIC RETICULUM ](#image-processing-objective-8-infer-endoplasmic-reticulum)- ER, ch 5
-  -  #### #9. [Infer LB](#image-processing-objective-9-infer-lipid-bodies-droplet), LD, ch 6 
-  -  
+  -  #### #1. [infer NUCLEI ](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #2. [Infer SOMA](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #3. [Infer CYTOSOL](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #4. [Infer LYSOSOMES](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #5. [Infer MITOCHONDRIA](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #6. [Infer GOLGI complex](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #7. [Infer PEROXISOMES](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### #8. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/02_infer_soma.ipynb)
+  -   #### #9. [Infer LB](../tree/main/notebooks/02_infer_soma.ipynb)
+
+
+
+
+## DONE
+- Infer subcellular objects:
+  -  ### 0. [pipeline Overview/setup  ](../tree/main/notebooks/00_pipeline_setup.ipynb)
+  -  ### 1. [infer NUCLEI ](../tree/main/notebooks/01_infer_nuclei.ipynb) 
+
+
+## WIP
+- Infer subcellular objects:
+  -  ### 2. [Infer SOMA](../tree/main/notebooks/02_infer_soma.ipynb)
+## TO-DO
+- Infer subcellular objects:
+
+  -  ### 3. [Infer CYTOSOL](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 4. [Infer LYSOSOMES](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 5. [Infer MITOCHONDRIA](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 6. [Infer GOLGI complex](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 7. [Infer PEROXISOMES](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 8. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  ### 9. [Infer LB](../tree/main/notebooks/02_infer_soma.ipynb)
+
+
 
 ## ADWB hints
 The medium term goal for this project is to execute it on ADDI's ADWB
