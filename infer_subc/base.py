@@ -11,14 +11,16 @@ from collections import defaultdict
 
 
 from scipy.ndimage import median_filter, extrema
+from scipy.interpolate import RectBivariateSpline
+
+from skimage import img_as_float
 from skimage.morphology import remove_small_objects, ball, dilation
-from skimage.filters import threshold_triangle, threshold_otsu,threshold_li
+from skimage.filters import threshold_triangle, threshold_otsu, threshold_li
 from skimage.measure import label
 
 from aicsimageio.writers import OmeTiffWriter
 from napari_aicsimageio.core import  reader_function
 from aicssegmentation.core.utils import size_filter
-
 
 # example constant variable
 NAME = "infer_subc"
@@ -28,8 +30,9 @@ NAME = "infer_subc"
 # notebook workflow will produce the in_params dictionary nescessary 
 # so all the images can be pushed through these functions (procedures)
 
-
-
+##########################
+# 1.  infer_NUCLEI
+##########################
 def infer_NUCLEI(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
@@ -55,53 +58,186 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
             updated parameters in case any needed were missing
     
     """
+    out_p= in_params.copy()
+
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+    #TODO: replace params below with the input params
+    scaling_param =  [0]   
+    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+    med_filter_size = 4   
+    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
+    struct_img = median_filter_slice_by_slice( 
+                                                                    struct_img,
+                                                                    size=med_filter_size  )
+    out_p["median_filter_size"] = med_filter_size 
+
+    med_filter_size = 4   
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = image_smoothing_gaussian_slice_by_slice(   struct_img,
+                                                                                                        sigma=gaussian_smoothing_sigma,
+                                                                                                        truncate_range = gaussian_smoothing_truncate_range
+                                                                                                    )
+    out_p["median_filter_size"] = med_filter_size 
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    struct_obj = struct_img > filters.threshold_li(struct_img)
+    threshold_value_log = threshold_li_log(struct_img)
+
+    threshold_factor = 0.9 #from cellProfiler
+    thresh_min = .1
+    thresh_max = 1.
+    threshold = min( max(threshold_value_log*threshold_factor, thresh_min), thresh_max)
+    out_p['threshold_factor'] = threshold_factor
+    out_p['thresh_min'] = thresh_min
+    out_p['thresh_max'] = thresh_max
+
+    struct_obj = struct_img > threshold
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    hole_width = 5  
+    # # wrapper to remoce_small_objects
+    struct_obj = morphology.remove_small_holes(struct_obj, hole_width ** 3 )
+    out_p['hole_width'] = hole_width
+
+    small_object_max = 5
+    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+                                                            min_size= small_object_max**3, 
+                                                         method = "slice_by_slice", #"3D", # 
+                                                            connectivity=1)
+    out_p['small_object_max'] = small_object_max
+
+    retval = (struct_obj,  label(struct_obj), out_p)
+    return retval
+
+
+
+##########################
+# 2a.  infer_SOMA1
+##########################
+def infer_SOMA1(struct_img, NU_labels,  in_params) -> tuple:
+    """
+    Procedure to infer SOMA from linearly unmixed input.
+
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the SOMA signal
+
+    NU_labels: np.ndarray boolean
+        a 3d image containing the NU labels
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of SOMA
+        label
+            label (could be more than 1)
+        parameters: dict
+            updated parameters in case any needed were missing
+    
+    """
+    out_p= in_params.copy()
+
     ###################
     # PRE_PROCESSING
     ###################                         
 
     #TODO: replace params below with the input params
-    struct_img = intensity_normalization(struct_img, scaling_param=[0])
+    scaling_param =  [0]   
+    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+    med_filter_size = 15   
     # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    # # very little difference in 2D vs 3D
     struct_img = median_filter_slice_by_slice( 
                                                                     struct_img,
                                                                     size=med_filter_size  )
+    out_p["median_filter_size"] = med_filter_size 
+
+    gaussian_smoothing_sigma = 1.
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = image_smoothing_gaussian_slice_by_slice(   struct_img,
+                                                                                                        sigma=gaussian_smoothing_sigma,
+                                                                                                        truncate_range = gaussian_smoothing_truncate_range
+                                                                                                    )
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma 
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+
+
+
+    struct_img, d = log_transform( struct_img ) 
+    struct_img = intensity_normalization(  struct_img,  scaling_param=[0] )
+
+    struct_img += intensity_normalization(  filters.scharr(struct_img),  scaling_param=[0] )  
+
+
+
     ###################
     # CORE_PROCESSING
     ###################
-    struct_obj = struct_img > threshold_li(struct_img)
+    local_adjust = 0.5
+
+    struct_obj, _bw_low_level = MO(struct_img, 
+                                                global_thresh_method='ave', 
+                                                object_minArea=low_level_min_size, 
+                                                extra_criteria=True,
+                                                local_adjust= local_adjust, 
+                                                return_object=True,
+                                                dilate=True)
+
+    out_p["local_adjust"] = local_adjust 
+
+    # # this is not actually applied for this workflow,,,,
+    # threshold_correction_factor = 0.9
+    # thresh_min, thresh_max = 0.0000267,.2
+    
+    # threshold = min( max(threshold_value_log*threshold_factor, thresh_min), thresh_max)
+    # out_p['threshold_factor'] = threshold_factor
+    # out_p['thresh_min'] = thresh_min
+    # out_p['thresh_max'] = thresh_max
+
 
     ###################
     # POST_PROCESSING
     ###################
-    out_p= in_params.copy()
+    hole_max = 80  
+    # discount z direction
+    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    out_p['hole_max'] = hole_max
 
-    hole_width = 5  
-    out_p['hole_width'] = hole_width
-    # # wrapper to remoce_small_objects
-    struct_obj = remove_small_holes(struct_obj, hole_width ** 3 )
-
-    small_object_max = 5
+    small_object_max = 35
+    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+                                                            min_size= width**3, 
+                                                            method = "slice_by_slice" ,
+                                                            connectivity=1)
     out_p['small_object_max'] = small_object_max
 
-    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
-                                                            min_size= small_object_max**3, 
-                                                            method = "3D", #"slice_by_slice" 
-                                                            connectivity=1)
 
-    ###################
-    # OUTPUT
-    ###################
-    NU_object = struct_obj
-    NU_labels = label(struct_obj)
-    NU_signal = struct_img
+    labels_out = watershed(
+                connectivity=np.ones((3, 3,3), bool),
+                image=1. - struct_img,
+                markers=NU_labels,
+                mask= np.logical_or(struct_obj, NU_labels > 0),
+                )
 
-    retval = (NU_object, NU_label, NU_signal, out_p)
+
+
+    retval = (struct_obj,  labels_out, out_p)
     return retval
-
-
-def infer_SOMA(struct_img,  nuclei_labels, out_path, in_params):
-    pass
 
 def infer_CYTOSOL(struct_img, nuclei_labels, soma_labels, out_path, in_params):
     pass
@@ -277,6 +413,139 @@ def threshold_otsu_log( image_in ):
     threshold =  threshold_otsu(image)
     threshold = inverse_log_transform(threshold, d)
     return threshold
+
+
+
+
+
+def cp_adaptive_threshold(
+                image_data,
+                th_method, #skimage.filters.threshold_li,
+                volumetric,
+                window_size, 
+                tolerance
+                ):
+    """   
+    wrapper for the functions from CellProfiler
+    NOTE: might work better to copy from CellProfiler/centrosome/threshold.py 
+    https://github.com/CellProfiler/centrosome/blob/master/centrosome/threshold.py
+    
+    """
+    
+    threshold = _run_local_threshold(image_data, th_method, volumetric, window_size, tolerance) #**kwargs):
+    return threshold
+
+
+
+def _run_local_threshold(image_data, method, volumetric, window_size, tolerance): #**kwargs):
+    if volumetric:
+        t_local = np.zeros_like(image_data)
+        for index, plane in enumerate(image_data):
+            t_local[index] = _get_adaptive_threshold(plane, method, window_size, tolerance) #**kwargs)
+    else:
+        t_local = _get_adaptive_threshold(image_data, method, window_size, tolerance) #, **kwargs)
+    return img_as_float(t_local)
+
+def _get_adaptive_threshold(image_data, threshold_method, adaptive_window_size, tolerance):
+    """Given a global threshold, compute a threshold per pixel
+    Break the image into blocks, computing the threshold per block.
+    Afterwards, constrain the block threshold to .7 T < t < 1.5 T.
+    """
+    # for the X and Y direction, find the # of blocks, given the
+    # size constraints
+
+    # if self.threshold_operation == TM_OTSU:
+    #     bin_wanted = (
+    #         0 if self.assign_middle_to_foreground.value == "Foreground" else 1
+    #     )
+    image_size = np.array(image_data.shape[:2], dtype=int)
+    nblocks = image_size // adaptive_window_size
+    if any(n < 2 for n in nblocks):
+        raise ValueError(
+            "Adaptive window cannot exceed 50%% of an image dimension.\n"
+            "Window of %dpx is too large for a %sx%s image"
+            % (adaptive_window_size, image_size[1], image_size[0])
+        )
+    #
+    # Use a floating point block size to apportion the roundoff
+    # roughly equally to each block
+    #
+    increment = np.array(image_size, dtype=float) / np.array(
+        nblocks, dtype=float
+    )
+    #
+    # Put the answer here
+    #
+    thresh_out = np.zeros(image_size, image_data.dtype)
+    #
+    # Loop once per block, computing the "global" threshold within the
+    # block.
+    #
+    block_threshold = np.zeros([nblocks[0], nblocks[1]])
+    for i in range(nblocks[0]):
+        i0 = int(i * increment[0])
+        i1 = int((i + 1) * increment[0])
+        for j in range(nblocks[1]):
+            j0 = int(j * increment[1])
+            j1 = int((j + 1) * increment[1])
+            block = image_data[i0:i1, j0:j1]
+            block = block[~np.isnan(block)]
+            if len(block) == 0:
+                threshold_out = 0.0
+            elif np.all(block == block[0]):
+                # Don't compute blocks with only 1 value.
+                threshold_out = block[0]
+            # elif (self.threshold_operation == TM_OTSU and
+            #       self.two_class_otsu.value == O_THREE_CLASS and
+            #       len(np.unique(block)) < 3):
+            #     # Can't run 3-class otsu on only 2 values.
+            #     threshold_out = skimage.filters.threshold_otsu(block)
+            else:
+                try: 
+                    threshold_out = threshold_method(block) #, tolerance=tolerance) #**kwargs)
+                except ValueError:
+                    # Drop nbins kwarg when multi-otsu fails. See issue #6324 scikit-image
+                    threshold_out = threshold_method(block)
+            if isinstance(threshold_out, np.ndarray):
+                # Select correct bin if running multiotsu
+                threshold_out = threshold_out[bin_wanted]
+            block_threshold[i, j] = threshold_out
+
+    #
+    # Use a cubic spline to blend the thresholds across the image to avoid image artifacts
+    #
+    spline_order = min(3, np.min(nblocks) - 1)
+    xStart = int(increment[0] / 2)
+    xEnd = int((nblocks[0] - 0.5) * increment[0])
+    yStart = int(increment[1] / 2)
+    yEnd = int((nblocks[1] - 0.5) * increment[1])
+    xtStart = 0.5
+    xtEnd = image_data.shape[0] - 0.5
+    ytStart = 0.5
+    ytEnd = image_data.shape[1] - 0.5
+    block_x_coords = np.linspace(xStart, xEnd, nblocks[0])
+    block_y_coords = np.linspace(yStart, yEnd, nblocks[1])
+    adaptive_interpolation = RectBivariateSpline(
+        block_x_coords,
+        block_y_coords,
+        block_threshold,
+        bbox=(xtStart, xtEnd, ytStart, ytEnd),
+        kx=spline_order,
+        ky=spline_order,
+    )
+    thresh_out_x_coords = np.linspace(
+        0.5, int(nblocks[0] * increment[0]) - 0.5, thresh_out.shape[0]
+    )
+    thresh_out_y_coords = np.linspace(
+        0.5, int(nblocks[1] * increment[1]) - 0.5, thresh_out.shape[1]
+    )
+
+    thresh_out = adaptive_interpolation(thresh_out_x_coords, thresh_out_y_coords)
+
+    return thresh_out
+
+
+
 
 def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) ->  str:
     #  data_in: types.ArrayLike,
