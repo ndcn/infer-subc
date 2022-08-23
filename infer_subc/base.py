@@ -569,8 +569,34 @@ def infer_SOMA3(struct_img, NU_labels,  in_params) -> tuple:
 
 
 
-def infer_CYTOSOL(struct_img, nuclei_labels, soma_labels, out_path, in_params):
-    pass
+def infer_CYTOSOL(SO_object, NU_object, erode_NU = True):
+    """
+    Procedure to infer CYTOSOL from linearly unmixed input.
+
+    Parameters:
+    ------------
+    SO_object: np.ndarray
+        a 3d image containing the NUCLEI signal
+
+    NU_object: np.ndarray
+        a 3d image containing the NUCLEI signal
+
+    erode_NU: bool
+        should we erode?
+
+    Returns:
+    -------------
+    CY_object: np.ndarray (bool)
+      
+    """
+
+    #NU_eroded1 = morphology.binary_erosion(NU_object,  footprint=morphology.ball(3) )
+    if erode_NU:
+        CY_object = np.logical_and(SO_object,~morphology.binary_erosion(NU_object) )
+    else:
+        CY_object = np.logical_and(SO_object,~NU_object)
+    return CY_object
+
 
 def infer_LYSOSOMES(struct_img, out_path, cyto_labels, in_params):
     pass
