@@ -26,7 +26,10 @@ from aicsimageio.writers import OmeTiffWriter
 from napari_aicsimageio.core import  reader_function
 
 import aicssegmentation
-from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_slice_by_slice, dot_2d_slice_by_slice_wrapper, dot_3d
+from aicssegmentation.core.seg_dot import (dot_3d_wrapper, 
+                                                                            dot_slice_by_slice, 
+                                                                            dot_2d_slice_by_slice_wrapper, 
+                                                                            dot_3d)
 from aicssegmentation.core.pre_processing_utils import ( intensity_normalization, 
                                                          image_smoothing_gaussian_3d,  
                                                          image_smoothing_gaussian_slice_by_slice )
