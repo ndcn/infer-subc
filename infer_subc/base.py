@@ -16,7 +16,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from skimage import img_as_float, filters
 from skimage import morphology
-from skimage.morphology import remove_small_objects, ball, dilation, binary_closing
+from skimage.morphology import remove_small_objects, ball, disk, dilation, binary_closing, white_tophat, black_tophat
 from skimage.filters import threshold_triangle, threshold_otsu, threshold_li
 from skimage.measure import label
 from skimage.segmentation import watershed
@@ -33,7 +33,9 @@ from aicssegmentation.core.seg_dot import (dot_3d_wrapper,
 from aicssegmentation.core.pre_processing_utils import ( intensity_normalization, 
                                                          image_smoothing_gaussian_3d,  
                                                          image_smoothing_gaussian_slice_by_slice )
-from aicssegmentation.core.utils import topology_preserving_thinning, hole_filling, size_filter
+from aicssegmentation.core.utils import (topology_preserving_thinning, 
+                                                                    hole_filling, 
+                                                                    size_filter)
 from aicssegmentation.core.MO_threshold import MO
 from aicssegmentation.core.vessel import filament_2d_wrapper, vesselnessSliceBySlice
 from aicssegmentation.core.output_utils import   save_segmentation,  generate_segmentation_contour
@@ -47,6 +49,27 @@ NAME = "infer_subc"
 # ## we need to define some image processing wrappers... partials should work great
 # from functools import partial
 
+# # derived from CellProfiler not sure if they work in 2D...
+# def enhance_speckles(image, radius, volumetric = False):
+#     if volumetric:
+#         selem = ball(radius)
+#     else:
+#         selem = disk(radius)     
+#     retval = white_tophat(image, footprint=selem)
+#     return retval
+
+# # derived from CellProfiler
+# def enhance_neurites(image, radius, volumetric = False):
+#     if volumetric:
+#         selem = ball(radius)
+#     else:
+#         selem = disk(radius)     
+#     white = white_tophat(image, footprint=selem)
+#     black = black_tophat(image, footprint=selem)
+#     result = image + white - black
+#     result[result > 1] = 1
+#     result[result < 0] = 0
+#     return result
 
 # these are the fuinctions that need to be set by each notebook...
 # notebook workflow will produce the in_params dictionary nescessary 
@@ -55,6 +78,8 @@ NAME = "infer_subc"
 ##########################
 # 1.  infer_NUCLEI
 ##########################
+# copy this to base.py for easy import
+
 def infer_NUCLEI(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
@@ -80,11 +105,14 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
             updated parameters in case any needed were missing
     
     """
+
     out_p= in_params.copy()
+
 
     ###################
     # PRE_PROCESSING
     ###################                         
+
     #TODO: replace params below with the input params
     scaling_param =  [0]   
     struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
@@ -97,18 +125,19 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
                                                                     size=med_filter_size  )
     out_p["median_filter_size"] = med_filter_size 
 
-    med_filter_size = 4   
+    gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
     struct_img = image_smoothing_gaussian_slice_by_slice(   struct_img,
                                                                                                         sigma=gaussian_smoothing_sigma,
                                                                                                         truncate_range = gaussian_smoothing_truncate_range
                                                                                                     )
-    out_p["median_filter_size"] = med_filter_size 
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma 
     out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
 
     ###################
     # CORE_PROCESSING
     ###################
+
     struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(struct_img)
 
@@ -125,10 +154,12 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     ###################
     # POST_PROCESSING
     ###################
+
     hole_width = 5  
     # # wrapper to remoce_small_objects
     struct_obj = morphology.remove_small_holes(struct_obj, hole_width ** 3 )
     out_p['hole_width'] = hole_width
+
 
     small_object_max = 5
     struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
@@ -136,6 +167,7 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
                                                          method = "slice_by_slice", #"3D", # 
                                                             connectivity=1)
     out_p['small_object_max'] = small_object_max
+
 
     retval = (struct_obj,  label(struct_obj), out_p)
     return retval
@@ -229,11 +261,11 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray,  in_params:dict) 
 
     # 2D 
     hole_max = 80  
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
     out_p['hole_max'] = hole_max
 
     small_object_max = 35
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "slice_by_slice" ,
                                                             connectivity=1)
@@ -269,8 +301,8 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray,  in_params:dict) 
                                                 return_object=True,
                                                 dilate=True)
 
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "slice_by_slice" ,
                                                             connectivity=1)
@@ -374,11 +406,11 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray,  in_params:dict) 
 
     hole_max = 80  
     # discount z direction
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
     out_p['hole_max'] = hole_max
 
     small_object_max = 35
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "3D", #"slice_by_slice" 
                                                             connectivity=1)
@@ -415,8 +447,8 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray,  in_params:dict) 
                                                 return_object=True,
                                                 dilate=True)
     # 3D cleaning
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "3D", #"slice_by_slice" 
                                                             connectivity=1)
@@ -513,11 +545,11 @@ def infer_SOMA3(struct_img, NU_labels,  in_params) -> tuple:
     # 2D cleaning
     hole_max = 100  
     # discount z direction
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
     out_p['hole_max'] = hole_max
 
     small_object_max = 30
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "slice_by_slice" ,
                                                             connectivity=1)
@@ -555,8 +587,8 @@ def infer_SOMA3(struct_img, NU_labels,  in_params) -> tuple:
                                                 dilate=True)
 
     # 2D cleaning
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
-    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+    struct_obj = hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
                                                             min_size= small_object_max**3, 
                                                             method = "slice_by_slice" ,
                                                             connectivity=1)
@@ -601,11 +633,201 @@ def infer_CYTOSOL(SO_object, NU_object, erode_NU = True):
     return CY_object
 
 
-def infer_LYSOSOMES(struct_img, out_path, cyto_labels, in_params):
-    pass
+##########################
+#  infer_LYSOSOMES
+##########################
+def infer_LYSOSOMES(struct_img,  CY_object,  in_params) -> tuple:
+    """
+    Procedure to infer LYSOSOME from linearly unmixed input.
 
-def infer_MITOCHONDRIA(struct_img, out_path, cyto_labels, in_params):
-    pass
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the LYSOSOME signal
+
+    CY_object: np.ndarray boolean
+        a 3d image containing the NU labels
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of Lysosomes
+        parameters: dict
+            updated parameters in case any needed were missing
+    """
+    out_p= in_params.copy()
+
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+    scaling_param =  [0]   
+    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+   # make a copy for post-post processing
+    scaled_signal = struct_img.copy()
+
+    med_filter_size = 3   
+    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
+    struct_img = median_filter_slice_by_slice( 
+                                                                    struct_img,
+                                                                    size=med_filter_size  )
+    out_p["median_filter_size"] = med_filter_size 
+
+    gaussian_smoothing_sigma = 1.
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = image_smoothing_gaussian_slice_by_slice(   struct_img,
+                                                                                                        sigma=gaussian_smoothing_sigma,
+                                                                                                        truncate_range = gaussian_smoothing_truncate_range
+                                                                                                    )
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma 
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+    # log_img, d = log_transform( struct_img ) 
+    # struct_img = intensity_normalization( log_img ,  scaling_param=[0] )  
+    struct_img = intensity_normalization( struct_img ,  scaling_param=[0] )  
+
+
+   ###################
+    # CORE_PROCESSING
+    ###################
+    # dot and filiment enhancement - 2D
+
+    ################################
+    ## PARAMETERS for this step ##
+    s2_param = [[5,0.09], [2.5,0.07], [1,0.01]]
+    ################################
+    bw_spot = dot_2d_slice_by_slice_wrapper(struct_img, s2_param)
+
+    ################################
+    ## PARAMETERS for this step ##
+    f2_param = [[1, 0.15]]
+    ################################
+    bw_filament = filament_2d_wrapper(struct_img, f2_param)
+
+    bw = np.logical_or(bw_spot, bw_filament)
+
+    out_p["s2_param"] = s2_param 
+    out_p["f2_param"] = f2_param 
+    ###################
+    # POST_PROCESSING
+    ###################
+
+    # 2D cleaning
+    hole_max = 1600  
+    # discount z direction
+    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    out_p['hole_max'] = hole_max
+
+
+    # # 3D
+    # cleaned_img = remove_small_objects(removed_holes>0, 
+    #                                                             min_size=width, 
+    #                                                             connectivity=1, 
+    #                                                             in_place=False)
+
+    small_object_max = 15
+    struct_obj = aicssegmentation.core.utils.size_filter(struct_obj, # wrapper to remove_small_objects which can do slice by slice
+                                                            min_size= small_object_max**3, 
+                                                            method = "3D", #"slice_by_slice" ,
+                                                            connectivity=1)
+    out_p['small_object_max'] = small_object_max
+
+                
+    retval = (struct_obj,  out_p)
+    return retval
+
+
+##########################
+#  infer_MITOCHONDRIA
+##########################
+def infer_MITOCHONDRIA(struct_img, CY_object,  in_params) -> tuple:
+    """
+    Procedure to infer MITOCHONDRIA  from linearly unmixed input.
+
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the MITOCHONDRIA signal
+
+    CY_object: np.ndarray boolean
+        a 3d image containing the NU labels
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of MITOCHONDRIA
+        parameters: dict
+            updated parameters in case any needed were missing
+    """
+    out_p= in_params.copy()
+
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+    scaling_param =  [0,9]   
+    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+   # make a copy for post-post processing
+    scaled_signal = struct_img.copy()
+
+    med_filter_size = 3   
+    structure_img = median_filter(struct_img,    size=med_filter_size  )
+    out_p["median_filter_size"] = med_filter_size 
+
+    gaussian_smoothing_sigma = 1.3
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = image_smoothing_gaussian_3d(   struct_img,
+                                                                                                        sigma=gaussian_smoothing_sigma,
+                                                                                                        truncate_range = gaussian_smoothing_truncate_range
+                                                                                                    )
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma 
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+    # log_img, d = log_transform( struct_img ) 
+    # struct_img = intensity_normalization( log_img ,  scaling_param=[0] )  
+    # struct_img = intensity_normalization( struct_img ,  scaling_param=[0] )  
+
+
+   ###################
+    # CORE_PROCESSING
+    ###################
+    ################################
+    ## PARAMETERS for this step ##
+    vesselness_sigma = [1.5]
+    vesselness_cutoff = 0.16
+    # 2d vesselness slice by slice
+    response = vesselnessSliceBySlice(structure_img_smooth, sigmas=vesselness_sigma, tau=1, whiteonblack=True)
+    bw = response > vesselness_cutoff
+
+    out_p["vesselness_sigma"] = vesselness_sigma 
+    out_p["vesselness_cutoff"] = vesselness_cutoff 
+
+
+    ###################
+    # POST_PROCESSING
+    ###################
+
+    # MT_object = remove_small_objects(bw > 0, min_size=small_object_max**2, connectivity=1, in_place=False)
+    small_object_max = 10
+    struct_obj = size_filter(bw, # wrapper to remove_small_objects which can do slice by slice
+                                                            min_size= small_object_max**3, 
+                                                            method = "3D", #"slice_by_slice" ,
+                                                            connectivity=1)
+    out_p['small_object_max'] = small_object_max
+
+    retval = (struct_obj,  out_p)
+    return retval
+
 
 def infer_GOLGI(struct_img, out_path, cyto_labels, in_params):
     pass
@@ -621,11 +843,14 @@ def infer_LIPID_DROPLET(struct_img, out_path, cyto_labels, in_params):
 
 
 #### Median FIltering for 2D
+# TODO: rewrite these with np.vectorize or enumerate...
+#           mask_labeled = np.vectorize(keep_top_3, signature='(n,m)->(n,m)')(mask_labeled)
+
+
 # We need to define a wrapper for `median_filter` which steps through each Z-slice independently.  (Note: since we will use this 
 # pattern repeatedly we may want to make a generic wrapper for our filtering/de-noising). Lets call it `median_filter_slice_by_slice` 
 # and copy the way the `aicssegmentation` package handles smoothing.
 # TODO: typehints.... what is my "image" primitive?
-
 def median_filter_slice_by_slice(struct_img, size):
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -973,7 +1198,7 @@ def etree_to_dict(t):
             if text:
                 d[t.tag]['#text'] = text
         else:
-            d[t.tag] = texts
+            d[t.tag] = text
     return d
 
 
