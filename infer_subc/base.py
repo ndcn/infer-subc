@@ -851,7 +851,7 @@ def _infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
     -------------
     tuple of:
         object
-            mask defined boundaries of MITOCHONDRIA
+            mask defined boundaries of GOLGI
         parameters: dict
             updated parameters in case any needed were missing
     """
@@ -931,8 +931,93 @@ def _infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
     return retval
 
 
-def infer_PEROXISOMES(struct_img, out_path, cyto_labels, in_params):
-    pass
+##########################
+#  infer_PEROXISOME
+##########################
+def infer_PEROXISOME(struct_img, CY_object,  in_params) -> tuple:
+    """
+    Procedure to infer PEROXISOME  from linearly unmixed input.
+
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the PEROXISOME signal
+
+    CY_object: np.ndarray boolean
+        a 3d image containing the NU labels
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of PEROXISOME
+        parameters: dict
+            updated parameters in case any needed were missing
+    """
+    out_p= in_params.copy()
+
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+    intensity_norm_param = [0]  # CHECK THIS
+
+    struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+   # make a copy for post-post processing
+    scaled_signal = struct_img.copy()
+
+    gaussian_smoothing_sigma = 1.
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = image_smoothing_gaussian_3d(   struct_img,
+                                                                                                        sigma=gaussian_smoothing_sigma,
+                                                                                                        truncate_range = gaussian_smoothing_truncate_range
+                                                                                                    )
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma 
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+    # log_img, d = log_transform( struct_img ) 
+    # struct_img = intensity_normalization( log_img ,  scaling_param=[0] )  
+    # struct_img = intensity_normalization( struct_img ,  scaling_param=[0] )  
+
+
+   ###################
+    # CORE_PROCESSING
+    ###################
+    dot_3d_sigma = 1.
+    dot_3d_cutoff = 0.04
+    s3_param = [(dot_3d_sigma,dot_2d_cutoff)]
+
+    bw = dot_3d_wrapper(struct_img, s3_param)
+    out_p["dot_3d_sigma"] = dot_3d_sigma 
+    out_p["dot_3d_cutoff"] = dot_3d_cutoff 
+    out_p["s3_param"] = s3_param 
+
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    # watershed
+    minArea = 4
+    mask_ = remove_small_objects(bw>0, min_size=minArea, connectivity=1, in_place=False) 
+    seed_ = dilation(peak_local_max(struct_img,labels=label(mask_), min_distance=2, indices=False), selem=ball(1))
+    watershed_map = -1*distance_transform_edt(bw)
+    struct_obj = watershed(watershed_map, label(seed_), mask=mask_, watershed_line=True)
+    ################################
+    ## PARAMETERS for this step ##
+    min_area = 4 
+    ################################
+    struct_obj = remove_small_objects(struct_obj>0, min_size=min_area, connectivity=1, in_place=False)
+    out_p["min_area"] = min_area 
+
+
+
+    retval = (struct_obj,  out_p)
+    return retval
+
 
 def infer_ENDOPLASMIC_RETICULUM(struct_img, out_path, cyto_labels, in_params):
     pass
