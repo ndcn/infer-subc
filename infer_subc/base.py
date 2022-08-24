@@ -832,7 +832,7 @@ def infer_MITOCHONDRIA(struct_img, CY_object,  in_params) -> tuple:
 ##########################
 #  infer_GOLGI
 ##########################
-def _infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
+def infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
     """
     Procedure to infer GOLGI COMPLEX  from linearly unmixed input.
 
@@ -1019,8 +1019,73 @@ def infer_PEROXISOME(struct_img, CY_object,  in_params) -> tuple:
     return retval
 
 
-def infer_ENDOPLASMIC_RETICULUM(struct_img, out_path, cyto_labels, in_params):
-    pass
+##########################
+#  infer_ENDOPLASMIC_RETICULUM
+##########################
+def infer_ENDOPLASMIC_RETICULUM(struct_img, CY_object,  in_params) -> tuple:
+    """
+    Procedure to infer PEROXISOME  from linearly unmixed input.
+
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 3d image containing the PEROXISOME signal
+
+    CY_object: np.ndarray boolean
+        a 3d image containing the NU labels
+
+    in_params: dict
+        holds the needed parameters
+
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of PEROXISOME
+        parameters: dict
+            updated parameters in case any needed were missing
+    """
+    out_p= in_params.copy()
+
+    ###################
+    # PRE_PROCESSING
+    ###################                         
+    intensity_norm_param = [0]  # CHECK THIS
+
+    struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+    # edge-preserving smoothing (Option 2, used for Sec61B)
+    structure_img_smooth = edge_preserving_smoothing_3d(struct_img)
+
+
+   ###################
+    # CORE_PROCESSING
+    ###################
+    ################################
+    ## PARAMETERS for this step ##
+    f2_param = [[1, 0.15]]
+    ################################
+
+    struct_obj = filament_2d_wrapper(struct_img, f2_param)
+    out_p["f2_param"] = f2_param 
+
+    ###################
+    # POST_PROCESSING
+    ###################
+ 
+    ################################
+    ## PARAMETERS for this step ##
+    min_area = 20
+    ################################
+    struct_obj = remove_small_objects(struct_obj>0, min_size=min_area, connectivity=1, in_place=False)
+    out_p["min_area"] = min_area 
+
+
+
+    retval = (struct_obj,  out_p)
+    return retval
+
 
 def infer_LIPID_DROPLET(struct_img, out_path, cyto_labels, in_params):
     pass
