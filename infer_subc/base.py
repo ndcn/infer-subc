@@ -32,7 +32,8 @@ from aicssegmentation.core.seg_dot import (dot_3d_wrapper,
                                                                             dot_3d)
 from aicssegmentation.core.pre_processing_utils import ( intensity_normalization, 
                                                          image_smoothing_gaussian_3d,  
-                                                         image_smoothing_gaussian_slice_by_slice )
+                                                         image_smoothing_gaussian_slice_by_slice,
+                                                         edge_preserving_smoothing_3d )
 from aicssegmentation.core.utils import (topology_preserving_thinning, 
                                                                     hole_filling, 
                                                                     size_filter)
@@ -603,7 +604,9 @@ def infer_SOMA3(struct_img, NU_labels,  in_params) -> tuple:
     return retval
 
 
-
+##########################
+#  infer_CYTOSOL
+##########################
 def infer_CYTOSOL(SO_object, NU_object, erode_NU = True):
     """
     Procedure to infer CYTOSOL from linearly unmixed input.
@@ -720,7 +723,7 @@ def infer_LYSOSOMES(struct_img,  CY_object,  in_params) -> tuple:
     # 2D cleaning
     hole_max = 1600  
     # discount z direction
-    struct_obj = aicssegmentation.core.utils.hole_filling(struct_obj, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
+    struct_obj = aicssegmentation.core.utils.hole_filling(bw, hole_min =0. , hole_max=hole_max**2, fill_2d = True) 
     out_p['hole_max'] = hole_max
 
 
@@ -806,7 +809,7 @@ def infer_MITOCHONDRIA(struct_img, CY_object,  in_params) -> tuple:
     vesselness_sigma = [1.5]
     vesselness_cutoff = 0.16
     # 2d vesselness slice by slice
-    response = vesselnessSliceBySlice(structure_img_smooth, sigmas=vesselness_sigma, tau=1, whiteonblack=True)
+    response = vesselnessSliceBySlice(struct_img, sigmas=vesselness_sigma, tau=1, whiteonblack=True)
     bw = response > vesselness_cutoff
 
     out_p["vesselness_sigma"] = vesselness_sigma 
@@ -863,7 +866,7 @@ def infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
     intensity_norm_param = [0.1, 30.]  # CHECK THIS
 
     struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
-    out_p["intensity_norm_param"] = scaling_param
+    out_p["intensity_norm_param"] = intensity_norm_param
 
    # make a copy for post-post processing
     scaled_signal = struct_img.copy()
@@ -904,7 +907,7 @@ def infer_GOLGI(struct_img, CY_object,  in_params) -> tuple:
 
     dot_3d_sigma = 1.6
     dot_3d_cutoff = 0.02
-    s3_param = [(dot_3d_sigma,dot_2d_cutoff)]
+    s3_param = [(dot_3d_sigma,dot_3d_cutoff)]
 
     bw_extra = dot_3d_wrapper(struct_img, s3_param)
     out_p["dot_3d_sigma"] = dot_3d_sigma 
@@ -965,7 +968,7 @@ def infer_PEROXISOME(struct_img, CY_object,  in_params) -> tuple:
     intensity_norm_param = [0]  # CHECK THIS
 
     struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
-    out_p["intensity_norm_param"] = scaling_param
+    out_p["intensity_norm_param"] = intensity_norm_param
 
    # make a copy for post-post processing
     scaled_signal = struct_img.copy()
@@ -989,7 +992,7 @@ def infer_PEROXISOME(struct_img, CY_object,  in_params) -> tuple:
     ###################
     dot_3d_sigma = 1.
     dot_3d_cutoff = 0.04
-    s3_param = [(dot_3d_sigma,dot_2d_cutoff)]
+    s3_param = [(dot_3d_sigma,dot_3d_cutoff)]
 
     bw = dot_3d_wrapper(struct_img, s3_param)
     out_p["dot_3d_sigma"] = dot_3d_sigma 
@@ -1004,7 +1007,7 @@ def infer_PEROXISOME(struct_img, CY_object,  in_params) -> tuple:
     minArea = 4
     mask_ = remove_small_objects(bw>0, min_size=minArea, connectivity=1, in_place=False) 
     seed_ = dilation(peak_local_max(struct_img,labels=label(mask_), min_distance=2, indices=False), selem=ball(1))
-    watershed_map = -1*distance_transform_edt(bw)
+    watershed_map = -1*ndi.distance_transform_edt(bw)
     struct_obj = watershed(watershed_map, label(seed_), mask=mask_, watershed_line=True)
     ################################
     ## PARAMETERS for this step ##
@@ -1053,7 +1056,7 @@ def infer_ENDOPLASMIC_RETICULUM(struct_img, CY_object,  in_params) -> tuple:
     intensity_norm_param = [0]  # CHECK THIS
 
     struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
-    out_p["intensity_norm_param"] = scaling_param
+    out_p["intensity_norm_param"] = intensity_norm_param
 
     # edge-preserving smoothing (Option 2, used for Sec61B)
     structure_img_smooth = edge_preserving_smoothing_3d(struct_img)
