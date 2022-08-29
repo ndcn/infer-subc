@@ -17,7 +17,11 @@ from scipy.interpolate import RectBivariateSpline
 from skimage import img_as_float, filters
 from skimage import morphology
 from skimage.morphology import remove_small_objects, ball, disk, dilation, binary_closing, white_tophat, black_tophat
-from skimage.filters import threshold_triangle, threshold_otsu, threshold_li
+from skimage.filters import (
+    threshold_triangle, 
+    threshold_otsu, 
+    threshold_li,
+    threshold_multiotsu)
 from skimage.measure import label
 from skimage.segmentation import watershed
 from skimage.feature import peak_local_max
@@ -1250,135 +1254,17 @@ def threshold_otsu_log( image_in ):
     threshold = inverse_log_transform(threshold, d)
     return threshold
 
-
-
-
-
-def cp_adaptive_threshold(
-                image_data,
-                th_method, #skimage.filters.threshold_li,
-                volumetric,
-                window_size, 
-                tolerance
-                ):
-    """   
-    wrapper for the functions from CellProfiler
-    NOTE: might work better to copy from CellProfiler/centrosome/threshold.py 
-    https://github.com/CellProfiler/centrosome/blob/master/centrosome/threshold.py
-    
+def threshold_multiotsu_log( image_in ):
     """
-    
-    threshold = _run_local_threshold(image_data, th_method, volumetric, window_size, tolerance) #**kwargs):
-    return threshold
-
-
-
-def _run_local_threshold(image_data, method, volumetric, window_size, tolerance): #**kwargs):
-    if volumetric:
-        t_local = np.zeros_like(image_data)
-        for index, plane in enumerate(image_data):
-            t_local[index] = _get_adaptive_threshold(plane, method, window_size, tolerance) #**kwargs)
-    else:
-        t_local = _get_adaptive_threshold(image_data, method, window_size, tolerance) #, **kwargs)
-    return img_as_float(t_local)
-
-def _get_adaptive_threshold(image_data, threshold_method, adaptive_window_size, tolerance):
-    """Given a global threshold, compute a threshold per pixel
-    Break the image into blocks, computing the threshold per block.
-    Afterwards, constrain the block threshold to .7 T < t < 1.5 T.
+    thin wrapper to log-scale and inverse log image for threshold finding using otsu
     """
-    # for the X and Y direction, find the # of blocks, given the
-    # size constraints
+    image, d = log_transform(image_in.copy())
+    thresholds =  threshold_multiotsu(image)
+    thresholds = inverse_log_transform(thresholds, d)
+    return thresholds
 
-    # if self.threshold_operation == TM_OTSU:
-    #     bin_wanted = (
-    #         0 if self.assign_middle_to_foreground.value == "Foreground" else 1
-    #     )
-    image_size = np.array(image_data.shape[:2], dtype=int)
-    nblocks = image_size // adaptive_window_size
-    if any(n < 2 for n in nblocks):
-        raise ValueError(
-            "Adaptive window cannot exceed 50%% of an image dimension.\n"
-            "Window of %dpx is too large for a %sx%s image"
-            % (adaptive_window_size, image_size[1], image_size[0])
-        )
-    #
-    # Use a floating point block size to apportion the roundoff
-    # roughly equally to each block
-    #
-    increment = np.array(image_size, dtype=float) / np.array(
-        nblocks, dtype=float
-    )
-    #
-    # Put the answer here
-    #
-    thresh_out = np.zeros(image_size, image_data.dtype)
-    #
-    # Loop once per block, computing the "global" threshold within the
-    # block.
-    #
-    block_threshold = np.zeros([nblocks[0], nblocks[1]])
-    for i in range(nblocks[0]):
-        i0 = int(i * increment[0])
-        i1 = int((i + 1) * increment[0])
-        for j in range(nblocks[1]):
-            j0 = int(j * increment[1])
-            j1 = int((j + 1) * increment[1])
-            block = image_data[i0:i1, j0:j1]
-            block = block[~np.isnan(block)]
-            if len(block) == 0:
-                threshold_out = 0.0
-            elif np.all(block == block[0]):
-                # Don't compute blocks with only 1 value.
-                threshold_out = block[0]
-            # elif (self.threshold_operation == TM_OTSU and
-            #       self.two_class_otsu.value == O_THREE_CLASS and
-            #       len(np.unique(block)) < 3):
-            #     # Can't run 3-class otsu on only 2 values.
-            #     threshold_out = skimage.filters.threshold_otsu(block)
-            else:
-                try: 
-                    threshold_out = threshold_method(block) #, tolerance=tolerance) #**kwargs)
-                except ValueError:
-                    # Drop nbins kwarg when multi-otsu fails. See issue #6324 scikit-image
-                    threshold_out = threshold_method(block)
-            if isinstance(threshold_out, np.ndarray):
-                # Select correct bin if running multiotsu
-                threshold_out = threshold_out[bin_wanted]
-            block_threshold[i, j] = threshold_out
 
-    #
-    # Use a cubic spline to blend the thresholds across the image to avoid image artifacts
-    #
-    spline_order = min(3, np.min(nblocks) - 1)
-    xStart = int(increment[0] / 2)
-    xEnd = int((nblocks[0] - 0.5) * increment[0])
-    yStart = int(increment[1] / 2)
-    yEnd = int((nblocks[1] - 0.5) * increment[1])
-    xtStart = 0.5
-    xtEnd = image_data.shape[0] - 0.5
-    ytStart = 0.5
-    ytEnd = image_data.shape[1] - 0.5
-    block_x_coords = np.linspace(xStart, xEnd, nblocks[0])
-    block_y_coords = np.linspace(yStart, yEnd, nblocks[1])
-    adaptive_interpolation = RectBivariateSpline(
-        block_x_coords,
-        block_y_coords,
-        block_threshold,
-        bbox=(xtStart, xtEnd, ytStart, ytEnd),
-        kx=spline_order,
-        ky=spline_order,
-    )
-    thresh_out_x_coords = np.linspace(
-        0.5, int(nblocks[0] * increment[0]) - 0.5, thresh_out.shape[0]
-    )
-    thresh_out_y_coords = np.linspace(
-        0.5, int(nblocks[1] * increment[1]) - 0.5, thresh_out.shape[1]
-    )
 
-    thresh_out = adaptive_interpolation(thresh_out_x_coords, thresh_out_y_coords)
-
-    return thresh_out
 
 
 
@@ -1474,4 +1360,445 @@ def get_raw_meta_data(meta_dict):
 
 
 
+# takein from cellprofiler / centrosome
+# since i'm not limiting myself to integers it might not work...
+def fill_labeled_holes(labels, mask=None, size_fn=None):
+    """Fill all background pixels that are holes inside the foreground
+ 
+    A pixel is a hole inside a foreground object if
+    
+    * there is no path from the pixel to the edge AND
+    
+    * there is no path from the pixel to any other non-hole
+      pixel AND
+      
+    * there is no path from the pixel to two similarly-labeled pixels that
+      are adjacent to two differently labeled non-hole pixels.
+    
+    labels - the current labeling
+    
+    mask - mask of pixels to ignore
+    
+    size_fn - if not None, it is a function that takes a size and a boolean
+              indicating whether it is foreground (True) or background (False)
+              The function should return True to analyze and False to ignore
+    
+    returns a filled copy of the labels matrix
+    """
+    #
+    # The algorithm:
+    #
+    # Label the background to get distinct background objects
+    # Construct a graph of both foreground and background objects.
+    # Walk the graph according to the rules.
+    #
+    labels_type = labels.dtype
+    background = labels == 0
+    if mask is not None:
+        background &= mask
 
+    blabels, count = ndi.label(background, four_connect)
+    labels = labels.copy().astype(int)
+    lcount = np.max(labels)
+    labels[blabels != 0] = blabels[blabels != 0] + lcount + 1
+    lmax = lcount + count + 1
+    is_not_hole = np.ascontiguousarray(np.zeros(lmax + 1, np.uint8))
+    #
+    # Find the indexes on the edge and use to populate the to-do list
+    #
+    to_do = np.unique(
+        np.hstack((labels[0, :], labels[:, 0], labels[-1, :], labels[:, -1]))
+    )
+    to_do = to_do[to_do != 0]
+    is_not_hole[to_do] = True
+    to_do = list(to_do)
+    #
+    # An array that names the first non-hole object
+    #
+    adjacent_non_hole = np.ascontiguousarray(np.zeros(lmax + 1), np.uint32)
+    #
+    # Find all 4-connected adjacent pixels
+    # Note that there will be some i, j not in j, i
+    #
+    i = np.hstack([labels[:-1, :].flatten(), labels[:, :-1].flatten()])
+    j = np.hstack([labels[1:, :].flatten(), labels[:, 1:].flatten()])
+    i, j = i[i != j], j[i != j]
+    if (len(i)) > 0:
+        order = np.lexsort((j, i))
+        i = i[order]
+        j = j[order]
+        # Remove duplicates and stack to guarantee that j, i is in i, j
+        first = np.hstack([[True], (i[:-1] != i[1:]) | (j[:-1] != j[1:])])
+        i, j = np.hstack((i[first], j[first])), np.hstack((j[first], i[first]))
+        # Remove dupes again. (much shorter)
+        order = np.lexsort((j, i))
+        i = i[order]
+        j = j[order]
+        first = np.hstack([[True], (i[:-1] != i[1:]) | (j[:-1] != j[1:])])
+        i, j = i[first], j[first]
+        #
+        # Now we make a ragged array of i and j
+        #
+        i_count = np.bincount(i)
+        if len(i_count) < lmax + 1:
+            i_count = np.hstack((i_count, np.zeros(lmax + 1 - len(i_count), int)))
+        indexer = Indexes([i_count])
+        #
+        # Filter using the size function passed, if any
+        #
+        if size_fn is not None:
+            areas = np.bincount(labels.flatten())
+            for ii, area in enumerate(areas):
+                if (
+                    ii > 0
+                    and area > 0
+                    and not is_not_hole[ii]
+                    and not size_fn(area, ii <= lcount)
+                ):
+                    is_not_hole[ii] = True
+                    to_do.append(ii)
+
+        to_do_count = len(to_do)
+        if len(to_do) < len(is_not_hole):
+            to_do += [0] * (len(is_not_hole) - len(to_do))
+        to_do = np.ascontiguousarray(np.array(to_do), np.uint32)
+        fill_labeled_holes_loop(
+            np.ascontiguousarray(i, np.uint32),
+            np.ascontiguousarray(j, np.uint32),
+            np.ascontiguousarray(indexer.fwd_idx, np.uint32),
+            np.ascontiguousarray(i_count, np.uint32),
+            is_not_hole,
+            adjacent_non_hole,
+            to_do,
+            lcount,
+            to_do_count,
+        )
+    #
+    # Make an array that assigns objects to themselves and background to 0
+    #
+    new_indexes = np.arange(len(is_not_hole)).astype(np.uint32)
+    new_indexes[(lcount + 1) :] = 0
+    #
+    # Fill the holes by replacing the old value by the value of the
+    # enclosing object.
+    #
+    is_not_hole = is_not_hole.astype(bool)
+    new_indexes[~is_not_hole] = adjacent_non_hole[~is_not_hole]
+    if mask is not None:
+        labels[mask] = new_indexes[labels[mask]]
+    else:
+        labels = new_indexes[labels]
+    return labels.astype(labels_type)
+
+
+TS_GLOBAL = "Global"
+TS_ADAPTIVE = "Adaptive"
+TM_MANUAL = "Manual"
+TM_MEASUREMENT = "Measurement"
+TM_LI = "Minimum Cross-Entropy"
+TM_OTSU = "Otsu"
+TM_ROBUST_BACKGROUND = "Robust Background"
+TM_SAUVOLA = "Sauvola"
+
+def get_global_threshold(
+                                image, 
+                                mask, 
+                                threshold_operation=TM_LI, 
+                                automatic=False, 
+                                two_class_otsu=False, 
+                                assign_mid_to_fg = True
+                                ):
+
+    image_data = image[mask]
+    # Shortcuts - Check if image array is empty or all pixels are the same value.
+    if len(image_data) == 0:
+        threshold = 0.0
+
+    elif np.all(image_data == image_data[0]):
+        threshold = image_data[0]
+
+    elif automatic or threshold_operation in (TM_LI, TM_SAUVOLA):
+        tol = max(np.min(np.diff(np.unique(image_data))) / 2, 0.5 / 65536)
+        threshold = skimage.filters.threshold_li(image_data, tolerance=tol)
+
+    elif threshold_operation == TM_OTSU:
+        if two_class_otsu:
+            threshold = skimage.filters.threshold_otsu(image_data)
+        else:
+            bin_wanted = (
+                0 if assign_mid_to_fg else 1
+            )
+            threshold = skimage.filters.threshold_multiotsu(image_data, nbins=128)
+            threshold = threshold[bin_wanted]
+    else:
+        raise ValueError("Invalid thresholding settings")
+    return threshold
+
+def get_local_threshold( image, mask, volumetric, adaptive_window_size):
+    image_data = np.where(mask, image, np.nan)
+
+    if len(image_data) == 0 or np.all(image_data == np.nan):
+        local_threshold = np.zeros_like(image_data)
+
+    elif np.all(image_data == image_data[0]):
+        local_threshold = np.full_like(image_data, image_data[0])
+
+    elif threshold_operation == TM_LI:
+        local_threshold = self._run_local_threshold(
+            image_data,
+            method=skimage.filters.threshold_li,
+            volumetric=volumetric,
+            tolerance=max(np.min(np.diff(np.unique(image))) / 2, 0.5 / 65536)
+        )
+    elif threshold_operation == TM_OTSU:
+        if two_class_otsu:
+            local_threshold = _run_local_threshold(
+                image_data,
+                method=skimage.filters.threshold_otsu,
+                volumetric=volumetric,
+            )
+        else:
+            local_threshold = _run_local_threshold(
+                image_data,
+                method=skimage.filters.threshold_multiotsu,
+                volumetric=volumetric,
+                nbins=128,
+            )
+
+    elif threshold_operation == TM_SAUVOLA:
+        image_data = np.where(mask, image, 0)
+        adaptive_window = adaptive_window_size
+        if adaptive_window % 2 == 0:
+            adaptive_window += 1
+        local_threshold = skimage.filters.threshold_sauvola(
+            image_data, window_size=adaptive_window
+        )
+
+    else:
+        raise ValueError("Invalid thresholding settings")
+    return local_threshold
+
+def _run_local_threshold(
+                                image_data, 
+                                method, 
+                                volumetric=False, 
+                                threshold_operation=TM_LI, 
+                                automatic=False, 
+                                two_class_otsu=False, 
+                                assign_mid_to_fg = True,
+                                adaptive_window_size=80,
+                                **kwargs):
+    if volumetric:
+        t_local = np.zeros_like(image_data)
+        for index, plane in enumerate(image_data):
+            t_local[index] = _get_adaptive_threshold(plane, method, **kwargs)
+    else:
+        t_local = self._get_adaptive_threshold(image_data, method, **kwargs)
+    return skimage.img_as_float(t_local)
+
+
+
+def _get_adaptive_threshold(
+                                mage_data, 
+                                threshold_method, 
+                                threshold_operation=TM_LI, 
+                                automatic=False, 
+                                two_class_otsu=False, 
+                                assign_mid_to_fg = True,
+                                adaptive_window_size=80,
+                                **kwargs):
+    """Given a global threshold, compute a threshold per pixel
+    Break the image into blocks, computing the threshold per block.
+    Afterwards, constrain the block threshold to .7 T < t < 1.5 T.
+    """
+    # for the X and Y direction, find the # of blocks, given the
+    # size constraints
+    if threshold_operation == TM_OTSU:
+        bin_wanted = (
+            0 if assign_middle_to_foreground.value == "Foreground" else 1
+        )
+    image_size = np.array(image_data.shape[:2], dtype=int)
+    nblocks = image_size // self.adaptive_window_size.value
+    if any(n < 2 for n in nblocks):
+        raise ValueError(
+            "Adaptive window cannot exceed 50%% of an image dimension.\n"
+            "Window of %dpx is too large for a %sx%s image"
+            % (adaptive_window_size, image_size[1], image_size[0])
+        )
+    #
+    # Use a floating point block size to apportion the roundoff
+    # roughly equally to each block
+    #
+    increment = np.array(image_size, dtype=float) / np.array(
+        nblocks, dtype=float
+    )
+    #
+    # Put the answer here
+    #
+    thresh_out = np.zeros(image_size, image_data.dtype)
+    #
+    # Loop once per block, computing the "global" threshold within the
+    # block.
+    #
+    block_threshold = np.zeros([nblocks[0], nblocks[1]])
+    for i in range(nblocks[0]):
+        i0 = int(i * increment[0])
+        i1 = int((i + 1) * increment[0])
+        for j in range(nblocks[1]):
+            j0 = int(j * increment[1])
+            j1 = int((j + 1) * increment[1])
+            block = image_data[i0:i1, j0:j1]
+            block = block[~np.isnan(block)]
+            if len(block) == 0:
+                threshold_out = 0.0
+            elif np.all(block == block[0]):
+                # Don't compute blocks with only 1 value.
+                threshold_out = block[0]
+            elif (threshold_operation == TM_OTSU and
+                    two_class_otsu and
+                    len(np.unique(block)) < 3):
+                # Can't run 3-class otsu on only 2 values.
+                threshold_out = skimage.filters.threshold_otsu(block)
+            else:
+                try: 
+                    threshold_out = threshold_method(block, **kwargs)
+                except ValueError:
+                    # Drop nbins kwarg when multi-otsu fails. See issue #6324 scikit-image
+                    threshold_out = threshold_method(block)
+            if isinstance(threshold_out, np.ndarray):
+                # Select correct bin if running multiotsu
+                threshold_out = threshold_out[bin_wanted]
+            block_threshold[i, j] = threshold_out
+
+    #
+    # Use a cubic spline to blend the thresholds across the image to avoid image artifacts
+    #
+    spline_order = min(3, np.min(nblocks) - 1)
+    xStart = int(increment[0] / 2)
+    xEnd = int((nblocks[0] - 0.5) * increment[0])
+    yStart = int(increment[1] / 2)
+    yEnd = int((nblocks[1] - 0.5) * increment[1])
+    xtStart = 0.5
+    xtEnd = image_data.shape[0] - 0.5
+    ytStart = 0.5
+    ytEnd = image_data.shape[1] - 0.5
+    block_x_coords = np.linspace(xStart, xEnd, nblocks[0])
+    block_y_coords = np.linspace(yStart, yEnd, nblocks[1])
+    adaptive_interpolation = scipy.interpolate.RectBivariateSpline(
+        block_x_coords,
+        block_y_coords,
+        block_threshold,
+        bbox=(xtStart, xtEnd, ytStart, ytEnd),
+        kx=spline_order,
+        ky=spline_order,
+    )
+    thresh_out_x_coords = np.linspace(
+        0.5, int(nblocks[0] * increment[0]) - 0.5, thresh_out.shape[0]
+    )
+    thresh_out_y_coords = np.linspace(
+        0.5, int(nblocks[1] * increment[1]) - 0.5, thresh_out.shape[1]
+    )
+
+    thresh_out = adaptive_interpolation(thresh_out_x_coords, thresh_out_y_coords)
+
+    return thresh_out
+
+def _correct_global_threshold(threshold, corr_value, threshold_range):
+    threshold *= corr_value
+    return min(max(threshold, threshold_range.min), threshold_range.max)
+
+def _correct_local_threshold(t_local_orig, t_guide,threshold_correction_factor,threshold_range):
+    t_local = t_local_orig.copy()
+
+    # Constrain the local threshold to be within [0.7, 1.5] * global_threshold. It's for the pretty common case
+    # where you have regions of the image with no cells whatsoever that are as large as whatever window you're
+    # using. Without a lower bound, you start having crazy threshold s that detect noise blobs. And same for
+    # very crowded areas where there is zero background in the window. You want the foreground to be all
+    # detected.
+    t_min = max(threshold_range.min, t_guide * 0.7)
+    t_max = min(threshold_range.max, t_guide * 1.5)
+
+    t_local[t_local < t_min] = t_min
+    t_local[t_local > t_max] = t_max
+
+    return t_local
+
+
+def cp_adaptive_threshold(
+                image_data,
+                th_method, #skimage.filters.threshold_li,
+                volumetric,
+                window_size, 
+                log_scale
+                ):
+    """   
+    wrapper for the functions from CellProfiler
+    NOTE: might work better to copy from CellProfiler/centrosome/threshold.py 
+    https://github.com/CellProfiler/centrosome/blob/master/centrosome/threshold.py
+    """
+
+    th_guide = get_global_threshold(image_data, mask)
+    th_original = get_local_threshold(image_data, mask, volumetric)
+
+
+    final_threshold, orig_threshold, guide_threshold = get_threshold(
+            input_image, 
+            th_guide,
+            th_original,
+            log_scale=log_scale,
+        )
+
+
+
+    binary_image, _ = apply_threshold(input_image, final_threshold)
+    return binary_image
+
+
+
+def apply_threshold(image, threshold, mask=None, automatic=False):
+    if mask is not None:
+        return (data >= threshold) & mask
+    else:
+        return data>= threshold
+    
+        
+def get_threshold(
+            image, 
+            th_guide,
+            th_original,
+            automatic=False, 
+            log_scale=False
+            ):
+
+    need_transform = (
+                threshold_operation in (TM_LI, TM_OTSU) and
+                log_scale
+        )
+
+    if need_transform:
+        image_data, conversion_dict = log_transform(image)
+    else:
+        image_data = image
+
+    if  threshold_scope == TS_GLOBAL or automatic:
+        th_guide = None
+        th_original = get_global_threshold(image_data, image.mask, automatic=automatic)
+
+    elif threshold_scope == TS_ADAPTIVE:
+        th_guide = get_global_threshold(image_data, image.mask)
+        th_original = get_local_threshold(image_data, image.mask, image.volumetric)
+    else:
+        raise ValueError("Invalid thresholding settings")
+
+    if need_transform:
+        th_original = inverse_log_transform(th_original, conversion_dict)
+        if th_guide is not None:
+            th_guide = inverse_log_transform(th_guide, conversion_dict)
+
+    if threshold_scope == TS_GLOBAL or automatic:
+        th_corrected = _correct_global_threshold(th_original)
+    else:
+        th_guide = _correct_global_threshold(th_guide)
+        th_corrected = _correct_local_threshold(th_original, th_guide)
+
+    return th_corrected, th_original, th_guide
