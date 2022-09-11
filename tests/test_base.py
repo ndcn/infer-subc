@@ -1,4 +1,4 @@
-from infer_subc.base import NAME
+from infer_subc.bioim.base import NAME
 
 
 def test_base():

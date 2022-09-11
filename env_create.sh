@@ -12,3 +12,8 @@ pip install napari-aicsimageio
 
 pip install infer_subc
 pip install napari-infer-subc  
+
+# pip install opencv-python
+# pip install opencv-contrib-python
+pip install opencv-python-headless  # seems to already be installed
+
