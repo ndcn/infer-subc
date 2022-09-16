@@ -10,10 +10,9 @@ git for windows is best downloaded and installed from: [gitforwindows.org](https
 
 The github command line tools `gh` are available as a conda installation.  e.g.
 
-```sh
-
+'''bash
 conda install gh --channel conda-forge	
-```
+'''
 
 Or download as [].msi](https://github.com/cli/cli/releases/download/v2.14.7/gh_2.14.7_windows_amd64.msi)
 

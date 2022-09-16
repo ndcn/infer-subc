@@ -10,6 +10,7 @@ pip install aicssegmentation #downgrades napari and scikitlearn
 
 pip install napari-aicsimageio  
 
+<<<<<<< HEAD
 pip install infer_subc
 pip install napari-infer-subc  
 
@@ -17,3 +18,5 @@ pip install napari-infer-subc
 # pip install opencv-contrib-python
 pip install opencv-python-headless  # seems to already be installed
 
+=======
+>>>>>>> parent of 08c72e0 (fix 09_lipid body nb)
