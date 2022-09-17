@@ -92,9 +92,9 @@ class MedianBlurSliceBySlice(BioImTransform):
 
     def F(self, image: MetaArrayLike) -> MetaArrayLike:
         # assert image.dtype == np.uint8, f"image dtype {image.dtype} must be np.uint8"
-        out  =  median_filter_slice_by_slice(image, kernel_size):
+        out = median_filter_slice_by_slice(image, kernel_size)
         return out
-        #return cv2.medianBlur(image, ksize=self.kernel_size)
+        # return cv2.medianBlur(image, ksize=self.kernel_size)
 
     # def apply(self, img):
     #     # assert isinstance(
