@@ -1,3 +1,6 @@
+from infer_subc.utils.img import *
+
+
 from scipy.ndimage import median_filter, extrema
 from scipy.interpolate import RectBivariateSpline
 
@@ -9,7 +12,9 @@ from skimage.measure import label
 from skimage.segmentation import watershed
 from skimage.feature import peak_local_max
 
+
 # from napari_aicsimageio.core import  reader_function
+
 import aicssegmentation
 from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_slice_by_slice, dot_2d_slice_by_slice_wrapper, dot_3d
 
@@ -25,10 +30,13 @@ from aicssegmentation.core.pre_processing_utils import (
 )
 
 
-from infer_subc.utils.img import *
+##########################
+# 1.  infer_NUCLEI
+##########################
+# copy this to base.py for easy import
 
 
-def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
+def infer_NUCLEI(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
 
@@ -53,9 +61,7 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
             updated parameters in case any needed were missing
 
     """
-
     out_p = in_params.copy()
-
     ###################
     # PRE_PROCESSING
     ###################
@@ -115,3 +121,4 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
 
     retval = (struct_obj, label(struct_obj), out_p)
     return retval
+

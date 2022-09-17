@@ -1,0 +1,26 @@
+!!python/object:napari_workflows._workflow.Workflow
+_tasks:
+  Result of Adaptive histogram equalization (n-SimpleITK): !!python/tuple
+  - &id001 !!python/name:napari_simpleitk_image_processing.adaptive_histogram_equalization ''
+  - '0 :: None :: Nuclei_Jan22'
+  - 1.0
+  - 1.0
+  - 0
+  - 0
+  - 0
+  Result of Adaptive histogram equalization (n-SimpleITK) [1]: !!python/tuple
+  - *id001
+  - Result of Adaptive histogram equalization (n-SimpleITK)
+  - 1.0
+  - 1.0
+  - 0
+  - 0
+  - 0
+  Result of Bilateral (n-SimpleITK): !!python/tuple
+  - &id002 !!python/name:napari_simpleitk_image_processing.bilateral_filter ''
+  - '0 :: None :: Residuals'
+  - 1.0
+  Result of Bilateral (n-SimpleITK) [1]: !!python/tuple
+  - *id002
+  - Result of Bilateral (n-SimpleITK)
+  - 1.0
