@@ -1,5 +1,7 @@
+from pstats import Stats
 from infer_subc.utils.img import *
 
+import numpy as np
 
 from scipy.ndimage import median_filter, extrema
 from scipy.interpolate import RectBivariateSpline
@@ -28,6 +30,29 @@ from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
     edge_preserving_smoothing_3d,
 )
+
+# from .qc import ObjectCheck, ObjectStats, ArrayLike
+
+
+# def NucleiCheck(ObjectCheck):
+#     """
+#     Checker class for NUCLEI priors
+#     """
+#     def __init__(self, priors: ObjectStats)
+#         self.prior = priors
+
+#     @property
+#     def self.prior(self):
+#         if self.__stats is None:
+#             return
+#         return self.__stats
+
+#     @prior.setter
+#     def self.prior(self, prior: ObjectStats):
+#         return self.__stats
+
+#     def self.check_prior(self, test_image:ArrayLike):
+#         pass
 
 
 ##########################
@@ -121,4 +146,3 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
 
     retval = (struct_obj, label(struct_obj), out_p)
     return retval
-
