@@ -21,23 +21,24 @@ Notebooks  found [here]( link ) provide the template
 
 To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
-#### summary of _OBJECTIVES_
+#### summary of _OBJECTIVES_ ✅
 - Infer subcellular objects:
-  -  #### #1. [infer NUCLEI ](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #2. [Infer SOMA](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #3. [Infer CYTOSOL](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #4. [Infer LYSOSOMES](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #5. [Infer MITOCHONDRIA](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #6. [Infer GOLGI complex](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #7. [Infer PEROXISOMES](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### #8. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/02_infer_soma.ipynb)
-  -   #### #9. [Infer LB](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### 1️⃣. [infer NUCLEI ](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### 2️⃣. [Infer SOMA](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧 
+  -  #### 3️⃣. [Infer CYTOSOL](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧 (🚨🚨🚨🚨 Steps 3-9 depend on establishing a good solution here.)
+  -  #### 4️⃣. [Infer LYSOSOMES](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧
+  -  #### 5️⃣. [Infer MITOCHONDRIA](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### 6️⃣. [Infer GOLGI complex](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### 7️⃣. [Infer PEROXISOMES](../tree/main/notebooks/02_infer_soma.ipynb)
+  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/02_infer_soma.ipynb)
+  -   #### 9️⃣. [Infer LB](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧
+
 
 
 ----------------------------
 ## DEVELOPMENT STATUS
 ### DONE
-- Infer subcellular objects:
+- Infer subcellular objects notebooks 
   -  ### 0. [pipeline Overview/setup  ](../tree/main/notebooks/00_pipeline_setup.ipynb)
   -  ### 1. [infer NUCLEI ](../tree/main/notebooks/01_infer_nuclei.ipynb) 
   -  ### 2. [Infer SOMA](../tree/main/notebooks/03_infer_soma.ipynb)
@@ -53,11 +54,13 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
   -  ### 9. [Infer LB](../tree/main/notebooks/09_infer_lipid_bodies.ipynb)
 - Infer subcellular objects:
   -  ### 10. [batch process](../tree/main/notebooks/10_batch_process.ipynb)
-### TO-DO
-- testing
-- data class?
-- TBD
 
+- leverage [aics-segmenter]( https://allencell.org/segmenter ) `Workflows` paradigm (from [`aicssegmentation.workflow`](https://github.com/AllenCell/aics-segmentation) encode procedures as .json and execute programmically.
+- develop a [napari](https://napari.org/stable/) plugin: [napari-infer-subc](https://github.com/ergonyc/napari-infer-subc) 
+### TO-DO
+- QC for each step, each organelle
+- testing
+- TBD
 
 ## FRAMEWORKS & RESOURCES
 
