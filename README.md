@@ -23,15 +23,15 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 
 #### summary of _OBJECTIVES_ ✅
 - Infer subcellular objects:
-  -  #### 1️⃣. [infer NUCLEI ](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### 2️⃣. [Infer SOMA](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧 
-  -  #### 3️⃣. [Infer CYTOSOL](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧 (🚨🚨🚨🚨 Steps 3-9 depend on establishing a good solution here.)
-  -  #### 4️⃣. [Infer LYSOSOMES](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧
-  -  #### 5️⃣. [Infer MITOCHONDRIA](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### 6️⃣. [Infer GOLGI complex](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### 7️⃣. [Infer PEROXISOMES](../tree/main/notebooks/02_infer_soma.ipynb)
-  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/02_infer_soma.ipynb)
-  -   #### 9️⃣. [Infer LB](../tree/main/notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧
+  -  #### 1️⃣. [infer NUCLEI ](./notebooks/01_infer_nuclei.ipynb)
+  -  #### 2️⃣. [Infer SOMA](./notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧 
+  -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 🚧 WIP 🚧 (🚨🚨🚨🚨 Steps 3-9 depend on establishing a good solution here.)
+  -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 🚧 WIP 🚧
+  -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/02_infer_soma.ipynb)
+  -  #### 6️⃣. [Infer GOLGI complex](./notebooks/02_infer_soma.ipynb)
+  -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/02_infer_soma.ipynb)
+  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/02_infer_soma.ipynb)
+  -   #### 9️⃣. [Infer LB](./notebooks/02_infer_soma.ipynb) 🚧 WIP 🚧
 
 
 
@@ -39,21 +39,21 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 ## DEVELOPMENT STATUS
 ### DONE
 - Infer subcellular objects notebooks 
-  -  ### 0. [pipeline Overview/setup  ](../tree/main/notebooks/00_pipeline_setup.ipynb)
-  -  ### 1. [infer NUCLEI ](../tree/main/notebooks/01_infer_nuclei.ipynb) 
-  -  ### 2. [Infer SOMA](../tree/main/notebooks/03_infer_soma.ipynb)
-  -  ### 3. [Infer CYTOSOL](../tree/main/notebooks/03_infer_cytosol.ipynb)
-  -  ### 4. [Infer LYSOSOMES](../tree/main/notebooks/04_infer_lysosome.ipynb)
-  -  ### 5. [Infer MITOCHONDRIA](../tree/main/notebooks/05_infer_mitochondria.ipynb)
-  -  ### 6. [Infer GOLGI complex](../tree/main/notebooks/06_infer_golgi.ipynb)
-  -  ### 7. [Infer PEROXISOMES](../tree/main/notebooks/07_infer_peroxisome.ipynb)
-  -  ### 8. [Infer ENDOPLASMIC RETICULUM ](../tree/main/notebooks/08_infer_endoplasmic_reticulum.ipynb)
+  -  ### 0. [pipeline Overview/setup  ](./notebooks/00_pipeline_setup.ipynb)
+  -  ### 1. [infer NUCLEI ](./notebooks/01_infer_nuclei.ipynb) 
+  -  ### 2. [Infer SOMA](./notebooks/03_infer_soma.ipynb)
+  -  ### 3. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb)
+  -  ### 4. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb)
+  -  ### 5. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
+  -  ### 6. [Infer GOLGI complex](./notebooks/06_infer_golgi.ipynb)
+  -  ### 7. [Infer PEROXISOMES](./notebooks/07_infer_peroxisome.ipynb)
+  -  ### 8. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_infer_endoplasmic_reticulum.ipynb)
 
 ## WIP
 - Infer subcellular objects:
-  -  ### 9. [Infer LB](../tree/main/notebooks/09_infer_lipid_bodies.ipynb)
+  -  ### 9. [Infer LB](./notebooks/09_infer_lipid_bodies.ipynb)
 - Infer subcellular objects:
-  -  ### 10. [batch process](../tree/main/notebooks/10_batch_process.ipynb)
+  -  ### 10. [batch process](./notebooks/10_batch_process.ipynb)
 
 - leverage [aics-segmenter]( https://allencell.org/segmenter ) `Workflows` paradigm (from [`aicssegmentation.workflow`](https://github.com/AllenCell/aics-segmentation) encode procedures as .json and execute programmically.
 - develop a [napari](https://napari.org/stable/) plugin: [napari-infer-subc](https://github.com/ergonyc/napari-infer-subc) 
