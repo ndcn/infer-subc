@@ -8,10 +8,10 @@ import math
 from aicsimageio.dimensions import Dimensions
 
 # derived from CellProfiler/core
-from infer_subc.imports import *
-from infer_subc.bioim.base import BioImContainer, BioImLike
-from infer_subc.transforms.transform import BioImTransform
-from infer_subc.transforms.pipeline import BioImPipeline
+from infer_subc_2d.imports import *
+from infer_subc_2d.bioim.base import BioImContainer, BioImLike
+from infer_subc_2d.transforms.transform import BioImTransform
+from infer_subc_2d.transforms.pipeline import BioImPipeline
 
 from ..utils.file_io import AICSImageReaderWrap, PathLike
 import xarray as xr

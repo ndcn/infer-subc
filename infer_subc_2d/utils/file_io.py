@@ -31,6 +31,21 @@ class AICSImageReaderWrap:
         self.raw_meta = get_raw_meta_data(meta)
 
 
+def export_ndarray(data_in, img_name, out_path) -> str:
+    """
+    #  data_in: types.ArrayLike,
+    #  meta_in: dict,
+    # img_name: types.PathLike,
+    # out_path: types.PathLike,
+    # curr_chan: int
+    # assumes a single image
+    """
+
+    out_name = out_path + img_name + ".npy"
+    data_in.tofile(out_name)
+    return out_name
+
+
 def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) -> str:
     """
     #  data_in: types.ArrayLike,
@@ -53,6 +68,8 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) -> str:
     channel_names = [meta_in["metadata"]["aicsimage"].channel_names[curr_chan]]
     if len(data_in.shape) == 3:  # single channel zstack
         data_in = data_in[np.newaxis, :, :, :]
+    elif len(data_in.shape) == 2:  # single channel , 1Z
+        data_in = data_in[np.newaxis, np.newaxis, :, :]
 
     if data_in.dtype == "bool":
         data_in = data_in.astype(np.uint8)

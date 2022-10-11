@@ -1,11 +1,11 @@
 
 ---
-# infer_subc
+# infer_subc_2d
 
 [![codecov](https://codecov.io/gh/ergonyc/infer-subc/branch/main/graph/badge.svg?token=infer-subc_token_here)](https://codecov.io/gh/ergonyc/infer-subc)
 [![CI](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml/badge.svg)](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml)
 
- `infer_subc` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
+ `infer_subc_2d` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
 
 This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.   
 
@@ -98,23 +98,23 @@ The medium term goal for this project is to execute it on ADDI's ADWB
 ## Install it from PyPI
 
 ```bash
-pip install infer_subc
+pip install infer_subc_2d
 ```
 
 ## Usage
 
 ```py
-from infer_subc import BaseClass
-from infer_subc import base_function
+from infer_subc_2d import BaseClass
+from infer_subc_2d import base_function
 
 BaseClass().base_method()
 base_function()
 ```
 
 ```bash
-$ python -m infer_subc
+$ python -m infer_subc_2d
 #or
-$ infer_subc
+$ infer_subc_2d
 ```
 
 ## Development

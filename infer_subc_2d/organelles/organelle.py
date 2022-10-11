@@ -1,8 +1,3 @@
-from pstats import Stats
-from infer_subc.utils.img import *
-
-import numpy as np
-
 from scipy.ndimage import median_filter, extrema
 from scipy.interpolate import RectBivariateSpline
 
@@ -14,9 +9,7 @@ from skimage.measure import label
 from skimage.segmentation import watershed
 from skimage.feature import peak_local_max
 
-
 # from napari_aicsimageio.core import  reader_function
-
 import aicssegmentation
 from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_slice_by_slice, dot_2d_slice_by_slice_wrapper, dot_3d
 
@@ -31,37 +24,11 @@ from aicssegmentation.core.pre_processing_utils import (
     edge_preserving_smoothing_3d,
 )
 
-# from .qc import ObjectCheck, ObjectStats, ArrayLike
+
+from infer_subc_2d.utils.img import *
 
 
-# def NucleiCheck(ObjectCheck):
-#     """
-#     Checker class for NUCLEI priors
-#     """
-#     def __init__(self, priors: ObjectStats)
-#         self.prior = priors
-
-#     @property
-#     def self.prior(self):
-#         if self.__stats is None:
-#             return
-#         return self.__stats
-
-#     @prior.setter
-#     def self.prior(self, prior: ObjectStats):
-#         return self.__stats
-
-#     def self.check_prior(self, test_image:ArrayLike):
-#         pass
-
-
-##########################
-# 1.  infer_NUCLEI
-##########################
-# copy this to base.py for easy import
-
-
-def infer_NUCLEI(struct_img, in_params) -> tuple:
+def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
 
@@ -86,7 +53,9 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
             updated parameters in case any needed were missing
 
     """
+
     out_p = in_params.copy()
+
     ###################
     # PRE_PROCESSING
     ###################

@@ -1,4 +1,4 @@
-"""Python setup.py for infer_subc package"""
+"""Python setup.py for infer_subc_2d package"""
 import io
 import os
 from setuptools import find_packages, setup
@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 def read(*paths, **kwargs):
     """Read the contents of a text file safely.
-    >>> read("infer_subc", "VERSION")
+    >>> read("infer_subc_2d", "VERSION")
     '0.1.0'
     >>> read("README.md")
     ...
@@ -30,9 +30,9 @@ def read_requirements(path):
 
 
 setup(
-    name="infer_subc",
-    version=read("infer_subc", "VERSION"),
-    description="Awesome infer_subc created by ergonyc",
+    name="infer_subc_2d",
+    version=read("infer_subc_2d", "VERSION"),
+    description="Awesome infer_subc_2d created by ergonyc",
     url="https://github.com/ergonyc/infer-subc/",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -40,7 +40,7 @@ setup(
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
     entry_points={
-        "console_scripts": ["infer_subc = infer_subc.__main__:main"]
+        "console_scripts": ["infer_subc_2d = infer_subc_2d.__main__:main"]
     },
     extras_require={"test": read_requirements("requirements-test.txt")},
 )

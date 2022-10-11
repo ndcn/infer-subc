@@ -11,7 +11,7 @@ pip install aicssegmentation #downgrades napari and scikitlearn
 pip install napari-aicsimageio  
 
 <<<<<<< HEAD
-pip install infer_subc
+pip install infer_subc_2d
 pip install napari-infer-subc  
 
 # pip install opencv-python

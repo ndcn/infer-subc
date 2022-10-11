@@ -25,7 +25,7 @@ from aicssegmentation.core.pre_processing_utils import (
 )
 
 
-from infer_subc.utils.img import *
+from infer_subc_2d.utils.img import *
 
 ##########################
 #  infer_ENDOPLASMIC_RETICULUM

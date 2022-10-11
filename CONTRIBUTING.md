@@ -1,6 +1,6 @@
 # How to develop on this project
 
-infer_subc welcomes contributions from the community.
+infer_subc_2d welcomes contributions from the community.
 
 **You need PYTHON3!**
 

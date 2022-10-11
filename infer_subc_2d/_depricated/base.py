@@ -1,7 +1,7 @@
 """
-infer_subc base module.
+infer_subc_2d base module.
 
-This is the principal module of the infer_subc project.
+This is the principal module of the infer_subc_2d project.
 here you put your main classes and objects.
 """
 import numpy as np
@@ -40,7 +40,7 @@ from aicssegmentation.core.output_utils import save_segmentation, generate_segme
 
 
 # example constant variable
-NAME = "infer_subc"
+NAME = "infer_subc_2d"
 
 
 # ## we need to define some image processing wrappers... partials should work great

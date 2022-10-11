@@ -1,4 +1,4 @@
-"""CLI interface for infer_subc project.
+"""CLI interface for infer_subc_2d project.
 
 Be creative! do whatever you want!
 
@@ -12,7 +12,7 @@ Be creative! do whatever you want!
 def main():  # pragma: no cover
     """
     The main function executes on commands:
-    `python -m infer_subc` and `$ infer_subc `.
+    `python -m infer_subc_2d` and `$ infer_subc_2d `.
 
     This is your program's entry point.
 

@@ -16,4 +16,4 @@ DEFAULT_PARAMS = defaultdict(
     }
 )
 
-NAME = "infer_subc"
+NAME = "infer_subc_2d"

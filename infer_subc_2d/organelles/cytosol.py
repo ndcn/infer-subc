@@ -1,4 +1,5 @@
-from infer_subc.utils.img import *
+from infer_subc_2d.utils.img import *
+
 
 from scipy.ndimage import median_filter, extrema
 from scipy.interpolate import RectBivariateSpline
@@ -29,6 +30,35 @@ from aicssegmentation.core.pre_processing_utils import (
 )
 
 
-#########################
-def infer_LIPID_DROPLET(struct_img, out_path, cyto_labels, in_params):
-    pass
+
+##########################
+#  infer_CYTOSOL
+##########################
+def infer_CYTOSOL(SO_object, NU_object, erode_NU=True):
+    """
+    Procedure to infer CYTOSOL from linearly unmixed input.
+
+    Parameters:
+    ------------
+    SO_object: np.ndarray
+        a 3d image containing the NUCLEI signal
+
+    NU_object: np.ndarray
+        a 3d image containing the NUCLEI signal
+
+    erode_NU: bool
+        should we erode?
+
+    Returns:
+    -------------
+    CY_object: np.ndarray (bool)
+
+    """
+
+    # NU_eroded1 = morphology.binary_erosion(NU_object,  footprint=morphology.ball(3) )
+    if erode_NU:
+        CY_object = np.logical_and(SO_object, ~morphology.binary_erosion(NU_object))
+    else:
+        CY_object = np.logical_and(SO_object, ~NU_object)
+    return CY_object
+

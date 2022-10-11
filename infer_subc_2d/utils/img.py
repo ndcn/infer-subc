@@ -4,9 +4,13 @@ from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, th
 # from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 from scipy.ndimage import median_filter, extrema
 import scipy
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from typing import Tuple
+
+from skimage.morphology import remove_small_objects
 
 
-def log_transform(image):
+def log_transform(image: np.ndarray) -> np.ndarray:
     """Renormalize image intensities to log space
 
     Returns a tuple of transformed image and a dictionary to be passed into
@@ -93,8 +97,8 @@ def threshold_li_log(image_in):
     threshold = inverse_log_transform(threshold, d)
     return threshold
 
-    image_out = log_transform(image_in.copy())
-    li_thresholded = structure_img_smooth > threshold_li_log(structure_img_smooth)
+    # image_out = log_transform(image_in.copy())
+    # li_thresholded = structure_img_smooth > threshold_li_log(structure_img_smooth)
 
 
 def threshold_otsu_log(image_in):
@@ -163,6 +167,78 @@ def simple_intensity_normalization(struct_img, max_value=None):
     struct_img = (struct_img - strech_min + 1e-8) / (strech_max - strech_min + 1e-8)
 
     return struct_img
+
+
+def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> int:
+    """
+    Procedure to infer "optimal" Z-slice  from linearly unmixed input.
+
+    Parameters:
+    ------------
+    raw_img: np.ndarray
+        a ch,z,x,y - image containing florescent signal
+
+    nuc_ch: int
+        holds the needed parameters
+
+    ch_to_agg: int
+        holds the needed parameters
+
+    Returns:
+    -------------
+    opt_z:
+        the "0ptimal" z-slice which has the most signal intensity for downstream 2D segmentation
+    """
+
+    # median filter in 2D / convert to float 0-1.   get rid of the "residual"
+    nuclei = simple_intensity_normalization(raw_img[nuc_ch].copy())
+
+    med_filter_size = 4
+    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
+    nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
+
+    gaussian_smoothing_sigma = 1.34
+    gaussian_smoothing_truncate_range = 3.0
+    nuclei = image_smoothing_gaussian_slice_by_slice(
+        nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
+    )
+
+    # struct_obj = struct_img > filters.threshold_li(struct_img)
+    threshold_value_log = threshold_li_log(nuclei)
+
+    threshold_factor = 0.9  # from cellProfiler
+    thresh_min = 0.1
+    thresh_max = 1.0
+    threshold = min(max(threshold_value_log * threshold_factor, thresh_min), thresh_max)
+
+    struct_obj = nuclei > threshold
+    # find the z with the maximum non-nuclei florescence
+    total_florescence = (
+        raw_img[
+            ch_to_agg,
+        ]
+        .astype(np.double)
+        .sum(axis=0)
+    )
+    total_florescence[struct_obj] = 0
+    optimal_Z = total_florescence.sum(axis=(1, 2)).argmax()
+
+    return optimal_Z
+
+
+def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
+    """size filter
+
+    Parameters:
+    ------------
+    img: np.ndarray
+        the image to filter on
+    min_size: int
+        the minimum size to keep
+    connnectivity: int
+        the connectivity to use when computing object size
+    """
+    return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
 
 
 # ## we need to define some image processing wrappers... partials should work great
