@@ -1,11 +1,11 @@
 import numpy as np
-from skimage.morphology import binary_erosion
+from skimage.morphology import binary_erosion, binary_dilation
 
 
 ##########################
 #  infer_CYTOSOL
 ##########################
-def infer_CYTOSOL(SO_object, NU_object, erode_NU=True):
+def infer_CYTOSOL(SO_object, NU_object, erode_NU=True, dilate=True):
     """
     Procedure to infer CYTOSOL from linearly unmixed input.
 
@@ -31,4 +31,8 @@ def infer_CYTOSOL(SO_object, NU_object, erode_NU=True):
         CY_object = np.logical_and(SO_object, ~binary_erosion(NU_object))
     else:
         CY_object = np.logical_and(SO_object, ~NU_object)
-    return CY_object
+
+    if dilate:
+        return binary_dilation(CY_object)
+    else:
+        return CY_object
