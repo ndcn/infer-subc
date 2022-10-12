@@ -1,5 +1,5 @@
 from .nuclei import infer_NUCLEI
-from .soma import infer_SOMA1, infer_SOMA2, infer_SOMA3
+from .soma import infer_SOMA
 from .cytosol import infer_CYTOSOL
 from .lysosomes import infer_LYSOSOMES
 from .mitochondria import infer_MITOCHONDRIA

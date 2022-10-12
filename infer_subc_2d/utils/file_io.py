@@ -2,6 +2,7 @@ import numpy as np
 
 from platform import system
 import os
+import pickle
 
 from pathlib import Path
 from collections import defaultdict
@@ -29,6 +30,25 @@ class AICSImageReaderWrap:
         self.image = image
         self.meta = meta
         self.raw_meta = get_raw_meta_data(meta)
+
+
+def save_parameters(out_p, img_name, out_path) -> str:
+    """
+    #  out_p: defaultdict,
+    # img_name: str,
+    # out_path: types.PathLike,
+    """
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "wb") as f:
+        pickle.dump(out_p, f)
+    return out_name
+
+
+def load_parameters(img_name, out_path) -> defaultdict:
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "rb") as f:
+        x = pickle.load(f)
+    return x
 
 
 def export_ndarray(data_in, img_name, out_path) -> str:
@@ -94,6 +114,33 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) -> str:
         ome_xml=out_ome,
     )
     return out_name
+
+
+def append_ome_metadata(filename, meta_add):
+    import numpy
+    import ome_types
+    from tifffile import imwrite, tiffcomment
+
+    filename = "test.ome.tif"
+
+    imwrite(
+        filename,
+        numpy.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
+        bigtiff=True,
+        photometric="RGB",
+        tile=(64, 64),
+        metadata={
+            "axes": "ZYXS",
+            "SignificantBits": 10,
+            "Plane": {"PositionZ": [0.0, 1.0, 2.0, 3.0]},
+        },
+    )
+
+    ome_xml = tiffcomment(filename)
+    ome = ome_types.from_xml(ome_xml)
+    ome.images[0].description = "Image 0 description"
+    ome_xml = ome.to_xml()
+    tiffcomment(filename, ome_xml)
 
 
 ### UTILS

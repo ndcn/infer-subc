@@ -227,7 +227,7 @@ def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> i
 
 
 def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
-    """size filter
+    """size filter in 2D
 
     Parameters:
     ------------
@@ -239,6 +239,24 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
         the connectivity to use when computing object size
     """
     return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
+
+
+def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """mask the image
+
+    Parameters:
+    ------------
+    img: np.ndarray
+        the image to filter on
+    mask: np.ndarray
+        the mask to apply
+    """
+    if mask.dtype == "bool":
+        img[~mask] = 0
+    else:
+        img[mask > 0] = 0
+
+    return img
 
 
 # ## we need to define some image processing wrappers... partials should work great
