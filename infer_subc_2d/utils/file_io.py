@@ -79,7 +79,6 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     out_name = out_path + img_name + ".ome.tiff"
 
     image_names = [img_name]
-    print(image_names)
     # chan_names = meta_in['metadata']['aicsimage'].channel_names
 
     physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
