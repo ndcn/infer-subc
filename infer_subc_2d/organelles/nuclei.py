@@ -1,8 +1,5 @@
-import numpy as np
-
 from scipy.ndimage import median_filter, gaussian_filter
 
-from skimage import filters
 from skimage.measure import label
 
 from aicssegmentation.core.pre_processing_utils import intensity_normalization
@@ -89,7 +86,7 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     ###################
     # CORE_PROCESSING
     ###################
-    struct_obj = struct_img > filters.threshold_li(struct_img)
+    # struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(struct_img)
 
     threshold_factor = 0.9  # from cellProfiler

@@ -17,3 +17,5 @@ DEFAULT_PARAMS = defaultdict(
 )
 
 NAME = "infer_subc_2d"
+
+TEST_IMG_N = 5

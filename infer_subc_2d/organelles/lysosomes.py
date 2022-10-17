@@ -1,3 +1,5 @@
+import numpy as np
+
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.utils import hole_filling, size_filter
 from aicssegmentation.core.vessel import filament_2d_wrapper
@@ -6,12 +8,12 @@ from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
 )
 
-from infer_subc_2d.utils.img import *
+from infer_subc_2d.utils.img import apply_mask, median_filter_slice_by_slice
 
 ##########################
 #  infer_LYSOSOMES
 ##########################
-def _infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
+def infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer LYSOSOME from linearly unmixed input.
 
@@ -36,12 +38,13 @@ def _infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
     """
     out_p = in_params.copy()
 
+    struct_img = apply_mask(struct_img, CY_object)
     ###################
     # PRE_PROCESSING
     ###################
     #
     #
-    struct_img = apply_mask(struct_img, CY_object)
+
     scaling_param = [0]
     struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
     out_p["intensity_norm_param"] = scaling_param

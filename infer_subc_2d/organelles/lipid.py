@@ -1,34 +1,88 @@
+from scipy.ndimage import gaussian_filter, median_filter
+from skimage.morphology import remove_small_holes  # function for post-processing (size filter)
+
+from aicssegmentation.core.pre_processing_utils import intensity_normalization
+
 from infer_subc_2d.utils.img import *
 
-from scipy.ndimage import median_filter, extrema
-from scipy.interpolate import RectBivariateSpline
 
-from skimage import img_as_float, filters
-from skimage import morphology
-from skimage.morphology import remove_small_objects, ball, disk, dilation, binary_closing, white_tophat, black_tophat
-from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
-from skimage.measure import label
-from skimage.segmentation import watershed
-from skimage.feature import peak_local_max
+##########################
+#  infer_LIPID_DROPLET
+##########################
+def infer_LIPID_DROPLET(struct_img, CY_object, in_params) -> tuple:
+    """
+    Procedure to infer LIPID_DROPLET  from linearly unmixed input.
 
+    Parameters:
+    ------------
+    struct_img: np.ndarray
+        a 2d (actually single Z) image containing the LIPID_DROPLET signal
 
-# from napari_aicsimageio.core import  reader_function
+    CY_object: np.ndarray boolean
+        a 2d (1Z- 3D) image containing the CYTO
 
-import aicssegmentation
-from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_slice_by_slice, dot_2d_slice_by_slice_wrapper, dot_3d
+    in_params: dict
+        holds the needed parameters
 
-from aicssegmentation.core.utils import topology_preserving_thinning, hole_filling, size_filter
-from aicssegmentation.core.MO_threshold import MO
-from aicssegmentation.core.vessel import filament_2d_wrapper, vesselnessSliceBySlice
-from aicssegmentation.core.output_utils import save_segmentation, generate_segmentation_contour
-from aicssegmentation.core.pre_processing_utils import (
-    intensity_normalization,
-    image_smoothing_gaussian_3d,
-    image_smoothing_gaussian_slice_by_slice,
-    edge_preserving_smoothing_3d,
-)
+    Returns:
+    -------------
+    tuple of:
+        object
+            mask defined boundaries of LD
+        parameters: dict
+            updated parameters in case any needed were missing
+    """
+    out_p = in_params.copy()
 
+    struct_img = apply_mask(struct_img, CY_object)
 
-#########################
-def infer_LIPID_DROPLET(struct_img, out_path, cyto_labels, in_params):
-    pass
+    ###################
+    # PRE_PROCESSING
+    ###################
+    # TODO: replace params below with the input params
+    scaling_param = [0]
+    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
+    out_p["intensity_norm_param"] = scaling_param
+
+    med_filter_size = 2
+    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
+    struct_img = median_filter(struct_img, size=med_filter_size)
+    out_p["median_filter_size"] = med_filter_size
+
+    gaussian_smoothing_sigma = 1.34
+    gaussian_smoothing_truncate_range = 3.0
+    struct_img = gaussian_filter(
+        struct_img, sigma=gaussian_smoothing_sigma, mode="nearest", truncate=gaussian_smoothing_truncate_range
+    )
+    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma
+    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    threshold_val = threshold_li(struct_img)
+
+    threshold_factor = 0.99  # from cellProfiler
+    thresh_min = 0.5
+    thresh_max = 1.0
+    threshold = min(max(threshold_val * threshold_factor, thresh_min), thresh_max)
+    out_p["threshold_factor"] = threshold_factor
+    out_p["thresh_min"] = thresh_min
+    out_p["thresh_max"] = thresh_max
+
+    struct_obj = struct_img > threshold
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    hole_width = 2.5
+    # # wrapper to remoce_small_objects
+    struct_obj = remove_small_holes(struct_obj, hole_width**2)
+    out_p["hole_width"] = hole_width
+
+    small_object_max = 4
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
+    out_p["small_object_max"] = small_object_max
+
+    retval = (struct_obj, out_p)
+    return retval

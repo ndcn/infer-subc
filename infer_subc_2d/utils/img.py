@@ -7,7 +7,7 @@ import scipy
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from typing import Tuple
 
-from skimage.morphology import remove_small_objects
+from skimage.morphology import remove_small_objects, white_tophat, ball, disk, black_tophat
 
 
 def log_transform(image: np.ndarray) -> np.ndarray:
@@ -257,6 +257,59 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
         img[mask > 0] = 0
 
     return img
+
+
+def enhance_speckles(image, radius, volumetric=False):
+    """enhance "spreckles" small dots
+    Parameters:
+    ------------
+    image: np.ndarray
+        the image to filter on
+    radius: int
+        radius of the "filter"
+    volumetric: bool
+        True for 3D analysis
+
+    """
+    radius = radius / 2
+    if volumetric:
+        selem = ball(radius)
+    else:
+        selem = disk(radius)
+
+    # if radius >10:
+    #         minimum = scipy.ndimage.minimum_filter(image, footprint=selem)
+    #         maximum = scipy.ndimage.maximum_filter(minimum, footprint=selem)
+    #         result = data - maximum
+    # else:
+    result = white_tophat(image)
+
+    return result
+
+
+def enhance_neurites(image, radius, volumetric=False):
+    """enhance "neurites" or filiments
+    Parameters:
+    ------------
+    image: np.ndarray
+        the image to filter on
+    radius: int
+        radius of the "filter"
+    volumetric: bool
+        True for 3D analysis
+
+    """
+    if volumetric:
+        selem = ball(radius)
+    else:
+        selem = disk(radius)
+    white = white_tophat(image, selem)
+    black = black_tophat(image, selem)
+    result = image + white - black
+    result[result > 1] = 1
+    result[result < 0] = 0
+
+    return result
 
 
 # ## we need to define some image processing wrappers... partials should work great

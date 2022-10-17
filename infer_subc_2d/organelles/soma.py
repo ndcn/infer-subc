@@ -18,13 +18,13 @@ from infer_subc_2d.utils.img import *
 ##########################
 # 2  infer_SOMA
 ##########################
-def infer_SOMA(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) -> tuple:
+def infer_SOMA(in_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) -> tuple:
     """
     Procedure to infer SOMA from linearly unmixed input.
 
     Parameters:
     ------------
-    struct_img: np.ndarray
+    in_img: np.ndarray
         a 3d image containing the SOMA signal
 
     NU_labels: np.ndarray boolean
@@ -45,7 +45,7 @@ def infer_SOMA(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) -
 
     """
     out_p = in_params.copy()
-
+    struct_img = in_img.copy()
     ###################
     # PRE_PROCESSING
     ###################

@@ -66,7 +66,7 @@ def export_ndarray(data_in, img_name, out_path) -> str:
     return out_name
 
 
-def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) -> str:
+def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
     #  data_in: types.ArrayLike,
     #  meta_in: dict,
@@ -85,7 +85,11 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, curr_chan=0) -> str:
     physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
 
     dimension_order = ["CZYX"]
-    channel_names = [meta_in["metadata"]["aicsimage"].channel_names[curr_chan]]
+    if channel_names is None:
+        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    else:
+        channel_names = [channel_names]
+
     if len(data_in.shape) == 3:  # single channel zstack
         data_in = data_in[np.newaxis, :, :, :]
     elif len(data_in.shape) == 2:  # single channel , 1Z
