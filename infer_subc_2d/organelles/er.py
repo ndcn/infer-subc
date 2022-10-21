@@ -3,7 +3,7 @@ from aicssegmentation.core.pre_processing_utils import (
     intensity_normalization,
     edge_preserving_smoothing_3d,
 )
-
+from aicssegmentation.core.utils import size_filter
 
 from infer_subc_2d.utils.img import *
 
@@ -67,9 +67,3 @@ def infer_ENDOPLASMIC_RETICULUM(struct_img, CY_object, in_params) -> tuple:
     ################################
     # struct_obj = remove_small_objects(struct_obj>0, min_size=min_area, connectivity=1, in_place=False)
     # out_p["min_area"] = min_area
-
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
-    out_p["small_object_max"] = small_object_max
-
-    retval = (struct_obj, out_p)
-    return retval

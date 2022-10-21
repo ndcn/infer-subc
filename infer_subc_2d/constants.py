@@ -18,4 +18,13 @@ DEFAULT_PARAMS = defaultdict(
 
 NAME = "infer_subc_2d"
 
+NUC_CH = 0
+LYSO_CH = 1
+MITO_CH = 2
+GOLGI_CH = 3
+PEROXI_CH = 4
+ER_CH = 5
+LIPID_CH = 6
+RESIDUAL_CH = 7
+
 TEST_IMG_N = 5

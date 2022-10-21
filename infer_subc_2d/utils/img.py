@@ -5,11 +5,25 @@ from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, th
 from scipy.ndimage import median_filter, extrema
 import scipy
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
-from typing import Tuple
+from aicssegmentation.core.utils import size_filter
+
+from typing import Tuple, List, Union, Any
 
 from skimage.morphology import remove_small_objects, white_tophat, ball, disk, black_tophat
 
+from infer_subc_2d.constants import (
+    TEST_IMG_N,
+    NUC_CH,
+    LYSO_CH,
+    MITO_CH,
+    GOLGI_CH,
+    PEROXI_CH,
+    ER_CH,
+    LIPID_CH,
+    RESIDUAL_CH,
+)
 
+# TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
 def log_transform(image: np.ndarray) -> np.ndarray:
     """Renormalize image intensities to log space
 
@@ -122,19 +136,6 @@ def threshold_multiotsu_log(image_in):
     return thresholds
 
 
-# these are the fuinctions that need to be set by each notebook...
-# notebook workflow will produce the in_params dictionary nescessary
-# so all the images can be pushed through these functions (procedures)
-
-#### Median FIltering for 2D
-# TODO: rewrite these with np.vectorize or enumerate...
-#           mask_labeled = np.vectorize(keep_top_3, signature='(n,m)->(n,m)')(mask_labeled)
-
-
-# We need to define a wrapper for `median_filter` which steps through each Z-slice independently.  (Note: since we will use this
-# pattern repeatedly we may want to make a generic wrapper for our filtering/de-noising). Lets call it `median_filter_slice_by_slice`
-# and copy the way the `aicssegmentation` package handles smoothing.
-# TODO: typehints.... what is my "image" primitive?
 def median_filter_slice_by_slice(struct_img, size):
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -148,19 +149,18 @@ def median_filter_slice_by_slice(struct_img, size):
     return structure_img_denoise
 
 
-def simple_intensity_normalization(struct_img, max_value=None):
+def min_max_intensity_normalization(struct_img):
     """Normalize the intensity of input image so that the value range is from 0 to 1.
 
     Parameters:
     ------------
     img: np.ndarray
         a 3d image
-    max_value: float
 
+    Returns:
+    -------------
+        np.ndimage
     """
-    if max_value is not None:
-        struct_img[struct_img > max_value] = max_value
-
     strech_min = struct_img.min()
     strech_max = struct_img.max()
 
@@ -169,19 +169,87 @@ def simple_intensity_normalization(struct_img, max_value=None):
     return struct_img
 
 
+def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh_max=None):
+    """return a binary mask after applying a log_li threshold
+
+    Parameters:
+    ------------
+    img_in: np.ndimage
+
+    threshold_factor:float=1.0  scaling value for threshold
+
+    thresh_min= None or min
+
+    thresh_max = None or max
+
+    Returns:
+    -------------
+        np.ndimage
+    """
+    # struct_obj = struct_img > filters.threshold_li(struct_img)
+    threshold_value_log = threshold_li_log(img_in)
+    threshold = threshold_value_log * threshold_factor
+
+    if thresh_min is not None:
+        threshold = max(threshold, thresh_min)
+    if thresh_max is not None:
+        threshold = min(threshold, thresh_max)
+    return img_in > threshold
+
+
+def aggregate_signal_channels(
+    img_in: np.ndarray, chs: Union[List, Tuple], ws: Union[List, Tuple, Any] = None
+) -> np.ndarray:
+    """
+    return a weighted sum of the image across channels
+
+    img_in:  np.ndarray  [ch,z,x,y]
+    chs: list/tuple of channels to aggregate
+    ws: list/tuple/ of weights for aggregation
+    """
+    n_chan = len(chs)
+    if n_chan <= 1:
+        return img_in[chs]
+
+    if ws is None:
+        ws = n_chan * [1.0]
+    img_out = np.zeros_like(img_in[0]).astype(np.double)
+    for w, ch in zip(ws, chs):
+        img_out += w * img_in[ch]
+    return img_out
+    # return img_in[ch_to_agg,].astype( np.double ).sum(axis=0)
+
+
+def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=None):
+    """
+    return z the maximum signal for the aggregate signal
+
+    img_in:  np.ndarray  [ch,z,x,y]
+    chs: list of channels to aggregate
+    ws: list of weights for aggregation
+    mask: mask for img_in
+
+    returns z with maximum signal
+    """
+    total_florescence_ = aggregate_signal_channels(img_in, chs)
+    if mask is not None:
+        total_florescence_[mask] = 0.0
+    return total_florescence_.sum(axis=(1, 2)).argmax()
+
+
 def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> int:
     """
-    Procedure to infer "optimal" Z-slice  from linearly unmixed input.
+    Procedure to infer NUCLEI from linearly unmixed input.
 
     Parameters:
     ------------
     raw_img: np.ndarray
         a ch,z,x,y - image containing florescent signal
 
-    nuc_ch: int
+    nuclei_ch: int
         holds the needed parameters
 
-    ch_to_agg: int
+    nuclei_ch: int
         holds the needed parameters
 
     Returns:
@@ -191,41 +259,45 @@ def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> i
     """
 
     # median filter in 2D / convert to float 0-1.   get rid of the "residual"
-    nuclei = simple_intensity_normalization(raw_img[nuc_ch].copy())
 
+    struct_img = min_max_intensity_normalization(raw_img[nuc_ch].copy())
     med_filter_size = 4
-    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
+    nuclei = median_filter_slice_by_slice(struct_img, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
     nuclei = image_smoothing_gaussian_slice_by_slice(
         nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-
-    # struct_obj = struct_img > filters.threshold_li(struct_img)
-    threshold_value_log = threshold_li_log(nuclei)
-
     threshold_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    threshold = min(max(threshold_value_log * threshold_factor, thresh_min), thresh_max)
-
-    struct_obj = nuclei > threshold
-    # find the z with the maximum non-nuclei florescence
-    total_florescence = (
-        raw_img[
-            ch_to_agg,
-        ]
-        .astype(np.double)
-        .sum(axis=0)
+    struct_obj = apply_log_li_threshold(
+        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
-    total_florescence[struct_obj] = 0
-    optimal_Z = total_florescence.sum(axis=(1, 2)).argmax()
+
+    optimal_Z = choose_agg_signal_zmax(raw_img, ch_to_agg, mask=struct_obj)
 
     return optimal_Z
 
 
+# TODO: consider MOVE to soma.py?
+def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray):
+    """keep only the label with the maximum raw signal"""
+
+    all_labels = np.unique(labels_in)[1:]
+
+    total_signal = [raw_signal[labels_in == label].sum() for label in all_labels]
+    # combine NU and "labels" to make a SOMA
+    keep_label = all_labels[np.argmax(total_signal)]
+
+    labels_max = np.zeros_like(labels_in)
+    labels_max[labels_in == keep_label] = 1
+    return labels_max
+
+
+# TODO: depricate this...call
+#     size_filter(img, min_size=min_size, method = "slice_by_slice", connectivity = 1)
 def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
     """size filter in 2D
 
@@ -238,7 +310,8 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
     connnectivity: int
         the connectivity to use when computing object size
     """
-    return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
+    # return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
+    return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=1)
 
 
 def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -254,7 +327,7 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     if mask.dtype == "bool":
         img[~mask] = 0
     else:
-        img[mask > 0] = 0
+        img[mask < 1] = 0
 
     return img
 
