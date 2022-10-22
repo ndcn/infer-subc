@@ -198,6 +198,15 @@ def read_input_image(image_name):
     return AICSImageReaderWrap(image_name, data_out, meta_out)
 
 
+def read_czi_image(image_name):
+    """
+    return output from napari aiscioimage reader
+    """
+    data_out, meta_out, layer_type = napari_aiscimageio_reader_fn(image_name)[0]
+    meta_out["file_name"] = image_name
+    return (data_out, meta_out)
+
+
 # function to collect all the
 def list_image_files(data_folder: Path, file_type: str) -> List:
     """

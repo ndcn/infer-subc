@@ -1,88 +1,82 @@
-from scipy.ndimage import gaussian_filter, median_filter
 from skimage.morphology import remove_small_holes  # function for post-processing (size filter)
 
-from aicssegmentation.core.pre_processing_utils import intensity_normalization
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from aicssegmentation.core.utils import hole_filling
 
-from infer_subc_2d.utils.img import *
+from infer_subc_2d.utils.img import (
+    apply_threshold,
+    min_max_intensity_normalization,
+    median_filter_slice_by_slice,
+    size_filter_2D,
+)
 
 
 ##########################
-#  infer_LIPID_DROPLET
+#  infer_lipid_body
 ##########################
-def infer_LIPID_DROPLET(struct_img, CY_object, in_params) -> tuple:
+##########################
+#  infer_endoplasmic_reticulum
+##########################
+def _infer_lipid_body(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer LIPID_DROPLET  from linearly unmixed input.
+    Procedure to infer peroxisome from linearly unmixed input.
 
     Parameters:
     ------------
-    struct_img: np.ndarray
-        a 2d (actually single Z) image containing the LIPID_DROPLET signal
+    in_img: np.ndarray
+        a 3d image containing all the channels
 
-    CY_object: np.ndarray boolean
-        a 2d (1Z- 3D) image containing the CYTO
-
-    in_params: dict
-        holds the needed parameters
+    cytosol_mask: np.ndarray
+        mask of cytosol
 
     Returns:
     -------------
-    tuple of:
-        object
-            mask defined boundaries of LD
-        parameters: dict
-            updated parameters in case any needed were missing
+    peroxi_object
+        mask defined extent of peroxisome object
     """
-    out_p = in_params.copy()
-
-    struct_img = apply_mask(struct_img, CY_object)
 
     ###################
     # PRE_PROCESSING
     ###################
-    # TODO: replace params below with the input params
-    scaling_param = [0]
-    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
-    out_p["intensity_norm_param"] = scaling_param
+    struct_img = min_max_intensity_normalization(raw_er)
 
     med_filter_size = 2
-    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    struct_img = median_filter(struct_img, size=med_filter_size)
-    out_p["median_filter_size"] = med_filter_size
+    struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
-    struct_img = gaussian_filter(
-        struct_img, sigma=gaussian_smoothing_sigma, mode="nearest", truncate=gaussian_smoothing_truncate_range
+    struct_img = image_smoothing_gaussian_slice_by_slice(
+        struct_img, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma
-    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
 
     ###################
     # CORE_PROCESSING
     ###################
-    threshold_val = threshold_li(struct_img)
 
     threshold_factor = 0.99  # from cellProfiler
     thresh_min = 0.5
     thresh_max = 1.0
-    threshold = min(max(threshold_val * threshold_factor, thresh_min), thresh_max)
-    out_p["threshold_factor"] = threshold_factor
-    out_p["thresh_min"] = thresh_min
-    out_p["thresh_max"] = thresh_max
-
-    struct_obj = struct_img > threshold
+    bw = apply_threshold(
+        struct_img, method="otsu", threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
+    )
 
     ###################
     # POST_PROCESSING
     ###################
-    hole_width = 2.5
-    # # wrapper to remoce_small_objects
-    struct_obj = remove_small_holes(struct_obj, hole_width**2)
-    out_p["hole_width"] = hole_width
+
+    # 2D cleaning
+    hole_min = 0
+    hole_max = 2.5
+    struct_obj = hole_filling(bw, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
+
+    struct_obj = apply_mask(struct_obj, cytosol_mask)
 
     small_object_max = 4
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
-    out_p["small_object_max"] = small_object_max
 
-    retval = (struct_obj, out_p)
-    return retval
+    struct_obj = size_filter_2D(
+        struct_obj,  # wrapper to remove_small_objects which can do slice by slice
+        min_size=small_object_max**2,
+        connectivity=1,
+    )
+
+    return struct_obj

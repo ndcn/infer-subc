@@ -1,70 +1,54 @@
-from scipy.ndimage import median_filter
+import numpy as np
 
-from aicssegmentation.core.vessel import vesselnessSliceBySlice
 from aicssegmentation.core.pre_processing_utils import (
-    intensity_normalization,
-    image_smoothing_gaussian_3d,
+    image_smoothing_gaussian_slice_by_slice,
 )
 
+from infer_subc_2d.constants import MITO_CH
 
-from infer_subc_2d.utils.img import *
-
+from infer_subc_2d.utils.img import (
+    apply_mask,
+    median_filter_slice_by_slice,
+    min_max_intensity_normalization,
+    size_filter_2D,
+    vesselness_slice_by_slice,
+)
 
 ##########################
-#  infer_MITOCHONDRIA
+#  infer_mitochondria
 ##########################
-def infer_MITOCHONDRIA(struct_img, CY_object, in_params) -> tuple:
+def infer_mitochondria(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer MITOCHONDRIA  from linearly unmixed input.
+    Procedure to infer mitochondria from linearly unmixed input.
 
     Parameters:
     ------------
-    struct_img: np.ndarray
-        a 3d image containing the MITOCHONDRIA signal
+    in_img: np.ndarray
+        a 3d image containing all the channels
 
-    CY_object: np.ndarray boolean
-        a 3d image containing the NU labels
-
-    in_params: dict
-        holds the needed parameters
+    cytosol_mask: np.ndarray
+        mask of cytosol
 
     Returns:
     -------------
-    tuple of:
-        object
-            mask defined boundaries of MITOCHONDRIA
-        parameters: dict
-            updated parameters in case any needed were missing
-    """
-    out_p = in_params.copy()
+    lysosome_object
+        mask defined extent of mitochondria object
 
-    struct_img = apply_mask(struct_img, CY_object)
+    """
 
     ###################
     # PRE_PROCESSING
     ###################
-    scaling_param = [0, 9]
-    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
-    out_p["intensity_norm_param"] = scaling_param
-
-    # make a copy for post-post processing
-    scaled_signal = struct_img.copy()
+    struct_img = min_max_intensity_normalization(in_img[MITO_CH].copy())
 
     med_filter_size = 3
-    structure_img = median_filter(struct_img, size=med_filter_size)
-    out_p["median_filter_size"] = med_filter_size
+    struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
     struct_img = image_smoothing_gaussian_slice_by_slice(
         struct_img, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma
-    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
-
-    # log_img, d = log_transform( struct_img )
-    # struct_img = intensity_normalization( log_img ,  scaling_param=[0] )
-    # struct_img = intensity_normalization( struct_img ,  scaling_param=[0] )
 
     ###################
     # CORE_PROCESSING
@@ -74,24 +58,15 @@ def infer_MITOCHONDRIA(struct_img, CY_object, in_params) -> tuple:
     vesselness_sigma = [1.5]
     vesselness_cutoff = 0.1
     # 2d vesselness slice by slice
-    response = vesselnessSliceBySlice(struct_img, sigmas=vesselness_sigma, tau=1, whiteonblack=True)
-    bw = response > vesselness_cutoff
-
-    out_p["vesselness_sigma"] = vesselness_sigma
-    out_p["vesselness_cutoff"] = vesselness_cutoff
+    bw = vesselness_slice_by_slice(struct_img, sigmas=vesselness_sigma, cutoff=vesselness_cutoff, tau=0.75)
 
     ###################
     # POST_PROCESSING
     ###################
 
-    # MT_object = remove_small_objects(bw > 0, min_size=small_object_max**2, connectivity=1, in_place=False)
-    small_object_max = 3
-    struct_obj = size_filter_2D(
-        bw,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**2,
-        connectivity=1,
-    )
-    out_p["small_object_max"] = small_object_max
+    struct_obj = apply_mask(bw, cytosol_mask)
 
-    retval = (struct_obj, out_p)
-    return retval
+    small_object_max = 3
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
+
+    return struct_obj

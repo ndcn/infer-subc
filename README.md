@@ -23,16 +23,15 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 
 #### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
-  -  #### 1️⃣. [infer NUCLEI ](./notebooks/01_infer_nuclei.ipynb)
-  -  #### 2️⃣. [Infer SOMA](./notebooks/02_infer_soma.ipynb) 
-  -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) (🚨🚨🚨🚨 Steps 3-9 depend on establishing a good solution here.)
+  -  #### 2️⃣. [Infer SOMA](./notebooks/01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
+  -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
+  -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 
   -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
-  -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/02_infer_soma.ipynb)
-  -  #### 6️⃣. [Infer GOLGI complex](./notebooks/02_infer_soma.ipynb)
-  -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/02_infer_soma.ipynb)
-  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/02_infer_soma.ipynb)
-  -   #### 9️⃣. [Infer LB](./notebooks/02_infer_soma.ipynb) 
-
+  -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
+  -  #### 6️⃣. [Infer GOLGI complex](./notebooks/06_golgi.ipynb)
+  -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/07_peroxisome.ipynb)
+  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_endoplasmic_reticulum.ipynb)
+  -   #### 9️⃣. [Infer LB](./notebooks/09_lipid_bodies.ipynb) 
 
 
 ----------------------------

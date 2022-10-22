@@ -1,11 +1,27 @@
-from scipy.ndimage import median_filter, gaussian_filter
-
 from skimage.measure import label
+import numpy as np
 
-from aicssegmentation.core.pre_processing_utils import intensity_normalization
-from skimage.morphology import remove_small_holes  # function for post-processing (size filter)
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from aicssegmentation.core.utils import hole_filling
 
-from infer_subc_2d.utils.img import threshold_li_log, size_filter_2D
+from infer_subc_2d.utils.img import (
+    size_filter_2D,
+    min_max_intensity_normalization,
+    median_filter_slice_by_slice,
+    apply_log_li_threshold,
+    apply_mask,
+)
+from infer_subc_2d.constants import (
+    TEST_IMG_N,
+    NUC_CH,
+    LYSO_CH,
+    MITO_CH,
+    GOLGI_CH,
+    PEROXI_CH,
+    ER_CH,
+    LIPID_CH,
+    RESIDUAL_CH,
+)
 
 # from .qc import ObjectCheck, ObjectStats, ArrayLike
 
@@ -30,86 +46,67 @@ from infer_subc_2d.utils.img import threshold_li_log, size_filter_2D
 #     def self.check_prior(self, test_image:ArrayLike):
 #         pass
 
+# copy this to base.py for easy import
 
 ##########################
-# 1.  infer_NUCLEI
+#  _infer_nuclei
 ##########################
-# copy this to base.py for easy import
-def infer_NUCLEI(struct_img, in_params) -> tuple:
+def _infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer NUCLEI from linearly unmixed input.
+    Procedure to infer nuclei from linearly unmixed input.
 
     Parameters:
     ------------
-    struct_img: np.ndarray
-        a 3d image containing the NUCLEI signal
+    in_img: np.ndarray
+        a 3d image containing all the channels
 
-    in_params: dict
-        holds the needed parameters (though they are not used)
+    soma_mask: np.ndarray
+        mask
 
     Returns:
     -------------
-    tuple of:
-        object
-            mask defined boundaries of NU
-        label
-            label (could be more than 1)
-        signal
-            scaled/filtered (pre-processed) flourescence image
-        parameters: dict
-            updated parameters in case any needed were missing
+    nuclei_object
+        mask defined extent of NU
 
     """
-    out_p = in_params.copy()
 
     ###################
     # PRE_PROCESSING
     ###################
-    # TODO: replace params below with the input params
-    scaling_param = [0]
-    struct_img = intensity_normalization(struct_img, scaling_param=scaling_param)
-    out_p["intensity_norm_param"] = scaling_param
+    nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy())
 
     med_filter_size = 4
     # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    struct_img = median_filter(struct_img, size=med_filter_size)
-    out_p["median_filter_size"] = med_filter_size
+    nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
-    struct_img = gaussian_filter(
-        struct_img, sigma=gaussian_smoothing_sigma, mode="nearest", truncate=gaussian_smoothing_truncate_range
+    nuclei = image_smoothing_gaussian_slice_by_slice(
+        nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma
-    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
 
     ###################
     # CORE_PROCESSING
     ###################
     # struct_obj = struct_img > filters.threshold_li(struct_img)
-    threshold_value_log = threshold_li_log(struct_img)
-
     threshold_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    threshold = min(max(threshold_value_log * threshold_factor, thresh_min), thresh_max)
-    out_p["threshold_factor"] = threshold_factor
-    out_p["thresh_min"] = thresh_min
-    out_p["thresh_max"] = thresh_max
+    nuclei_object = apply_log_li_threshold(
+        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
+    )
 
-    struct_obj = struct_img > threshold
-
+    NU_labels = label(nuclei_object)
     ###################
     # POST_PROCESSING
     ###################
     hole_width = 5
     # # wrapper to remoce_small_objects
-    struct_obj = remove_small_holes(struct_obj, hole_width**2)
-    out_p["hole_width"] = hole_width
+    # nuclei_object = remove_small_holes(nuclei_object, hole_width ** 2 )
+    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
+    nuclei_object = apply_mask(nuclei_object, soma_mask)
 
-    small_object_max = 5
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
-    out_p["small_object_max"] = small_object_max
+    small_object_max = 45
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_max**2, connectivity=1)
 
-    retval = (struct_obj, label(struct_obj), out_p)
-    return retval
+    return nuclei_object
