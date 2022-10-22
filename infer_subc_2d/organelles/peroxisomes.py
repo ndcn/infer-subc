@@ -1,89 +1,67 @@
+import numpy as np
+
 from skimage.morphology import remove_small_objects, ball, dilation
 from skimage.measure import label
 from skimage.segmentation import watershed
 from skimage.feature import peak_local_max
-
-from aicssegmentation.core.seg_dot import dot_3d_wrapper
-from aicssegmentation.core.pre_processing_utils import (
-    intensity_normalization,
-    image_smoothing_gaussian_slice_by_slice,
-)
-
 from scipy.ndimage import distance_transform_edt
 
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
-from infer_subc_2d.utils.img import *
+from infer_subc_2d.constants import PEROXI_CH
+
+from infer_subc_2d.utils.img import (
+    apply_mask,
+    min_max_intensity_normalization,
+    size_filter_2D,
+)
+
 
 ##########################
-#  infer_peroxisomes
+#  infer_peroxisome
 ##########################
-def infer_PEROXISOME(struct_img, CY_object, in_params, do_watershed=False) -> tuple:
+def infer_peroxisome(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer PEROXISOME  from linearly unmixed input.
+     Procedure to infer peroxisome from linearly unmixed input.
 
-    Parameters:
-    ------------
-    struct_img: np.ndarray
-        a 2d image containing the PEROXISOME signal
+     Parameters:
+     ------------
+     in_img: np.ndarray
+         a 3d image containing all the channels
 
-    CY_object: np.ndarray boolean
-        a 2d (3D with 1 Z) image containing the cytosol mask
+     cytosol_mask: np.ndarray
+         mask of cytosol
 
-    in_params: dict
-        holds the needed parameters
-
-    do_watersed: bool
-        flag to perform watershed to setment / label adjacent/overlapping peroxisomes
-    Returns:
-    -------------
-    tuple of:
-        object
-            mask defined boundaries of PEROXISOME
-        parameters: dict
-            updated parameters in case any needed were missing
+     Returns:
+     -------------
+    peroxi_object
+         mask defined extent of peroxisome object
     """
-    out_p = in_params.copy()
-
-    struct_img = apply_mask(struct_img, CY_object)
 
     ###################
     # PRE_PROCESSING
     ###################
-    intensity_norm_param = [0]  # CHECK THIS
-
-    struct_img = intensity_normalization(struct_img, scaling_param=intensity_norm_param)
-    out_p["intensity_norm_param"] = intensity_norm_param
-
-    # make a copy for post-post processing
-    scaled_signal = struct_img.copy()
+    struct_img = min_max_intensity_normalization(in_img[PEROXI_CH].copy())
 
     gaussian_smoothing_sigma = 1.34
     gaussian_smoothing_truncate_range = 3.0
     struct_img = image_smoothing_gaussian_slice_by_slice(
         struct_img, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-    out_p["gaussian_smoothing_sigma"] = gaussian_smoothing_sigma
-    out_p["gaussian_smoothing_truncate_range"] = gaussian_smoothing_truncate_range
-
-    # log_img, d = log_transform( struct_img )
-    # struct_img = intensity_normalization( log_img ,  scaling_param=[0] )
-    # struct_img = intensity_normalization( struct_img ,  scaling_param=[0] )
-
     ###################
     # CORE_PROCESSING
     ###################
     dot_2d_sigma = 1.0
     dot_2d_cutoff = 0.04
-    s3_param = [(dot_2d_sigma, dot_2d_cutoff)]
+    s2_param = [(dot_2d_sigma, dot_2d_cutoff)]
 
-    bw = dot_3d_wrapper(struct_img, s3_param)
-    out_p["dot_2d_sigma"] = dot_2d_sigma
-    out_p["dot_2d_cutoff"] = dot_2d_cutoff
-    out_p["s3_param"] = s3_param
+    bw = dot_2d_slice_by_slice_wrapper(struct_img, s2_param)
 
     ###################
     # POST_PROCESSING
     ###################
+    do_watershed = False
     if do_watershed:  # BUG: this makes bw into labels... but we are returning a binary object...
         minArea = 4
         mask_ = remove_small_objects(bw > 0, min_size=minArea, connectivity=1, in_place=False)
@@ -91,14 +69,12 @@ def infer_PEROXISOME(struct_img, CY_object, in_params, do_watershed=False) -> tu
         watershed_map = -1 * distance_transform_edt(bw)
         bw = watershed(watershed_map, label(seed_), mask=mask_, watershed_line=True)
 
-    ################################
-    ## PARAMETERS for this step ##
+    ###################
+    # POST_PROCESSING
+    ###################
+    struct_obj = apply_mask(bw, cytosol_mask)
+
     small_object_max = 2
-    ################################
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
 
-    # struct_obj = remove_small_objects(bw>0, min_size=minArea, connectivity=1, in_place=False)
-    struct_obj = size_filter_2D(bw, min_size=small_object_max**2, connectivity=1)
-    out_p["small_object_max"] = small_object_max
-
-    retval = (struct_obj, out_p)
-    return retval
+    return struct_obj

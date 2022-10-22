@@ -3,36 +3,32 @@ from skimage.morphology import binary_erosion, binary_dilation
 
 
 ##########################
-#  infer_CYTOSOL
+#  infer_cytosol
 ##########################
-def infer_CYTOSOL(SO_object, NU_object, erode_NU=True, dilate=True):
+def infer_cytosol(nuclei_object, soma_mask, erode_nuclei=True):
     """
-    Procedure to infer CYTOSOL from linearly unmixed input.
+    Procedure to infer infer from linearly unmixed input. (logical soma AND NOT nucleus)
 
     Parameters:
     ------------
-    SO_object: np.ndarray
-        a 3d image containing the NUCLEI signal
+    nuclei_object: np.ndarray
+        a 3d image containing the nuclei object
 
-    NU_object: np.ndarray
-        a 3d image containing the NUCLEI signal
+    soma_mask: np.ndarray
+        a 3d image containing the soma object (mask)
 
-    erode_NU: bool
+    erode_nuclei: bool
         should we erode?
 
     Returns:
     -------------
-    CY_object: np.ndarray (bool)
+    cytosol_mask: np.ndarray (bool)
 
     """
 
-    # NU_eroded1 = morphology.binary_erosion(NU_object,  footprint=morphology.ball(3) )
-    if erode_NU:
-        CY_object = np.logical_and(SO_object, ~binary_erosion(NU_object))
+    if erode_nuclei:
+        cytosol_mask = np.logical_xor(soma_mask, binary_erosion(nuclei_object))
     else:
-        CY_object = np.logical_and(SO_object, ~NU_object)
+        cytosol_mask = np.logical_xor(soma_mask, nuclei_object)
 
-    if dilate:
-        return binary_dilation(CY_object)
-    else:
-        return CY_object
+    return cytosol_mask

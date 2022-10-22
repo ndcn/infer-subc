@@ -1,4 +1,5 @@
 from skimage.measure import label
+import numpy as np
 
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import hole_filling
@@ -45,10 +46,14 @@ from infer_subc_2d.constants import (
 #     def self.check_prior(self, test_image:ArrayLike):
 #         pass
 
+# copy this to base.py for easy import
 
-def infer_NUCLEI(in_img, soma_mask) -> tuple:
+##########################
+#  _infer_nuclei
+##########################
+def _infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer NUCLEI from linearly unmixed input.
+    Procedure to infer nuclei from linearly unmixed input.
 
     Parameters:
     ------------
@@ -87,19 +92,21 @@ def infer_NUCLEI(in_img, soma_mask) -> tuple:
     threshold_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    NU_object = apply_log_li_threshold(
+    nuclei_object = apply_log_li_threshold(
         nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
 
-    NU_labels = label(NU_object)
+    NU_labels = label(nuclei_object)
     ###################
     # POST_PROCESSING
     ###################
     hole_width = 5
     # # wrapper to remoce_small_objects
-    NU_object = hole_filling(NU_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
+    # nuclei_object = remove_small_holes(nuclei_object, hole_width ** 2 )
+    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
+    nuclei_object = apply_mask(nuclei_object, soma_mask)
 
     small_object_max = 45
-    NU_object = size_filter_2D(NU_object, min_size=small_object_max**2, connectivity=1)
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_max**2, connectivity=1)
 
-    return apply_mask(NU_object, soma_mask)
+    return nuclei_object

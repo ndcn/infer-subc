@@ -60,22 +60,21 @@ def non_linear_soma_transform_MCZ(in_img):
 
 
 ##########################
-# 1  infer_SOMA
+# 1. infer_soma
 ##########################
-def infer_SOMA(in_img: np.ndarray) -> np.ndarray:
+def infer_soma(in_img: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer SOMA from linearly unmixed input.
+    Procedure to infer soma from linearly unmixed input.
 
     Parameters:
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
 
-
     Returns:
     -------------
-    soma_out:
-          label (could be more than 1)
+    soma_mask: np.ndarray
+        a logical/labels object defining boundaries of soma
 
     """
 
@@ -139,18 +138,19 @@ def infer_SOMA(in_img: np.ndarray) -> np.ndarray:
     threshold_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    NU_object = apply_log_li_threshold(
+    nuclei_object = apply_log_li_threshold(
         nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
+
     hole_width = 5
     # # wrapper to remoce_small_objects
-    # NU_object = remove_small_holes(NU_object, hole_width**2)
-    NU_object = hole_filling(NU_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
+    # nuclei_object = remove_small_holes(nuclei_object, hole_width**2)
+    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
 
     small_object_max = 45
-    NU_object = size_filter_2D(NU_object, min_size=small_object_max**2, connectivity=1)
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_max**2, connectivity=1)
 
-    NU_labels = label(NU_object)
+    nuclei_labels = label(nuclei_object)
     ###################
     # POST_PROCESSING
     ###################
@@ -164,7 +164,7 @@ def infer_SOMA(in_img: np.ndarray) -> np.ndarray:
     struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
 
     labels_out = masked_inverted_watershed(
-        struct_img, NU_labels, struct_obj
+        struct_img, nuclei_labels, struct_obj
     )  # np.logical_or(struct_obj, NU_labels > 0)
 
     ###################

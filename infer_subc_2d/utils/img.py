@@ -6,6 +6,7 @@ from scipy.ndimage import median_filter, extrema
 import scipy
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import size_filter
+from aicssegmentation.core.vessel import vesselness2D
 
 from typing import Tuple, List, Union, Any
 
@@ -169,6 +170,51 @@ def min_max_intensity_normalization(struct_img):
     return struct_img
 
 
+def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None, thresh_max=None):
+    """return a binary mask after applying a log_li threshold
+
+    Parameters:
+    ------------
+    img_in: np.ndimage
+
+    method: str="otsu"  or "li"
+    threshold_factor:float=1.0  scaling value for threshold
+
+    thresh_min= None or min
+
+    thresh_max = None or max
+
+    Returns:
+    -------------
+        np.ndimage
+    """
+
+    if method == "tri" or method == "triangle":
+        threshold_val = threshold_triangle(img_in)
+    elif method == "med" or method == "median":
+        threshold_val = np.percentile(img_in, 50)
+    elif method == "ave" or method == "ave_tri_med":
+        global_tri = threshold_triangle(img_in)
+        global_median = np.percentile(img_in, 50)
+        threshold_val = (global_tri + global_median) / 2
+    elif method == "li" or method == "cross_entropy" or method == "crossentropy":
+        threshold_val = threshold_li(img_in)
+    elif method == "sauvola":
+        threshold_val = threshold_sauvola(img_in)
+    elif method == "mult_otsu" or method == "multiotsu":
+        threshold_val = threshold_multiotsu(img_in)
+    else:  # default to "otsu"
+        threshold_val = threshold_otsu(img_in)
+
+    threshold = threshold_val * threshold_factor
+
+    if thresh_min is not None:
+        threshold = max(threshold, thresh_min)
+    if thresh_max is not None:
+        threshold = min(threshold, thresh_max)
+    return img_in > threshold
+
+
 def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
@@ -195,6 +241,45 @@ def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh
     if thresh_max is not None:
         threshold = min(threshold, thresh_max)
     return img_in > threshold
+
+
+# NOTE this is identical to veselnessSliceBySlice from aicssegmentation.core.vessel
+def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float = -1, tau: float = 0.75):
+    """
+    wrapper for applying multi-scale 2D filament filter on 3D images in a
+    slice by slice fashion
+
+    Parameters:
+    -----------
+    nd_array: np.ndarray
+        the 3D image to be filterd on
+    sigmas: List
+        a list of scales to use
+    cutoff: float
+        the cutoff value to apply on the filter result. If the cutoff is
+        negative, no cutoff will be applied. Default is -1.
+    tau: float
+        parameter that controls response uniformity. The value has to be
+        between 0.5 and 1. Lower tau means more intense output response.
+        Default is 0.5
+
+
+    hardcoded:
+    whiteonblack = True
+        segts the filamentous structures are bright on dark background
+    """
+
+    mip = np.amax(nd_array, axis=0)
+    response = np.zeros(nd_array.shape)
+    for zz in range(nd_array.shape[0]):
+        tmp = np.concatenate((nd_array[zz, :, :], mip), axis=1)
+        tmp = vesselness2D(tmp, sigmas=sigmas, tau=tau, whiteonblack=True)
+        response[zz, :, : nd_array.shape[2] - 3] = tmp[:, : nd_array.shape[2] - 3]
+
+    if cutoff < 0:
+        return response
+    else:
+        return response > cutoff
 
 
 def aggregate_signal_channels(
@@ -314,22 +399,27 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
     return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=1)
 
 
-def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """mask the image
 
     Parameters:
     ------------
-    img: np.ndarray
+    img_in: np.ndarray
         the image to filter on
     mask: np.ndarray
         the mask to apply
-    """
-    if mask.dtype == "bool":
-        img[~mask] = 0
-    else:
-        img[mask < 1] = 0
 
-    return img
+    Returns:
+    img_out: np.ndarray
+        a new (copied) array with mask applied
+    """
+    img_out = img_in.copy()
+    if mask.dtype == "bool":
+        img_out[~mask] = 0
+    else:
+        img_out[mask < 1] = 0
+
+    return img_out
 
 
 def enhance_speckles(image, radius, volumetric=False):
@@ -809,11 +899,11 @@ def cp_adaptive_threshold(
         threshold_scope=TS_ADAPTIVE,
     )
 
-    binary_image, _ = apply_threshold(image_data, final_threshold)
+    binary_image, _ = _apply_threshold(image_data, final_threshold)
     return binary_image
 
 
-def apply_threshold(image, threshold, mask=None, automatic=False):
+def _apply_threshold(image, threshold, mask=None, automatic=False):
     if mask is not None:
         return (image >= threshold) & mask
     else:
