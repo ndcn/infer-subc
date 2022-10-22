@@ -1,3 +1,5 @@
+import numpy as np
+
 from skimage.morphology import remove_small_holes  # function for post-processing (size filter)
 
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
@@ -5,10 +7,12 @@ from aicssegmentation.core.utils import hole_filling
 
 from infer_subc_2d.utils.img import (
     apply_threshold,
+    apply_mask,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
     size_filter_2D,
 )
+from infer_subc_2d.constants import LIPID_CH
 
 
 ##########################
@@ -17,7 +21,7 @@ from infer_subc_2d.utils.img import (
 ##########################
 #  infer_endoplasmic_reticulum
 ##########################
-def _infer_lipid_body(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray:
+def infer_lipid_body(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray:
     """
     Procedure to infer peroxisome from linearly unmixed input.
 
@@ -38,7 +42,7 @@ def _infer_lipid_body(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarra
     ###################
     # PRE_PROCESSING
     ###################
-    struct_img = min_max_intensity_normalization(raw_er)
+    struct_img = min_max_intensity_normalization(in_img[LIPID_CH].copy())
 
     med_filter_size = 2
     struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)

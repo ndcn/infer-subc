@@ -66,6 +66,23 @@ def export_ndarray(data_in, img_name, out_path) -> str:
     return out_name
 
 
+def export_infer_organelles(img_out, layer_names, meta_dict, data_root_path):
+    # get some top-level info about the RAW data
+    channel_names = meta_dict["name"]
+    img = meta_dict["metadata"]["aicsimage"]
+    scale = meta_dict["scale"]
+    channel_axis = meta_dict["channel_axis"]
+    img_name = meta_dict["file_name"]
+    # add params to metadata
+    meta_dict["layer_names"] = layer_names
+    out_path = data_root_path / "inferred_objects"
+    img_name_out = "binarized_" + img_name.split("/")[-1].split(".")[0]
+
+    out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_path) + "/", layer_names)
+    print(f"saved file: {out_file_n}")
+    return out_file_n
+
+
 def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
     #  data_in: types.ArrayLike,

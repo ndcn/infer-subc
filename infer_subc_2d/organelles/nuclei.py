@@ -51,7 +51,7 @@ from infer_subc_2d.constants import (
 ##########################
 #  _infer_nuclei
 ##########################
-def _infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
+def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     """
     Procedure to infer nuclei from linearly unmixed input.
 
