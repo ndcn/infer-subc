@@ -3,6 +3,68 @@
 
 ***Note: the parameters described here are only for the widgets in the Napari plugin. Not all parameters are exposed to the widget for the sake of simplicity. For programmer users, please refer the full documentation to see the detailed APIs.***  
 
+## infer_subc_2d functions - helpers
+
+### Z-extract
+
+#### infer_optimal_Z
+
+### masks
+
+#### infer_soma
+
+#### infer_cytosol
+
+#### infer_cell_membrane (NOT IMPLIMENTED)
+
+
+## infer_subc_2d functions - organelle segmentation wrappers
+
+
+### infer_nuclei
+
+
+### infer_lysosome
+
+### infer_mitocondria
+
+### infer_golgi
+
+### infer_peroxisome
+
+### infer_endoplasmic_reticulum
+
+### infer_lipid_bodies
+
+
+
+## batch_infer 
+
+
+## infer_subc_2d functions - extract, pre-processing, core, post-processing, post-post-processing
+
+
+### 1. Intensity Normalization
+
+Auto-contrast normalizaiton. First, *mean* and standard deviaion (*std*) of the original intensity in image are calculated. Next, the intensity is truncated into range `[mean - a * std, mean + b * std]`, and then rescaled to `[0, 1]`. `a` and `b` are parameters controling effect of the adjustment. 
+* `scaling_param`: a list of two float values, corresponding to `a` and `b` is the aforementioned equation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## aics-segmentation functions
 ### 1. Intensity Normalization
 
 Auto-contrast normalizaiton. First, *mean* and standard deviaion (*std*) of the original intensity in image are calculated. Next, the intensity is truncated into range `[mean - a * std, mean + b * std]`, and then rescaled to `[0, 1]`. `a` and `b` are parameters controling effect of the adjustment. 
