@@ -6,4 +6,11 @@
 # from .batch_workflow import BatchWorkflow  # noqa F401
 # from .workflow_definition import WorkflowDefinition, PrebuiltWorkflowDefinition  # noqa F401
 # from .workflow_engine import WorkflowEngine  # noqa F401
-from .infer_subc_2D_workflow import InferSubC2dWorkflowEngine
+from .infer_subc_2D_workflow import (
+    InferSubC2dWorkflowEngine,
+    InferSubC2dWorkflowStepCategory,
+    InferSubC2dWorkflowDefinition,
+    InferSubC2dPrebuiltWorkflowDefinition,
+    InferSubC2dWorkflowStep,
+    InferSubC2dWorkflow,
+)

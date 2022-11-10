@@ -9,10 +9,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Union, List, Any, Tuple
 
-from aicsimageio.writers import OmeTiffWriter
-from napari_aicsimageio.core import reader_function as napari_aiscimageio_reader_fn
+# from aicsimageio.writers import OmeTiffWriter
+# from napari_aicsimageio.core import reader_function
+from ._aicsimage_reader import reader_function, export_ome_tiff
+
+import ome_types
+from tifffile import imwrite, tiffcomment
 
 
+# TODO:  depricate AICSImageReaderWrap
 @dataclass
 class AICSImageReaderWrap:
     """
@@ -83,69 +88,12 @@ def export_infer_organelles(img_out, layer_names, meta_dict, data_root_path):
     return out_file_n
 
 
-def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
-    """
-    #  data_in: types.ArrayLike,
-    #  meta_in: dict,
-    # img_name: types.PathLike,
-    # out_path: types.PathLike,
-    # curr_chan: int
-    # assumes a single image
-    """
-
-    out_name = out_path + img_name + ".ome.tiff"
-
-    image_names = [img_name]
-    # chan_names = meta_in['metadata']['aicsimage'].channel_names
-
-    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
-
-    dimension_order = ["CZYX"]
-    if channel_names is None:
-        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
-    else:
-        channel_names = [channel_names]
-
-    if len(data_in.shape) == 3:  # single channel zstack
-        data_in = data_in[np.newaxis, :, :, :]
-    elif len(data_in.shape) == 2:  # single channel , 1Z
-        data_in = data_in[np.newaxis, np.newaxis, :, :]
-
-    if data_in.dtype == "bool":
-        data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
-
-    out_ome = OmeTiffWriter.build_ome(
-        [data_in.shape],
-        [data_in.dtype],
-        channel_names=channel_names,  # type: ignore
-        image_name=image_names,
-        physical_pixel_sizes=physical_pixel_sizes,
-        dimension_order=dimension_order,
-    )
-
-    OmeTiffWriter.save(
-        data_in,
-        out_name,
-        dim_order=dimension_order,
-        channel_names=channel_names,
-        image_names=image_names,
-        physical_pixel_sizes=physical_pixel_sizes,
-        ome_xml=out_ome,
-    )
-    return out_name
-
-
 def append_ome_metadata(filename, meta_add):
-    import numpy
-    import ome_types
-    from tifffile import imwrite, tiffcomment
-
     filename = "test.ome.tif"
 
     imwrite(
         filename,
-        numpy.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
+        np.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
         bigtiff=True,
         photometric="RGB",
         tile=(64, 64),
@@ -207,11 +155,13 @@ def get_raw_meta_data(meta_dict):
     return (raw_meta_data, ome_types)
 
 
+# TODO:  refactor this and napari plugin so napari_aicsimageio is not a dependency
+# can then export to the organelle-segmenter-npe2 plugin
 def read_input_image(image_name):
     """
     send output from napari aiscioimage reader wrapped in dataclass
     """
-    data_out, meta_out, layer_type = napari_aiscimageio_reader_fn(image_name)[0]
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
     return AICSImageReaderWrap(image_name, data_out, meta_out)
 
 
@@ -219,7 +169,8 @@ def read_czi_image(image_name):
     """
     return output from napari aiscioimage reader
     """
-    data_out, meta_out, layer_type = napari_aiscimageio_reader_fn(image_name)[0]
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
+
     meta_out["file_name"] = image_name
     return (data_out, meta_out)
 
