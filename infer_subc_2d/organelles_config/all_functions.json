@@ -1,4 +1,10 @@
 {
+    "min_max_intensity_normalization": {
+        "name": "min_max_intensity_normalization",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "min_max_intensity_normalization",
+        "parameters": null
+    },    
     "intensity_normalization": {
         "name": "Intensity Normalization",
         "python::module": "aicssegmentation.core.pre_processing_utils",

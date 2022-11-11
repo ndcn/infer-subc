@@ -8,10 +8,21 @@
 ### Z-extract
 
 #### infer_optimal_Z
+Finds an *optimal* Z slice by smoothing and thresholding (`log Li`) an aggregated total florescence signal which is NOT the nuclei.  It implicitly calls the procedure with `nuc_ch = NUC_CH` and `ch_to_agg = ( LYSO_CH ,MITO_CH , GOLGI_CH ,PEROXI_CH , ER_CH , LIPID_CH )` hard coded.
+* no parameters
 
 ### masks
+#### apply_mask
+***This function takes two inputs.***
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+
+This function is commonly used to mask out some area from a specific segmentation.
+* `value`: all the pixels in **Input 1** that are 1 in the mask image will be set to `value`.   
 
 #### infer_soma
+Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) followed by PREPROCESSING --  _normalization_, _filtering_; CORE processing -- threholding; and POST-PROCESSING -- watershed labeling a _masked object thresholded_ nuclei and size filtering. POST-POST-PROCESSING involves choosing the max label.
+* no parameters 
 
 #### infer_cytosol
 
