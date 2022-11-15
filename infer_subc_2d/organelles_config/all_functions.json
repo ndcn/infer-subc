@@ -63,6 +63,12 @@
         "python::function": "apply_mask",
         "python::module": "infer_subc_2d.utils.img"
     },
+    "choose_max_label": {
+        "name": "keep only the label with the maximum raw signa",
+        "parameters": null,
+        "python::function": "choose_max_label",
+        "python::module": "infer_subc_2d.utils.img"
+    },
     "compute_3d_hessian_matrix": {
         "name": "Compute 3D Hessian Matrix",
         "parameters": {
@@ -380,6 +386,33 @@
         "python::function": "mask_image",
         "python::module": "aicssegmentation.core.utils"
     },
+    "masked_inverted_watershed": {
+        "name": "watershed on inverted image and masked",
+        "parameters": null,
+        "python::function": "masked_inverted_watershed",
+        "python::module": "infer_subc_2d.organelles"
+    },
+    "masked_object_threshold": {
+        "name": "masked_object_threshold",
+        "parameters": {
+            "local_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "size_min": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            }
+        },
+        "python::function": "masked_object_threshold",
+        "python::module": "infer_subc_2d.utils.img"
+    },
     "masked_object_treshold_combined": {
         "name": "Masked Object Threshold - Combined",
         "parameters": {
@@ -513,11 +546,23 @@
         "python::function": "min_max_intensity_normalization",
         "python::module": "infer_subc_2d.utils.img"
     },
+    "non_linear_soma_transform_MCZ": {
+        "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
+        "parameters": null,
+        "python::function": "non_linear_soma_transform_MCZ",
+        "python::module": "infer_subc_2d.organelles"
+    },
     "prune_z_slices": {
         "name": "Prune Z-Slices",
         "parameters": null,
         "python::function": "prune_z_slices",
         "python::module": "aicssegmentation.core.utils"
+    },
+    "raw_soma_MCZ": {
+        "name": "define weighted aggregate soma signal (MCZ-cellprofiler)",
+        "parameters": null,
+        "python::function": "non_linear_soma_transform_MCZ",
+        "python::module": "infer_subc_2d.organelles"
     },
     "remove_hot_pixel": {
         "name": "Remove Hot Pixel",

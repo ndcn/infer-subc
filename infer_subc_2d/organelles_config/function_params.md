@@ -6,7 +6,7 @@
 ## infer_subc_2d functions - helpers
 
 ### Select a channel from raw multi-chan image
-Select channel `chan` from the the `np.ndarray`, with `ndim = (ch,time, X, Y)` . This is an EXTRACT
+Select channel `chan` from the the `np.ndarray`, with `ndim = (ch,time, X, Y)` . E.g. an EXTRACT
 ### Z-extract
 
 #### infer_optimal_Z
@@ -27,6 +27,8 @@ Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) follo
 * no parameters 
 
 #### infer_cytosol
+Infers the *cytosol* by taking the *soma* masked by the *nuclei*
+* no parameters 
 
 #### infer_cell_membrane (NOT IMPLIMENTED)
 
@@ -72,17 +74,29 @@ PRE-PROCESSING
 Min-Max normalization so the image are floats between `[0, 1]`.
 * no parameters 
 
+### median_filter_slice_by_slice
+PRE-PROCESSING
+Wrapper to `median`filter slice-by-slice (which is a single Z here)
+* `size` is the linear width of the median filter, which is converted to a (X,Y)=(size,size) footprint.
+
+### apply_log_li_threshold
+CORE
+Apply Log Li threholding.  Applies a threshold on the log-intensities according to the Li procedure. 
+* `threshold_factor` indicates a scaling to apply to the Li threhold.
+* `thresh_min` is the minimum possible threhold.
+* `thresh_max` is the maximum possible threhold.
+
+# size_filter_2D
+POST-PROCESSING
+Wrapper to `aicssegmentation.core.utils.size_filter` to remove small objects.
+* `min_size` is the size in total-pixels that will be kept.
 
 ## np.ndimage functions
 
 ### label
-
-
-
-
-
-
-
+POST-PROCESSING / CORE
+Make labels from binary object via `skimage.measure.label` [need to worry about making this a *label* layer?]
+* no parameters 
 
 
 ## aics-segmentation functions
@@ -110,7 +124,7 @@ A smoothing method that reduce the noise, while retaining the sharp edges.
 * No parameter is needed.
 
 
-### 5. Gaussian Smoothing 3D
+### 5. Gaussian Smoothing 3D (DEPRICATED HERE)
 
 A smoothing method based on 3D Gaussian filter. 
 * `sigma`: the size of the Gaussian kernal. Larger kernel will result in more smoothing effect.

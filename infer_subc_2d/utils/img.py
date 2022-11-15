@@ -4,9 +4,12 @@ from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, th
 # from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 from scipy.ndimage import median_filter, extrema
 import scipy
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+
+# from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import size_filter
 from aicssegmentation.core.vessel import vesselness2D
+from aicssegmentation.core.MO_threshold import MO
+
 
 from typing import Tuple, List, Union, Any
 
@@ -135,6 +138,37 @@ def threshold_multiotsu_log(image_in):
     thresholds = threshold_multiotsu(image)
     thresholds = inverse_log_transform(thresholds, d)
     return thresholds
+
+
+def masked_object_threshold(structure_img_smooth: np.ndarray, size_min: int, local_adjust: float) -> np.ndarray:
+    """
+    wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
+    Parameters:
+    ------------
+    structure_img_smooth: np.ndarray
+        a 3d image
+
+    size_min: int
+        the linear "size" limit
+
+    local_adjust: float
+        adjustment
+
+    Returns:
+    -------------
+        np.ndimage
+
+    """
+    struct_obj, _bw_low_level = MO(
+        structure_img_smooth,
+        global_thresh_method="ave",
+        object_minArea=size_min,
+        extra_criteria=True,
+        local_adjust=local_adjust,
+        return_object=True,
+        dilate=True,
+    )
+    return struct_obj
 
 
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
@@ -294,14 +328,13 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         return response > cutoff
 
 
-
-def select_channel_from_raw(img_in:np.ndarray, ch:Union[int, Tuple[int]]) -> np.ndarray:
-    """" 
+def select_channel_from_raw(img_in: np.ndarray, ch: Union[int, Tuple[int]]) -> np.ndarray:
+    """ "
     Parameters:
     ------------
     img_in: np.ndarray
 
-    ch:int  
+    ch:int
         channel to extract.
 
     Returns:

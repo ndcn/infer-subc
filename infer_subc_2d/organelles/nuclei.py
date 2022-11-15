@@ -10,6 +10,7 @@ from infer_subc_2d.utils.img import (
     median_filter_slice_by_slice,
     apply_log_li_threshold,
     apply_mask,
+    select_channel_from_raw,
 )
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -74,7 +75,7 @@ def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     # PRE_PROCESSING
     ###################
     nuc_ch = NUC_CH
-    nuclei = _select_channel_from_raw(in_img, nuc_ch)
+    nuclei = select_channel_from_raw(in_img, nuc_ch)
     # nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy() )
 
     med_filter_size = 4

@@ -2,10 +2,11 @@ from skimage.filters import scharr
 from skimage.segmentation import watershed
 from skimage.measure import label
 
+import numpy as np
+
 # from napari_aicsimageio.core import  reader_function
 
-from aicssegmentation.core.utils import hole_filling, size_filter
-from aicssegmentation.core.MO_threshold import MO
+from aicssegmentation.core.utils import hole_filling
 
 from aicssegmentation.core.pre_processing_utils import (
     intensity_normalization,
@@ -23,7 +24,15 @@ from infer_subc_2d.constants import (
     LIPID_CH,
     RESIDUAL_CH,
 )
-from infer_subc_2d.utils.img import *
+from infer_subc_2d.utils.img import (
+    masked_object_threshold,
+    log_transform,
+    min_max_intensity_normalization,
+    median_filter_slice_by_slice,
+    apply_log_li_threshold,
+    size_filter_2D,
+    choose_max_label,
+)
 
 
 def raw_soma_MCZ(img_in):
@@ -83,8 +92,15 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
         a logical/labels object defining boundaries of soma
 
     """
-
+    ###################
+    # EXTRACT
+    ###################
     struct_img = raw_soma_MCZ(in_img)
+
+    ################# part 2 - nuclei
+    nuc_ch = NUC_CH
+    nuclei = select_channel_from_raw(in_img, nuc_ch)
+    # nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy() )
 
     ###################
     # PRE_PROCESSING
@@ -92,7 +108,6 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     ################# part 1- soma
 
     struct_img = min_max_intensity_normalization(struct_img)
-
     # make a copy for post-post processing
     scaled_signal = struct_img.copy()
 
@@ -100,14 +115,12 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     med_filter_size = 15
     struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)
 
-    gaussian_smoothing_sigma = 1.34
+    gaussian_smoothing_sigma = 1.4
     struct_img = image_smoothing_gaussian_slice_by_slice(struct_img, sigma=gaussian_smoothing_sigma)
 
     struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
 
     ################# part 2 - nuclei
-    nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy())
-
     med_filter_size = 4
     # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
     nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
@@ -119,17 +132,9 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     # CORE_PROCESSING
     ###################
     local_adjust = 0.5
-    low_level_min_size = 100
+    size_min = 100
     # "Masked Object Thresholding" - 3D capable
-    struct_obj, _bw_low_level = MO(
-        struct_img_non_lin,
-        global_thresh_method="ave",
-        object_minArea=low_level_min_size,
-        extra_criteria=True,
-        local_adjust=local_adjust,
-        return_object=True,
-        dilate=True,
-    )
+    struct_obj = masked_object_threshold(struct_img_non_lin, size_min, local_adjust)
 
     ################# part 2 : nuclei thresholding
     # struct_obj = struct_img > filters.threshold_li(struct_img)
@@ -154,7 +159,7 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     ###################
 
     # 2D
-    hole_max = 40
+    hole_max = 25
     struct_obj = hole_filling(struct_obj, hole_min=0, hole_max=hole_max**2, fill_2d=True)
     # struct_obj = remove_small_holes(struct_obj, hole_max ** 2 )
 
