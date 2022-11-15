@@ -75,11 +75,11 @@ def infer_lipid_body(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray
 
     struct_obj = apply_mask(struct_obj, cytosol_mask)
 
-    small_object_max = 4
+    small_object_width = 4
 
     struct_obj = size_filter_2D(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**2,
+        min_size=small_object_width**2,
         connectivity=1,
     )
 

@@ -74,7 +74,7 @@ def infer_peroxisome(in_img: np.ndarray, cytosol_mask: np.ndarray) -> np.ndarray
     ###################
     struct_obj = apply_mask(bw, cytosol_mask)
 
-    small_object_max = 2
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
+    small_object_width = 2
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_width**2, connectivity=1)
 
     return struct_obj

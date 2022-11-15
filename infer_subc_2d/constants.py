@@ -28,3 +28,12 @@ LIPID_CH = 6
 RESIDUAL_CH = 7
 
 TEST_IMG_N = 5
+
+ALL_CHANNELS = [NUC_CH,
+                                 LYSO_CH,
+                                MITO_CH,
+                                GOLGI_CH,
+                                PEROXI_CH,
+                                ER_CH,
+                                LIPID_CH,
+                                RESIDUAL_CH]

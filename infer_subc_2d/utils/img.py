@@ -137,9 +137,21 @@ def threshold_multiotsu_log(image_in):
     return thresholds
 
 
-def median_filter_slice_by_slice(struct_img, size):
+def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
+    Parameters:
+    ------------
+    img: np.ndarray
+        a 3d image
+
+    size: int
+        the linear "size" which will be squared for
+
+    Returns:
+    -------------
+        np.ndimage
+
     """
     structure_img_denoise = np.zeros_like(struct_img)
 
@@ -282,6 +294,23 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         return response > cutoff
 
 
+
+def select_channel_from_raw(img_in:np.ndarray, ch:Union[int, Tuple[int]]) -> np.ndarray:
+    """" 
+    Parameters:
+    ------------
+    img_in: np.ndarray
+
+    ch:int  
+        channel to extract.
+
+    Returns:
+    -------------
+        np.ndarray
+    """
+    return img_in[ch]
+
+
 def aggregate_signal_channels(
     img_in: np.ndarray, chs: Union[List, Tuple], ws: Union[List, Tuple, Any] = None
 ) -> np.ndarray:
@@ -320,50 +349,6 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     if mask is not None:
         total_florescence_[mask] = 0.0
     return total_florescence_.sum(axis=(1, 2)).argmax()
-
-
-def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> int:
-    """
-    Procedure to infer NUCLEI from linearly unmixed input.
-
-    Parameters:
-    ------------
-    raw_img: np.ndarray
-        a ch,z,x,y - image containing florescent signal
-
-    nuclei_ch: int
-        holds the needed parameters
-
-    nuclei_ch: int
-        holds the needed parameters
-
-    Returns:
-    -------------
-    opt_z:
-        the "0ptimal" z-slice which has the most signal intensity for downstream 2D segmentation
-    """
-
-    # median filter in 2D / convert to float 0-1.   get rid of the "residual"
-
-    struct_img = min_max_intensity_normalization(raw_img[nuc_ch].copy())
-    med_filter_size = 4
-    nuclei = median_filter_slice_by_slice(struct_img, size=med_filter_size)
-
-    gaussian_smoothing_sigma = 1.34
-    gaussian_smoothing_truncate_range = 3.0
-    nuclei = image_smoothing_gaussian_slice_by_slice(
-        nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
-    )
-    threshold_factor = 0.9  # from cellProfiler
-    thresh_min = 0.1
-    thresh_max = 1.0
-    struct_obj = apply_log_li_threshold(
-        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
-    )
-
-    optimal_Z = choose_agg_signal_zmax(raw_img, ch_to_agg, mask=struct_obj)
-
-    return optimal_Z
 
 
 # TODO: consider MOVE to soma.py?
@@ -474,6 +459,8 @@ def enhance_neurites(image, radius, volumetric=False):
 
     return result
 
+
+###___________________DEPRICATED BELOW ___________________
 
 # ## we need to define some image processing wrappers... partials should work great
 # from functools import partial

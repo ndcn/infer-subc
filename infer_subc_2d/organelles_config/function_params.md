@@ -5,6 +5,8 @@
 
 ## infer_subc_2d functions - helpers
 
+### Select a channel from raw multi-chan image
+Select channel `chan` from the the `np.ndarray`, with `ndim = (ch,time, X, Y)` . This is an EXTRACT
 ### Z-extract
 
 #### infer_optimal_Z
@@ -33,20 +35,30 @@ Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) follo
 
 
 ### infer_nuclei
-
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 
 ### infer_lysosome
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 
 ### infer_mitocondria
-
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 ### infer_golgi
 
-### infer_peroxisome
-
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+* 
+* ### infer_peroxisome
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 ### infer_endoplasmic_reticulum
-
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 ### infer_lipid_bodies
-
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
 
 
 ## batch_infer 
@@ -55,17 +67,15 @@ Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) follo
 ## infer_subc_2d functions - extract, pre-processing, core, post-processing, post-post-processing
 
 
-### 1. Intensity Normalization
-
-Auto-contrast normalizaiton. First, *mean* and standard deviaion (*std*) of the original intensity in image are calculated. Next, the intensity is truncated into range `[mean - a * std, mean + b * std]`, and then rescaled to `[0, 1]`. `a` and `b` are parameters controling effect of the adjustment. 
-* `scaling_param`: a list of two float values, corresponding to `a` and `b` is the aforementioned equation.
-
-
+### min_max_intensity_normalization
+PRE-PROCESSING
+Min-Max normalization so the image are floats between `[0, 1]`.
+* no parameters 
 
 
+## np.ndimage functions
 
-
-
+### label
 
 
 

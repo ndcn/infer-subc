@@ -73,17 +73,16 @@ def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     ###################
     # PRE_PROCESSING
     ###################
-    nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy())
+    nuc_ch = NUC_CH
+    nuclei = _select_channel_from_raw(in_img, nuc_ch)
+    # nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy() )
 
     med_filter_size = 4
     # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
     nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
-    gaussian_smoothing_truncate_range = 3.0
-    nuclei = image_smoothing_gaussian_slice_by_slice(
-        nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
-    )
+    nuclei = image_smoothing_gaussian_slice_by_slice(nuclei, sigma=gaussian_smoothing_sigma)
 
     ###################
     # CORE_PROCESSING
@@ -106,7 +105,7 @@ def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
     nuclei_object = apply_mask(nuclei_object, soma_mask)
 
-    small_object_max = 45
-    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_max**2, connectivity=1)
+    small_object_width = 15
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_width**2, connectivity=1)
 
     return nuclei_object

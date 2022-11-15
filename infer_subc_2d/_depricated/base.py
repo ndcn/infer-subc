@@ -154,14 +154,14 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     struct_obj = morphology.remove_small_holes(struct_obj, hole_width**3)
     out_p["hole_width"] = hole_width
 
-    small_object_max = 5
+    small_object_width = 5
     struct_obj = aicssegmentation.core.utils.size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",  # "3D", #
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     retval = (struct_obj, label(struct_obj), out_p)
     return retval
@@ -257,14 +257,14 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     out_p["hole_max"] = hole_max
 
-    small_object_max = 35
+    small_object_width = 35
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     labels_out = watershed(
         connectivity=np.ones((3, 3, 3), bool),
@@ -301,7 +301,7 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",
         connectivity=1,
     )
@@ -403,14 +403,14 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     out_p["hole_max"] = hole_max
 
-    small_object_max = 35
+    small_object_width = 35
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="3D",  # "slice_by_slice"
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     labels_out = watershed(
         image=np.abs(ndi.sobel(struct_img)),
@@ -448,7 +448,7 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="3D",  # "slice_by_slice"
         connectivity=1,
     )
@@ -546,14 +546,14 @@ def infer_SOMA3(struct_img, NU_labels, in_params) -> tuple:
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     out_p["hole_max"] = hole_max
 
-    small_object_max = 30
+    small_object_width = 30
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     labels_out = watershed(
         image=np.abs(
@@ -594,7 +594,7 @@ def infer_SOMA3(struct_img, NU_labels, in_params) -> tuple:
     struct_obj = hole_filling(struct_obj, hole_min=0.0, hole_max=hole_max**2, fill_2d=True)
     struct_obj = size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",
         connectivity=1,
     )
@@ -735,14 +735,14 @@ def infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
     #                                                             connectivity=1,
     #                                                             in_place=False)
 
-    small_object_max = 15
+    small_object_width = 15
     struct_obj = aicssegmentation.core.utils.size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="3D",  # "slice_by_slice" ,
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     retval = (struct_obj, out_p)
     return retval
@@ -820,15 +820,15 @@ def infer_MITOCHONDRIA(struct_img, CY_object, in_params) -> tuple:
     # POST_PROCESSING
     ###################
 
-    # MT_object = remove_small_objects(bw > 0, min_size=small_object_max**2, connectivity=1, in_place=False)
-    small_object_max = 10
+    # MT_object = remove_small_objects(bw > 0, min_size=small_object_width**2, connectivity=1, in_place=False)
+    small_object_width = 10
     struct_obj = size_filter(
         bw,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="3D",  # "slice_by_slice" ,
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     retval = (struct_obj, out_p)
     return retval
@@ -919,15 +919,15 @@ def infer_GOLGI(struct_img, CY_object, in_params) -> tuple:
     # POST_PROCESSING
     ###################
 
-    # MT_object = remove_small_objects(bw > 0, min_size=small_object_max**2, connectivity=1, in_place=False)
-    small_object_max = 10
+    # MT_object = remove_small_objects(bw > 0, min_size=small_object_width**2, connectivity=1, in_place=False)
+    small_object_width = 10
     struct_obj = size_filter(
         bw,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="3D",  # "slice_by_slice" ,
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     retval = (struct_obj, out_p)
     return retval

@@ -57,12 +57,12 @@ def infer_endoplasmic_reticulum(in_img: np.ndarray, cytosol_mask: np.ndarray) ->
 
     ################################
     ## PARAMETERS for this step ##
-    small_object_max = 2
+    small_object_width = 2
     ################################
     # struct_obj = remove_small_objects(struct_obj>0, min_size=min_area, connectivity=1, in_place=False)
     # out_p["min_area"] = min_area
     struct_obj = apply_mask(bw, cytosol_mask)
 
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_width**2, connectivity=1)
 
     return struct_obj

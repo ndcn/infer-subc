@@ -6,7 +6,7 @@
     },
     "2": {        
         "category": "preprocessing",        
-        "function": "gaussian_smoothing_slice_by_slice",
+        "function": "image_smoothing_gaussian_slice_by_slice",
         "parameter_values": {
             "sigma": 1.4
         },
@@ -45,7 +45,7 @@
         "category": "postprocessing",
         "parameter_values": {
             "min_size": 15,
-            "method": "3D"
+            "method": "slice_by_slice"
         },
         "parent": 5
     }

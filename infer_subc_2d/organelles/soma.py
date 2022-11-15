@@ -27,7 +27,13 @@ from infer_subc_2d.utils.img import *
 
 
 def raw_soma_MCZ(img_in):
-    """define soma image"""
+    """define soma image
+
+    params
+    -------------
+    uses pre-defined weights and channels
+
+    """
     SOMA_W = (4.0, 1.0, 1.0)
     SOMA_CH = (LYSO_CH, ER_CH, RESIDUAL_CH)  # LYSO, ER, RESIDUAL
     img_out = np.zeros_like(img_in[0]).astype(np.double)
@@ -95,12 +101,7 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
-    gaussian_smoothing_truncate_range = 3.0
-    struct_img = image_smoothing_gaussian_slice_by_slice(
-        struct_img,
-        sigma=gaussian_smoothing_sigma,
-        truncate_range=gaussian_smoothing_truncate_range,
-    )
+    struct_img = image_smoothing_gaussian_slice_by_slice(struct_img, sigma=gaussian_smoothing_sigma)
 
     struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
 
@@ -112,10 +113,7 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
 
     gaussian_smoothing_sigma = 1.34
-    gaussian_smoothing_truncate_range = 3.0
-    nuclei = image_smoothing_gaussian_slice_by_slice(
-        nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
-    )
+    nuclei = image_smoothing_gaussian_slice_by_slice(nuclei, sigma=gaussian_smoothing_sigma)
 
     ###################
     # CORE_PROCESSING
@@ -147,8 +145,8 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     # nuclei_object = remove_small_holes(nuclei_object, hole_width**2)
     nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
 
-    small_object_max = 45
-    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_max**2, connectivity=1)
+    small_object_width = 15
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_width**2, connectivity=1)
 
     nuclei_labels = label(nuclei_object)
     ###################
@@ -160,8 +158,8 @@ def infer_soma(in_img: np.ndarray) -> np.ndarray:
     struct_obj = hole_filling(struct_obj, hole_min=0, hole_max=hole_max**2, fill_2d=True)
     # struct_obj = remove_small_holes(struct_obj, hole_max ** 2 )
 
-    small_object_max = 45
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_max**2, connectivity=1)
+    small_object_width = 15
+    struct_obj = size_filter_2D(struct_obj, min_size=small_object_width**2, connectivity=1)
 
     labels_out = masked_inverted_watershed(
         struct_img, nuclei_labels, struct_obj
