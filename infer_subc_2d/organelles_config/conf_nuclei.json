@@ -1,26 +1,34 @@
 {
     "1": {
-        "category": "preprocessing",
-        "function": "min_max_intensity_normalization",
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 0
+        },
         "parent": 0
     },
     "2": {
+        "category": "preprocessing",
+        "function": "min_max_intensity_normalization",
+        "parent": 1
+    },
+    "3": {
         "category": "preprocessing",
         "function": "median_filter_slice_by_slice",
         "parameter_values": {
             "size": 4
         },
-        "parent": 1
-    },
-    "3": {
-        "category": "preprocessing",
-        "function": "image_smoothing_gaussian_slice_by_slice",
-        "parameter_values": {
-            "sigma": 1.2        
-        },
         "parent": 2
     },
     "4": {
+        "category": "preprocessing",
+        "function": "image_smoothing_gaussian_slice_by_slice",
+        "parameter_values": {
+            "sigma": 1.34
+        },
+        "parent": 3
+    },
+    "5": {
         "category": "core",
         "function": "apply_log_li_threshold",
         "parameter_values": {
@@ -28,11 +36,6 @@
             "thresh_min": 0.1,
             "thresh_max": 1.0
         },
-        "parent": 3
-    },
-    "5": {
-        "category": "core",
-        "function": "label",
         "parent": 4
     },
     "6": {

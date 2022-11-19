@@ -1,5 +1,6 @@
 from skimage.measure import label
 import numpy as np
+from typing import Optional
 
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import hole_filling
@@ -52,7 +53,7 @@ from infer_subc_2d.constants import (
 ##########################
 #  _infer_nuclei
 ##########################
-def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
+def infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Procedure to infer nuclei from linearly unmixed input.
 
@@ -104,7 +105,9 @@ def infer_nuclei(in_img: np.ndarray, soma_mask: np.ndarray) -> np.ndarray:
     # # wrapper to remoce_small_objects
     # nuclei_object = remove_small_holes(nuclei_object, hole_width ** 2 )
     nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
-    nuclei_object = apply_mask(nuclei_object, soma_mask)
+
+    if soma_mask is not None:
+        nuclei_object = apply_mask(nuclei_object, soma_mask)
 
     small_object_width = 15
     nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_width**2, connectivity=1)

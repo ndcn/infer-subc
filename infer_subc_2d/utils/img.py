@@ -210,7 +210,8 @@ def min_max_intensity_normalization(struct_img):
     """
     strech_min = struct_img.min()
     strech_max = struct_img.max()
-
+    # do we need to convert to float?
+    # #.astype(np.double)
     struct_img = (struct_img - strech_min + 1e-8) / (strech_max - strech_min + 1e-8)
 
     return struct_img
@@ -328,20 +329,27 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         return response > cutoff
 
 
-def select_channel_from_raw(img_in: np.ndarray, ch: Union[int, Tuple[int]]) -> np.ndarray:
+def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) -> np.ndarray:
     """ "
     Parameters:
     ------------
-    img_in: np.ndarray
+    img_in : np.ndarray
 
-    ch:int
+    chan : int
         channel to extract.
 
     Returns:
     -------------
         np.ndarray
     """
-    return img_in[ch]
+    return img_in[chan]
+
+
+def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np.ndarray:
+    """
+    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    """
+    return img_in[:, list(z_slice), :, :]
 
 
 def aggregate_signal_channels(

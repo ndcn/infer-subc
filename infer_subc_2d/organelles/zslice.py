@@ -21,10 +21,21 @@ from infer_subc_2d.utils.img import (
     min_max_intensity_normalization,
     apply_log_li_threshold,
     choose_agg_signal_zmax,
+    select_z_from_raw,
 )
 
 
-def find_optimal_Z(img_data):
+def get_optimal_Z_image(img_data: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    """
+    nuc_ch = NUC_CH
+    ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH)
+    optimal_Z = find_optimal_Z_params(img_data, nuc_ch, ch_to_agg)
+    return select_z_from_raw(img_data, optimal_Z)
+
+
+def find_optimal_Z(img_data: np.ndarray) -> int:
     """
     Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
     """

@@ -1,6 +1,6 @@
 {
     "1": {
-        "category": "extract",
+        "category": "extraction",
         "function": "select_channel_from_raw",
         "parameter_values": {
             "chan": 0

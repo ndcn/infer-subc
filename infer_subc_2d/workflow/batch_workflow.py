@@ -12,7 +12,14 @@ from .workflow_definition import WorkflowDefinition
 
 SUPPORTED_FILE_EXTENSIONS = ["tiff", "tif", "czi"]
 
+# from infer_subc_2d.utils.file_io import reader_function
+from ..utils.file_io import reader_function
+from typing import Union
+from pathlib import Path
 
+PathLike = Union[str, Path]
+
+# TODO: fix channel index.
 class BatchWorkflow:
     """
     Represents a batch of workflows to process.
@@ -25,7 +32,7 @@ class BatchWorkflow:
         workflow_definition: WorkflowDefinition,
         input_dir: Union[str, Path],
         output_dir: Union[str, Path],
-        channel_index: int = 0,
+        channel_index: int = -1,  # JAH: change so all negative indices return ALL the channels/zslices
     ):
         if workflow_definition is None:
             raise ArgumentNullError("workflow_definition")
@@ -113,8 +120,10 @@ class BatchWorkflow:
                 print(f"Start file {f.name}")
 
                 # read and format image in the way we expect
-                read_image = AICSImage(f)
-                image_from_path = self._format_image_to_3d(read_image)
+
+                # read_image = AICSImage(f)
+                # image_from_path = self._format_image_to_3d(read_image)
+                image_from_path = self._format_image_to_3d(f)
 
                 # Run workflow on image
                 workflow = Workflow(self._workflow_definition, image_from_path)
@@ -125,6 +134,7 @@ class BatchWorkflow:
                 # Save output
                 output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
                 result = workflow.get_most_recent_result()
+                # TODO:  replace with ome.tiff.writer ...
                 OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
 
                 msg = f"SUCCESS: {f}. Output saved at {output_path}"
@@ -159,26 +169,40 @@ class BatchWorkflow:
             )
         self._write_to_log_file(report)
 
-    def _format_image_to_3d(self, image: AICSImage) -> np.ndarray:
+    # def _format_image_to_3d(self, image: AICSImage) -> np.ndarray:
+    def _format_image_to_3d(self, image_path: PathLike) -> np.ndarray:
         """
         Format images in the way that aics-segmention expects for most workflows (3d, zyx)
 
         Params:
-            image_path (AICSImage): image to format
+            image_path (Path or str): image to format
 
         Returns:
             np.ndarray: segment-able image for aics-segmentation
         """
-        if len(image.scenes) > 1:
-            raise ValueError("Multi-Scene images are unsupported")
+        # if len(image.scenes) > 1:
+        #     raise ValueError("Multi-Scene images are unsupported")
 
-        if image.dims.T > 1:
-            raise ValueError("Timelapse images are unsupported.")
+        # if image.dims.T > 1:
+        #     raise ValueError("Timelapse images are unsupported.")
 
-        if image.dims.C > 1:
-            return image.get_image_data("ZYX", C=self._channel_index)
+        # if image.dims.C > 1:
+        #     return image.get_image_data("ZYX", C=self._channel_index)
 
-        return image.get_image_data("ZYX")
+        # return image.get_image_data("ZYX")
+        # JAH: refactdor to use reader_function
+        data, meta, layer_type = reader_function(image_path)[0]
+        name = str(image_path).split("/")[-1].split(".")[0]
+        channel_names = meta.pop("name")  # list of names for each layer
+        meta["channel_names"] = channel_names
+        meta["file_name"] = name
+        layer_attributes = {"name": name, "metadata": meta}
+        # return [(data, layer_attributes, layer_type)]  # (data,meta) is fine since 'image' is default
+        # JAH: refactor to make channel_index be a zslice
+        if self._channel_index < 0:
+            return data
+        else:
+            return data[:, self._channel_index, :, :]
 
     def _format_output(self, image: np.ndarray):
         """

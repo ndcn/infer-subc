@@ -5,7 +5,7 @@ from skimage.morphology import binary_erosion, binary_dilation
 ##########################
 #  infer_cytosol
 ##########################
-def infer_cytosol(nuclei_object, soma_mask, erode_nuclei=True):
+def infer_cytosol(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei: bool = True) -> np.ndarray:
     """
     Procedure to infer infer from linearly unmixed input. (logical soma AND NOT nucleus)
 

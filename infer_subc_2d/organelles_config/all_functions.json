@@ -546,6 +546,12 @@
         "python::function": "min_max_intensity_normalization",
         "python::module": "infer_subc_2d.utils.img"
     },
+    "nfer_soma": {
+        "name": "infer infer_soma",
+        "parameters": null,
+        "python::function": "infer_soma",
+        "python::module": "infer_subc_2d.organelles"
+    },
     "non_linear_soma_transform_MCZ": {
         "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
         "parameters": null,

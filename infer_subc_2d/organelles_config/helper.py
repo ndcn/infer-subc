@@ -30,8 +30,8 @@ def add_function_spec_to_widget_json(function_name, function_dict, json_file_nam
 def write_workflow_json(wf_name, wf_dict):
     """helper function to dump dictionary of workflows to "configuration" jsons"""
     # read all_functions.json into dict
-    # if not wf_name.startswith("conf"):
-    #     wf_name = f"conf_{wf_name}"
+    if not wf_name.startswith("conf"):
+        wf_name = f"conf_{wf_name}"
     path = Directories.get_structure_config_dir() / f"{wf_name}.json"
 
     # re-write file
