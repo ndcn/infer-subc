@@ -349,7 +349,12 @@ def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np
     """
     Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
     """
-    return img_in[:, list(z_slice), :, :]
+    if isinstance(z_slice, int):
+        z_slice = [z_slice]
+    else:
+        z_slice = list(z_slice)
+
+    return img_in[:, z_slice, :, :]
 
 
 def aggregate_signal_channels(
@@ -389,7 +394,7 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     total_florescence_ = aggregate_signal_channels(img_in, chs)
     if mask is not None:
         total_florescence_[mask] = 0.0
-    return total_florescence_.sum(axis=(1, 2)).argmax()
+    return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
 
 # TODO: consider MOVE to soma.py?

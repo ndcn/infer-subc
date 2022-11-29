@@ -186,6 +186,30 @@
         "python::function": "find_optimal_Z",
         "python::module": "infer_subc_2d.utils.img"
     },
+    "fixed_find_optimal_Z": {
+        "name": "find the optimal Z slice (fixed parameters)",
+        "parameters": null,
+        "python::function": "fixed_find_optimal_Z",
+        "python::module": "infer_subc_2d.organelles"
+    },
+    "fixed_get_optimal_Z_img": {
+        "name": "extract optimal Z slice (fixed parameters)",
+        "parameters": null,
+        "python::function": "fixe_get_optimal_Z_image",
+        "python::module": "infer_subc_2d.organelles"
+    },
+    "fixed_infer_nuclei": {
+        "name": "infer nuclei",
+        "parameters": null,
+        "python::function": "fixed_infer_nuclei",
+        "python::module": "infer_subc_2d.organelles"
+    },
+    "fixed_infer_soma": {
+        "name": " infer soma mask (fixed parameters)",
+        "parameters": null,
+        "python::function": "fixed_infer_soma",
+        "python::module": "infer_subc_2d.organelles"
+    },
     "gaussian_smoothing_3D": {
         "name": "Gaussian Smoothing 3D",
         "parameters": {
@@ -274,13 +298,155 @@
     },
     "infer_nuclei": {
         "name": "infer nuclei",
-        "parameters": null,
+        "parameters": {
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "median_sz": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 15,
+                "min": 3,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "threshold_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            }
+        },
         "python::function": "infer_nuclei",
         "python::module": "infer_subc_2d.organelles"
     },
     "infer_soma": {
-        "name": "extract optimal Z slice",
-        "parameters": null,
+        "name": " infer soma mask",
+        "parameters": {
+            "gauss_sig_nuc": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "gauss_sig_soma": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "max_hole_w_nuc": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "max_hole_w_soma": {
+                "data_type": "int",
+                "increment": 2,
+                "max": 100,
+                "min": 20,
+                "widget_type": "slider"
+            },
+            "median_sz_nuc": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 15,
+                "min": 3,
+                "widget_type": "slider"
+            },
+            "median_sz_soma": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 15,
+                "min": 3,
+                "widget_type": "slider"
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "small_obj_w_nuc": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            },
+            "small_obj_w_soma": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "threshold_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            }
+        },
         "python::function": "infer_soma",
         "python::module": "infer_subc_2d.organelles"
     },
@@ -546,12 +712,6 @@
         "python::function": "min_max_intensity_normalization",
         "python::module": "infer_subc_2d.utils.img"
     },
-    "nfer_soma": {
-        "name": "infer infer_soma",
-        "parameters": null,
-        "python::function": "infer_soma",
-        "python::module": "infer_subc_2d.organelles"
-    },
     "non_linear_soma_transform_MCZ": {
         "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
         "parameters": null,
@@ -567,7 +727,7 @@
     "raw_soma_MCZ": {
         "name": "define weighted aggregate soma signal (MCZ-cellprofiler)",
         "parameters": null,
-        "python::function": "non_linear_soma_transform_MCZ",
+        "python::function": "raw_soma_MCZ",
         "python::module": "infer_subc_2d.organelles"
     },
     "remove_hot_pixel": {

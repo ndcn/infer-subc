@@ -10,7 +10,7 @@ Select channel `chan` from the the `np.ndarray`, with `ndim = (ch,time, X, Y)` .
 ### Z-extract
 
 #### infer_optimal_Z
-Finds an *optimal* Z slice by smoothing and thresholding (`log Li`) an aggregated total florescence signal which is NOT the nuclei.  It implicitly calls the procedure with `nuc_ch = NUC_CH` and `ch_to_agg = ( LYSO_CH ,MITO_CH , GOLGI_CH ,PEROXI_CH , ER_CH , LIPID_CH )` hard coded.
+Finds an *optimal* Z slice by smoothing and thresholding (`log Li`) an aggregated total florescence signal which is NOT the nuclei.  It implicitly calls the procedure with `nuc_ch = NUC_CH` and `ch_to_agg = ( LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH )` hard coded.
 * no parameters
 
 ### masks

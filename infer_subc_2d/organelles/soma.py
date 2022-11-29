@@ -8,10 +8,7 @@ import numpy as np
 
 from aicssegmentation.core.utils import hole_filling
 
-from aicssegmentation.core.pre_processing_utils import (
-    intensity_normalization,
-    image_smoothing_gaussian_slice_by_slice,
-)
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -24,6 +21,7 @@ from infer_subc_2d.constants import (
     LIPID_CH,
     RESIDUAL_CH,
 )
+
 from infer_subc_2d.utils.img import (
     masked_object_threshold,
     log_transform,
@@ -77,10 +75,204 @@ def non_linear_soma_transform_MCZ(in_img):
 ##########################
 # 1. infer_soma
 ##########################
-def infer_soma(in_img: np.ndarray) -> np.ndarray:
+def infer_soma(
+    in_img: np.ndarray,
+    median_sz_soma: int,
+    gauss_sig_soma: float,
+    median_sz_nuc: int,
+    gauss_sig_nuc: float,
+    mo_adjust: float,
+    mo_cutoff_size: int,
+    threshold_factor: float,
+    thresh_min: float,
+    thresh_max: float,
+    max_hole_w_nuc: int,
+    small_obj_w_nuc: int,
+    max_hole_w_soma: int,
+    small_obj_w_soma: int,
+) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input.
 
+    Parameters:
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+
+    median_sz_soma: int
+        width of median filter for _soma_ signal
+
+    gauss_sig_soma: float
+        sigma for gaussian smoothing of _soma_ signal
+
+    median_sz_nuc: int
+        width of median filter for _soma_ signal
+
+    gauss_sig_nuc: float
+        sigma for gaussian smoothing of _soma_ signal
+
+    mo_adjust: float
+        Masked Object threshold `local_adjust`
+
+    mo_cutoff_size: int
+        Masked Object threshold `size_min`
+
+    threshold_factor: float
+        adjustment factor for log Li threholding
+
+    thresh_min: float
+        abs min threhold for log Li threholding
+
+    thresh_max: float
+        abs max threhold for log Li threholding
+
+    max_hole_w_nuc: int
+        hole filling cutoff for nuclei post-processing
+
+    small_obj_w_nuc: int
+        minimu object size cutoff for nuclei post-processing
+
+    max_hole_w_soma: int
+        hole filling cutoff for soma signal post-processing
+
+    small_obj_w_soma: int
+        minimu object size cutoff for soma signal post-processing
+
+    Returns:
+    -------------
+    soma_mask: np.ndarray
+        a logical/labels object defining boundaries of soma
+
+    """
+    ###################
+    # EXTRACT
+    ###################
+    struct_img = raw_soma_MCZ(in_img)
+
+    nuc_ch = NUC_CH
+    nuclei = min_max_intensity_normalization(in_img[nuc_ch].copy())
+
+    ###################
+    # PRE_PROCESSING
+    ###################
+    ################# part 1- soma
+
+    struct_img = min_max_intensity_normalization(struct_img)
+
+    # make a copy for post-post processing
+    scaled_signal = struct_img.copy()
+
+    # Linear-ish processing
+    struct_img = median_filter_slice_by_slice(struct_img, size=median_sz_soma)
+
+    struct_img = image_smoothing_gaussian_slice_by_slice(struct_img, sigma=gauss_sig_soma)
+
+    struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
+
+    ################# part 2 - nuclei
+
+    nuclei = median_filter_slice_by_slice(nuclei, size=median_sz_nuc)
+
+    nuclei = image_smoothing_gaussian_slice_by_slice(nuclei, sigma=gauss_sig_nuc)
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    # "Masked Object Thresholding" - 3D capable
+    struct_obj = masked_object_threshold(struct_img_non_lin, mo_cutoff_size, mo_adjust)
+
+    ################# part 2 : nuclei thresholding
+    nuclei_object = apply_log_li_threshold(
+        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
+    )
+
+    # # wrapper to remoce_small_objects
+    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=max_hole_w_nuc**2, fill_2d=True)
+
+    nuclei_object = size_filter_2D(nuclei_object, min_size=small_obj_w_nuc**2, connectivity=1)
+
+    nuclei_labels = label(nuclei_object)
+    ###################
+    # POST_PROCESSING
+    ###################
+    struct_obj = hole_filling(struct_obj, hole_min=0, hole_max=max_hole_w_soma**2, fill_2d=True)
+
+    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w_soma**2, connectivity=1)
+
+    labels_out = masked_inverted_watershed(
+        struct_img, nuclei_labels, struct_obj
+    )  # np.logical_or(struct_obj, NU_labels > 0)
+
+    ###################
+    # POST- POST_PROCESSING
+    ###################
+    # keep the "SOMA" label which contains the highest total signal
+    soma_out = choose_max_label(struct_img, labels_out)
+
+    return soma_out
+
+
+##########################
+# 1. fixed_infer_soma
+##########################
+def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+
+    Parameters:
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+
+    Returns:
+    -------------
+    soma_mask: np.ndarray
+        a logical/labels object defining boundaries of soma
+    """
+
+    ###################
+    # PARAMETERS
+    ###################
+    median_sz_soma = 15
+    gauss_sig_soma = 1.34
+    median_sz_nuc = 4
+    gauss_sig_nuc = 1.34
+    mo_adjust = 0.5
+    mo_cutoff_size = 100
+    threshold_factor = 0.9
+    thresh_min = 0.1
+    thresh_max = 1.0
+    max_hole_w_nuc = 5
+    small_obj_w_nuc = 15
+    max_hole_w_soma = 40
+    small_obj_w_soma = 15
+
+    soma_out = infer_soma(
+        in_img,
+        median_sz_soma,
+        gauss_sig_soma,
+        median_sz_nuc,
+        gauss_sig_nuc,
+        mo_adjust,
+        mo_cutoff_size,
+        threshold_factor,
+        thresh_min,
+        thresh_max,
+        max_hole_w_nuc,
+        small_obj_w_nuc,
+        max_hole_w_soma,
+        small_obj_w_soma,
+    )
+
+    return soma_out
+
+
+##########################
+# DEPRICATED fixed_infer_soma
+##########################
+def depricated_fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
     Parameters:
     ------------
     in_img: np.ndarray

@@ -53,9 +53,101 @@ from infer_subc_2d.constants import (
 ##########################
 #  _infer_nuclei
 ##########################
-def infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def infer_nuclei( in_img: np.ndarray, 
+                            soma_mask: Optional[np.ndarray] = None,
+                            median_sz: int,  
+                            gauss_sig: float,
+                            threshold_factor: float,
+                            thresh_min: float,
+                            thresh_max: float,
+                            max_hole_w: int,
+                            small_obj_w: int
+                        ) -> np.ndarray:
+
     """
-    Procedure to infer nuclei from linearly unmixed input.
+    Procedure to infer soma from linearly unmixed input, 
+    Parameters:
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+
+    soma_mask: Optional[np.ndarray] = None
+        mask
+
+    median_sz: int
+        width of median filter for signal
+
+    gauss_sig: float
+        sigma for gaussian smoothing of  signal
+
+    threshold_factor: float
+        adjustment factor for log Li threholding
+
+    thresh_min: float
+        abs min threhold for log Li threholding
+
+    thresh_max: float
+        abs max threhold for log Li threholding
+
+    max_hole_w: int
+        hole filling cutoff for nuclei post-processing
+
+    small_obj_w: int
+        minimu object size cutoff for nuclei post-processing
+
+    Returns:
+    -------------
+    nuclei_object
+        mask defined extent of NU
+    
+    """
+    nuc_ch = NUC_CH
+
+    ###################
+    # PRE_PROCESSING
+    ###################                
+    nuclei = select_channel_from_raw(in_img, nuc_ch)
+    nuclei = min_max_intensity_normalization( nuclei )
+
+    nuclei = median_filter_slice_by_slice( nuclei,
+                                                                    size=median_sz  )
+
+    nuclei = image_smoothing_gaussian_slice_by_slice(  nuclei,
+                                                                                                sigma=gauss_sig )
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    nuclei_object = apply_log_li_threshold(nuclei, 
+                                                                    threshold_factor=threshold_factor, 
+                                                                    thresh_min=thresh_min, 
+                                                                    thresh_max=thresh_max)
+    # NU_labels = label(nuclei_object)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    nuclei_object = hole_filling(nuclei_object, 
+                                                    hole_min=0, 
+                                                    hole_max=max_hole_w**2, 
+                                                    fill_2d=True)
+
+    if soma_mask is not None:
+        nuclei_object = apply_mask(nuclei_object, soma_mask)
+
+    nuclei_object = size_filter_2D(nuclei_object, 
+                                                                min_size= small_obj_w**2, 
+                                                                connectivity=1)
+
+    return nuclei_object
+
+
+##########################
+#  fixed_infer_nuclei
+##########################
+def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = None) -> np.ndarray:
+    """
+    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters:
     ------------
@@ -64,52 +156,30 @@ def infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = None) -> 
 
     soma_mask: np.ndarray
         mask
-
+ 
     Returns:
     -------------
     nuclei_object
         mask defined extent of NU
-
+    
     """
-
-    ###################
-    # PRE_PROCESSING
-    ###################
     nuc_ch = NUC_CH
-    nuclei = select_channel_from_raw(in_img, nuc_ch)
-    # nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy() )
-
-    med_filter_size = 4
-    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
-
-    gaussian_smoothing_sigma = 1.34
-    nuclei = image_smoothing_gaussian_slice_by_slice(nuclei, sigma=gaussian_smoothing_sigma)
-
-    ###################
-    # CORE_PROCESSING
-    ###################
-    # struct_obj = struct_img > filters.threshold_li(struct_img)
-    threshold_factor = 0.9  # from cellProfiler
+    median_sz = 4   
+    gauss_sig = 1.34
+    threshold_factor = 0.9
     thresh_min = 0.1
     thresh_max = 1.0
-    nuclei_object = apply_log_li_threshold(
-        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
-    )
+    max_hole_w = 5
+    small_obj_w = 15
 
-    NU_labels = label(nuclei_object)
-    ###################
-    # POST_PROCESSING
-    ###################
-    hole_width = 5
-    # # wrapper to remoce_small_objects
-    # nuclei_object = remove_small_holes(nuclei_object, hole_width ** 2 )
-    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
+    return infer_nuclei( in_img,
+                                    soma_mask,
+                                    median_sz,
+                                    gauss_sig,
+                                    threshold_factor,
+                                    thresh_min,
+                                    thresh_max,
+                                    max_hole_w,
+                                    small_obj_w  )
 
-    if soma_mask is not None:
-        nuclei_object = apply_mask(nuclei_object, soma_mask)
-
-    small_object_width = 15
-    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_width**2, connectivity=1)
-
-    return nuclei_object
+    

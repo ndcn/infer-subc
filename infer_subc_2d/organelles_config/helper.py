@@ -2,7 +2,9 @@ import json
 from infer_subc_2d.utils.directories import Directories
 
 
-def add_function_spec_to_widget_json(function_name, function_dict, json_file_name="all_functions.json"):
+def add_function_spec_to_widget_json(
+    function_name, function_dict, json_file_name="all_functions.json", overwrite=False
+) -> int:
     """helper function to compose / update list of functions for Workflows"""
     # read all_functions.json into dict
     path = Directories.get_structure_config_dir() / json_file_name
@@ -16,9 +18,12 @@ def add_function_spec_to_widget_json(function_name, function_dict, json_file_nam
     # add function entry
     if function_name in obj.keys():
         print(f"function {function_name} is already in {json_file_name}")
-        return 0
-    else:
-        obj[function_name] = function_dict  # write updated all_functions.json
+        if overwrite:
+            print(f"overwriting  {function_name}")
+        else:
+            return 0
+
+    obj[function_name] = function_dict  # write updated all_functions.json
 
     # re-write file
     with open(path, "w") as file:

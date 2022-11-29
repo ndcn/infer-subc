@@ -25,26 +25,49 @@ from infer_subc_2d.utils.img import (
 )
 
 
-def get_optimal_Z_image(img_data: np.ndarray) -> np.ndarray:
+def get_optimal_Z_image(img_data: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> np.ndarray:
     """
-    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    Procedure to infer _best_ Zslice from linearly unmixed input
+
+    Parameters:
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+
+    nuc_ch: int
+        channel with nuclei signal
+
+    ch_to_agg: Tuple[int]
+        tuple of channels to aggregate for selecting Z
+
+    Returns:
+    -------------
+    np.ndarray
+        image array with single selected Z-slice   (Channels, 1, X, Y)
+
     """
-    nuc_ch = NUC_CH
-    ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH)
     optimal_Z = find_optimal_Z_params(img_data, nuc_ch, ch_to_agg)
     return select_z_from_raw(img_data, optimal_Z)
 
 
-def find_optimal_Z(img_data: np.ndarray) -> int:
+def fixed_get_optimal_Z_image(img_data: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    """
+    optimal_Z = fixed_find_optimal_Z(img_data)
+    return select_z_from_raw(img_data, optimal_Z)
+
+
+def fixed_find_optimal_Z(img_data: np.ndarray) -> int:
     """
     Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
     """
     nuc_ch = NUC_CH
     ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH)
-    return find_optimal_Z_params(img_data, nuc_ch, ch_to_agg)
+    return find_optimal_Z(img_data, nuc_ch, ch_to_agg)
 
 
-def find_optimal_Z_params(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> int:
+def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> int:
     """
     Procedure to infer _best_ Zslice  from linearly unmixed input.
 
@@ -53,11 +76,11 @@ def find_optimal_Z_params(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int
     raw_img: np.ndarray
         a ch,z,x,y - image containing florescent signal
 
-    nuclei_ch: int
-        holds the needed parameters
+    nuc_ch: int
+        channel with nuclei signal
 
-    nuclei_ch: int
-        holds the needed parameters
+    ch_to_agg: Tuple[int]
+        tuple of channels to aggregate for selecting Z
 
     Returns:
     -------------
