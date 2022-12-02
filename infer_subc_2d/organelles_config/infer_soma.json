@@ -67,7 +67,7 @@
         "category": "core",
         "function": "apply_log_li_threshold",
         "parameter_values": {
-            "threshold_factor": 0.9,
+            "thresh_factor": 0.9,
             "thresh_min": 0.1,
             "thresh_max": 1.0
         },

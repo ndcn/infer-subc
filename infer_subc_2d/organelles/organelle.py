@@ -85,11 +85,11 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(struct_img)
 
-    threshold_factor = 0.9  # from cellProfiler
+    thresh_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    threshold = min(max(threshold_value_log * threshold_factor, thresh_min), thresh_max)
-    out_p["threshold_factor"] = threshold_factor
+    threshold = min(max(threshold_value_log * thresh_factor, thresh_min), thresh_max)
+    out_p["thresh_factor"] = thresh_factor
     out_p["thresh_min"] = thresh_min
     out_p["thresh_max"] = thresh_max
 

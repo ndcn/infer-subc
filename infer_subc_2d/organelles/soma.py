@@ -23,13 +23,14 @@ from infer_subc_2d.constants import (
 )
 
 from infer_subc_2d.utils.img import (
-    masked_object_threshold,
+    masked_object_thresh,
     log_transform,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
     apply_log_li_threshold,
     size_filter_2D,
     choose_max_label,
+    select_channel_from_raw,
 )
 
 
@@ -81,9 +82,10 @@ def infer_soma(
     gauss_sig_soma: float,
     median_sz_nuc: int,
     gauss_sig_nuc: float,
+    mo_method: str,
     mo_adjust: float,
     mo_cutoff_size: int,
-    threshold_factor: float,
+    thresh_factor: float,
     thresh_min: float,
     thresh_max: float,
     max_hole_w_nuc: int,
@@ -98,43 +100,38 @@ def infer_soma(
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
-
     median_sz_soma: int
         width of median filter for _soma_ signal
-
     gauss_sig_soma: float
         sigma for gaussian smoothing of _soma_ signal
-
     median_sz_nuc: int
         width of median filter for _soma_ signal
-
     gauss_sig_nuc: float
         sigma for gaussian smoothing of _soma_ signal
-
+    obj_min_area: int
+        Masked Object threshold `size_min`
+    obj_min_area: int
+         the size filter for excluding small object before applying local threshold
+    mo_method: str
+         which method to use for calculating global threshold. Options include:
+         "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
+         "ave" refers the average of "triangle" threshold and "mean" threshold.
     mo_adjust: float
         Masked Object threshold `local_adjust`
-
     mo_cutoff_size: int
         Masked Object threshold `size_min`
-
-    threshold_factor: float
+    thresh_factor: float
         adjustment factor for log Li threholding
-
     thresh_min: float
         abs min threhold for log Li threholding
-
     thresh_max: float
         abs max threhold for log Li threholding
-
     max_hole_w_nuc: int
         hole filling cutoff for nuclei post-processing
-
     small_obj_w_nuc: int
         minimu object size cutoff for nuclei post-processing
-
     max_hole_w_soma: int
         hole filling cutoff for soma signal post-processing
-
     small_obj_w_soma: int
         minimu object size cutoff for soma signal post-processing
 
@@ -144,13 +141,14 @@ def infer_soma(
         a logical/labels object defining boundaries of soma
 
     """
+    nuc_ch = NUC_CH
     ###################
     # EXTRACT
     ###################
     struct_img = raw_soma_MCZ(in_img)
 
-    nuc_ch = NUC_CH
-    nuclei = min_max_intensity_normalization(in_img[nuc_ch].copy())
+    nuclei = select_channel_from_raw(in_img, nuc_ch)
+    nuclei = min_max_intensity_normalization(nuclei)
 
     ###################
     # PRE_PROCESSING
@@ -178,12 +176,20 @@ def infer_soma(
     ###################
     # CORE_PROCESSING
     ###################
-    # "Masked Object Thresholding" - 3D capable
-    struct_obj = masked_object_threshold(struct_img_non_lin, mo_cutoff_size, mo_adjust)
-
+    struct_obj = masked_object_thresh(
+        struct_img_non_lin, th_method=mo_method, cutoff_size=mo_cutoff_size, th_adjust=mo_adjust
+    )
+    # # "Masked Object Thresholding" - 3D capable
+    # struct_obj = MO(
+    #     struct_img_non_lin,
+    #     global_thresh_method=mo_method,
+    #     object_minArea=mo_cutoff_size,
+    #     local_adjust=mo_adjust,
+    #     return_object=False
+    # )
     ################# part 2 : nuclei thresholding
     nuclei_object = apply_log_li_threshold(
-        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
+        nuclei, thresh_factor=thresh_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
 
     # # wrapper to remoce_small_objects
@@ -237,9 +243,10 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
     gauss_sig_soma = 1.34
     median_sz_nuc = 4
     gauss_sig_nuc = 1.34
+    mo_method = "ave"
     mo_adjust = 0.5
     mo_cutoff_size = 100
-    threshold_factor = 0.9
+    thresh_factor = 0.9
     thresh_min = 0.1
     thresh_max = 1.0
     max_hole_w_nuc = 5
@@ -253,9 +260,10 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
         gauss_sig_soma,
         median_sz_nuc,
         gauss_sig_nuc,
+        mo_method,
         mo_adjust,
         mo_cutoff_size,
-        threshold_factor,
+        thresh_factor,
         thresh_min,
         thresh_max,
         max_hole_w_nuc,
@@ -263,109 +271,5 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
         max_hole_w_soma,
         small_obj_w_soma,
     )
-
-    return soma_out
-
-
-##########################
-# DEPRICATED fixed_infer_soma
-##########################
-def depricated_fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
-    """
-    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
-    Parameters:
-    ------------
-    in_img: np.ndarray
-        a 3d image containing all the channels
-
-    Returns:
-    -------------
-    soma_mask: np.ndarray
-        a logical/labels object defining boundaries of soma
-
-    """
-    ###################
-    # EXTRACT
-    ###################
-    struct_img = raw_soma_MCZ(in_img)
-
-    ################# part 2 - nuclei
-    nuc_ch = NUC_CH
-    nuclei = select_channel_from_raw(in_img, nuc_ch)
-    # nuclei = min_max_intensity_normalization(in_img[NUC_CH].copy() )
-
-    ###################
-    # PRE_PROCESSING
-    ###################
-    ################# part 1- soma
-
-    struct_img = min_max_intensity_normalization(struct_img)
-    # make a copy for post-post processing
-    scaled_signal = struct_img.copy()
-
-    # Linear-ish processing
-    med_filter_size = 15
-    struct_img = median_filter_slice_by_slice(struct_img, size=med_filter_size)
-
-    gaussian_smoothing_sigma = 1.4
-    struct_img = image_smoothing_gaussian_slice_by_slice(struct_img, sigma=gaussian_smoothing_sigma)
-
-    struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
-
-    ################# part 2 - nuclei
-    med_filter_size = 4
-    # structure_img_median_3D = ndi.median_filter(struct_img,    size=med_filter_size  )
-    nuclei = median_filter_slice_by_slice(nuclei, size=med_filter_size)
-
-    gaussian_smoothing_sigma = 1.34
-    nuclei = image_smoothing_gaussian_slice_by_slice(nuclei, sigma=gaussian_smoothing_sigma)
-
-    ###################
-    # CORE_PROCESSING
-    ###################
-    local_adjust = 0.5
-    size_min = 100
-    # "Masked Object Thresholding" - 3D capable
-    struct_obj = masked_object_threshold(struct_img_non_lin, size_min, local_adjust)
-
-    ################# part 2 : nuclei thresholding
-    # struct_obj = struct_img > filters.threshold_li(struct_img)
-    threshold_factor = 0.9  # from cellProfiler
-    thresh_min = 0.1
-    thresh_max = 1.0
-    nuclei_object = apply_log_li_threshold(
-        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
-    )
-
-    hole_width = 5
-    # # wrapper to remoce_small_objects
-    # nuclei_object = remove_small_holes(nuclei_object, hole_width**2)
-    nuclei_object = hole_filling(nuclei_object, hole_min=0, hole_max=hole_width**2, fill_2d=True)
-
-    small_object_width = 15
-    nuclei_object = size_filter_2D(nuclei_object, min_size=small_object_width**2, connectivity=1)
-
-    nuclei_labels = label(nuclei_object)
-    ###################
-    # POST_PROCESSING
-    ###################
-
-    # 2D
-    hole_max = 25
-    struct_obj = hole_filling(struct_obj, hole_min=0, hole_max=hole_max**2, fill_2d=True)
-    # struct_obj = remove_small_holes(struct_obj, hole_max ** 2 )
-
-    small_object_width = 15
-    struct_obj = size_filter_2D(struct_obj, min_size=small_object_width**2, connectivity=1)
-
-    labels_out = masked_inverted_watershed(
-        struct_img, nuclei_labels, struct_obj
-    )  # np.logical_or(struct_obj, NU_labels > 0)
-
-    ###################
-    # POST- POST_PROCESSING
-    ###################
-    # keep the "SOMA" label which contains the highest total signal
-    soma_out = choose_max_label(struct_img, labels_out)
 
     return soma_out

@@ -27,7 +27,7 @@ def add_function_spec_to_widget_json(
 
     # re-write file
     with open(path, "w") as file:
-        json.dump(obj, file, indent=4, sort_keys=True)
+        json.dump(obj, file, indent=4, sort_keys=False)
 
     return 1
 

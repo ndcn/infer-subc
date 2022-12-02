@@ -82,7 +82,7 @@ Wrapper to `median`filter slice-by-slice (which is a single Z here)
 ### apply_log_li_threshold
 CORE
 Apply Log Li threholding.  Applies a threshold on the log-intensities according to the Li procedure. 
-* `threshold_factor` indicates a scaling to apply to the Li threhold.
+* `thresh_factor` indicates a scaling to apply to the Li threhold.
 * `thresh_min` is the minimum possible threhold.
 * `thresh_max` is the maximum possible threhold.
 

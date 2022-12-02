@@ -10,6 +10,7 @@ from aicssegmentation.core.utils import size_filter
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
+from aicssegmentation.core.vessel import filament_2d_wrapper
 
 from typing import Tuple, List, Union, Any
 
@@ -140,33 +141,38 @@ def threshold_multiotsu_log(image_in):
     return thresholds
 
 
-def masked_object_threshold(structure_img_smooth: np.ndarray, size_min: int, local_adjust: float) -> np.ndarray:
+def masked_object_thresh(
+    structure_img_smooth: np.ndarray, th_method: str, cutoff_size: int, th_adjust: float
+) -> np.ndarray:
     """
     wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
     Parameters:
     ------------
     structure_img_smooth: np.ndarray
         a 3d image
+    th_method: str
+         which method to use for calculating global threshold. Options include:
+         "triangle", "median", and "ave_tri_med".
+         "ave_tri_med" refers the average of "triangle" threshold and "mean" threshold.
+    cutoff_size: int
+        Masked Object threshold `size_min`
+    th_adjust: float
+        Masked Object threshold `local_adjust`
 
-    size_min: int
-        the linear "size" limit
-
-    local_adjust: float
-        adjustment
 
     Returns:
     -------------
         np.ndimage
 
     """
-    struct_obj, _bw_low_level = MO(
+    struct_obj = MO(
         structure_img_smooth,
-        global_thresh_method="ave",
-        object_minArea=size_min,
+        global_thresh_method=th_method,
+        object_minArea=cutoff_size,
         extra_criteria=True,
-        local_adjust=local_adjust,
-        return_object=True,
-        dilate=True,
+        local_adjust=th_adjust,
+        return_object=False,
+        dilate=False,  # WARNING: dilate=True causes a bug if there is only one Z
     )
     return struct_obj
 
@@ -217,7 +223,7 @@ def min_max_intensity_normalization(struct_img):
     return struct_img
 
 
-def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
     Parameters:
@@ -225,11 +231,13 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     img_in: np.ndimage
 
     method: str="otsu"  or "li"
-    threshold_factor:float=1.0  scaling value for threshold
-
+        method for applying threshold.  "otsu"  or "li", "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
+    thresh_factor:float=1.0
+        scaling value for threshold
     thresh_min= None or min
-
+        absolute minumum for threshold
     thresh_max = None or max
+        absolute maximum for threshold
 
     Returns:
     -------------
@@ -253,7 +261,7 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     else:  # default to "otsu"
         threshold_val = threshold_otsu(img_in)
 
-    threshold = threshold_val * threshold_factor
+    threshold = threshold_val * thresh_factor
 
     if thresh_min is not None:
         threshold = max(threshold, thresh_min)
@@ -262,14 +270,14 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     return img_in > threshold
 
 
-def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
     Parameters:
     ------------
     img_in: np.ndimage
 
-    threshold_factor:float=1.0  scaling value for threshold
+    thresh_factor:float=1.0  scaling value for threshold
 
     thresh_min= None or min
 
@@ -281,7 +289,7 @@ def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh
     """
     # struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(img_in)
-    threshold = threshold_value_log * threshold_factor
+    threshold = threshold_value_log * thresh_factor
 
     if thresh_min is not None:
         threshold = max(threshold, thresh_min)
@@ -504,6 +512,13 @@ def enhance_neurites(image, radius, volumetric=False):
     result[result < 0] = 0
 
     return result
+
+
+def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: float) -> np.ndarray:
+    """filament wrapper to properly pack parameters into filament_2d_wrapper"""
+    f2_param = [[filament_scale, filament_cut]]
+    # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
+    return filament_2d_wrapper(in_img, f2_param)
 
 
 ###___________________DEPRICATED BELOW ___________________

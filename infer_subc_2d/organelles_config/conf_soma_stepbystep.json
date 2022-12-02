@@ -56,10 +56,11 @@
     },
     "9": {
         "category": "core",
-        "function": "masked_object_threshold",
+        "function": "masked_object_thresh",
         "parameter_values": {
-            "local_adjust": 0.5,
-            "size_min": 100
+            "th_method": "ave_tri_med",
+            "cutoff_size": 100,
+            "th_adjust": 0.5
         },
         "parent": 6
     },
@@ -67,7 +68,7 @@
         "category": "core",
         "function": "apply_log_li_threshold",
         "parameter_values": {
-            "threshold_factor": 0.9,
+            "thresh_factor": 0.9,
             "thresh_min": 0.1,
             "thresh_max": 1.0
         },
@@ -92,7 +93,7 @@
         "parent": 11
     },
     "13": {
-        "category": "core",
+        "category": "postprocessing",
         "function": "label",
         "parent": 12
     },

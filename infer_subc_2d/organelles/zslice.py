@@ -99,11 +99,11 @@ def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> i
     nuclei = image_smoothing_gaussian_slice_by_slice(
         nuclei, sigma=gaussian_smoothing_sigma, truncate_range=gaussian_smoothing_truncate_range
     )
-    threshold_factor = 0.9  # from cellProfiler
+    thresh_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
     struct_obj = apply_log_li_threshold(
-        nuclei, threshold_factor=threshold_factor, thresh_min=thresh_min, thresh_max=thresh_max
+        nuclei, thresh_factor=thresh_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
 
     optimal_Z = choose_agg_signal_zmax(raw_img, ch_to_agg, mask=struct_obj)
