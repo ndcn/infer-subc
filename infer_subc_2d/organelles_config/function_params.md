@@ -3,6 +3,103 @@
 
 ***Note: the parameters described here are only for the widgets in the Napari plugin. Not all parameters are exposed to the widget for the sake of simplicity. For programmer users, please refer the full documentation to see the detailed APIs.***  
 
+## infer_subc_2d functions - helpers
+
+### Select a channel from raw multi-chan image
+Select channel `chan` from the the `np.ndarray`, with `ndim = (ch,time, X, Y)` . E.g. an EXTRACT
+### Z-extract
+
+#### infer_optimal_Z
+Finds an *optimal* Z slice by smoothing and thresholding (`log Li`) an aggregated total florescence signal which is NOT the nuclei.  It implicitly calls the procedure with `nuc_ch = NUC_CH` and `ch_to_agg = ( LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH )` hard coded.
+* no parameters
+
+### masks
+#### apply_mask
+***This function takes two inputs.***
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+
+This function is commonly used to mask out some area from a specific segmentation.
+* `value`: all the pixels in **Input 1** that are 1 in the mask image will be set to `value`.   
+
+#### infer_soma
+Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) followed by PREPROCESSING --  _normalization_, _filtering_; CORE processing -- threholding; and POST-PROCESSING -- watershed labeling a _masked object thresholded_ nuclei and size filtering. POST-POST-PROCESSING involves choosing the max label.
+* no parameters 
+
+#### infer_cytosol
+Infers the *cytosol* by taking the *soma* masked by the *nuclei*
+* no parameters 
+
+#### infer_cell_membrane (NOT IMPLIMENTED)
+
+
+## infer_subc_2d functions - organelle segmentation wrappers
+
+
+### infer_nuclei
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+
+### infer_lysosome
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+
+### infer_mitocondria
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+### infer_golgi
+
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+* 
+* ### infer_peroxisome
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+### infer_endoplasmic_reticulum
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+### infer_lipid_bodies
+* **Input 1** is an image to be masked on.
+* **Input 2** is the mask, an image of the same size as **Input 1**, but each pixel is either 0 or 1 to represent the mask.
+
+
+## batch_infer 
+
+
+## infer_subc_2d functions - extract, pre-processing, core, post-processing, post-post-processing
+
+
+### min_max_intensity_normalization
+PRE-PROCESSING
+Min-Max normalization so the image are floats between `[0, 1]`.
+* no parameters 
+
+### median_filter_slice_by_slice
+PRE-PROCESSING
+Wrapper to `median`filter slice-by-slice (which is a single Z here)
+* `size` is the linear width of the median filter, which is converted to a (X,Y)=(size,size) footprint.
+
+### apply_log_li_threshold
+CORE
+Apply Log Li threholding.  Applies a threshold on the log-intensities according to the Li procedure. 
+* `thresh_factor` indicates a scaling to apply to the Li threhold.
+* `thresh_min` is the minimum possible threhold.
+* `thresh_max` is the maximum possible threhold.
+
+# size_filter_2D
+POST-PROCESSING
+Wrapper to `aicssegmentation.core.utils.size_filter` to remove small objects.
+* `min_size` is the size in total-pixels that will be kept.
+
+## np.ndimage functions
+
+### label
+POST-PROCESSING / CORE
+Make labels from binary object via `skimage.measure.label` [need to worry about making this a *label* layer?]
+* no parameters 
+
+
+## aics-segmentation functions
 ### 1. Intensity Normalization
 
 Auto-contrast normalizaiton. First, *mean* and standard deviaion (*std*) of the original intensity in image are calculated. Next, the intensity is truncated into range `[mean - a * std, mean + b * std]`, and then rescaled to `[0, 1]`. `a` and `b` are parameters controling effect of the adjustment. 
@@ -27,7 +124,7 @@ A smoothing method that reduce the noise, while retaining the sharp edges.
 * No parameter is needed.
 
 
-### 5. Gaussian Smoothing 3D
+### 5. Gaussian Smoothing 3D (DEPRICATED HERE)
 
 A smoothing method based on 3D Gaussian filter. 
 * `sigma`: the size of the Gaussian kernal. Larger kernel will result in more smoothing effect.

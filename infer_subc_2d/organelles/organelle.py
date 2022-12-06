@@ -85,11 +85,11 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(struct_img)
 
-    threshold_factor = 0.9  # from cellProfiler
+    thresh_factor = 0.9  # from cellProfiler
     thresh_min = 0.1
     thresh_max = 1.0
-    threshold = min(max(threshold_value_log * threshold_factor, thresh_min), thresh_max)
-    out_p["threshold_factor"] = threshold_factor
+    threshold = min(max(threshold_value_log * thresh_factor, thresh_min), thresh_max)
+    out_p["thresh_factor"] = thresh_factor
     out_p["thresh_min"] = thresh_min
     out_p["thresh_max"] = thresh_max
 
@@ -104,14 +104,14 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     struct_obj = morphology.remove_small_holes(struct_obj, hole_width**3)
     out_p["hole_width"] = hole_width
 
-    small_object_max = 5
+    small_object_width = 5
     struct_obj = aicssegmentation.core.utils.size_filter(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
-        min_size=small_object_max**3,
+        min_size=small_object_width**3,
         method="slice_by_slice",  # "3D", #
         connectivity=1,
     )
-    out_p["small_object_max"] = small_object_max
+    out_p["small_object_width"] = small_object_width
 
     retval = (struct_obj, label(struct_obj), out_p)
     return retval
