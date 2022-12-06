@@ -1,544 +1,592 @@
 {
-    "absolute_3d_hessian_eigenvalues": {
-        "name": "Absolute 3d hessian eigenvalues",
+    "intensity_normalization": {
+        "name": "Intensity Normalization",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
         "parameters": {
-            "scale": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            },
-            "sigma": {
-                "data_type": "float",
-                "increment": 0.5,
-                "max": 10,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "whiteonblack": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            }
-        },
-        "python::function": "absolute_3d_hessian_eigenvalues",
-        "python::module": "aicssegmentation.core.hessian"
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 30,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 200,
+                    "increment": 0.005
+                }
+            ]
+        }
     },
-    "apply_log_li_threshold": {
-        "name": "threshold log Li",
+    "intensity_normalization_with_bound": {
+        "name": "Intensity Normalization with bound",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
         "parameters": {
-            "thresh_max": {
-                "data_type": "float",
-                "increment": 0.02,
-                "max": 1.0,
-                "min": 0.06,
-                "widget_type": "slider"
-            },
-            "thresh_min": {
-                "data_type": "float",
-                "increment": 0.01,
-                "max": 0.8,
-                "min": 0.0,
-                "widget_type": "slider"
-            },
-            "threshold_factor": {
-                "data_type": "float",
-                "increment": 0.02,
-                "max": 1.1,
-                "min": 0.3,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "apply_log_li_threshold",
-        "python::module": "infer_subc_2d.utils.img"
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 30,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 200,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 20,
+                    "max": 1000,
+                    "increment": 20
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 50,
+                    "max": 8000,
+                    "increment": 50
+                }
+            ]
+        }
     },
-    "apply_mask": {
-        "name": "label objects",
-        "parameters": null,
-        "python::function": "apply_mask",
-        "python::module": "infer_subc_2d.utils.img"
-    },
-    "compute_3d_hessian_matrix": {
-        "name": "Compute 3D Hessian Matrix",
+    "intensity_normalization_min_max_with_bound": {
+        "name": "Intensity Normalization using min-max with bound",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
         "parameters": {
-            "scale": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            },
-            "sigma": {
-                "data_type": "float",
-                "increment": 0.5,
-                "max": 10,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "whiteonblack": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            }
-        },
-        "python::function": "compute_3d_hessian_matrix",
-        "python::module": "aicssegmentation.core.hessian"
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 50,
+                    "max": 10000,
+                    "increment": 50
+                }
+            ]
+        }
     },
     "edge_preserving_smoothing": {
         "name": "Edge Preserving Smoothing",
-        "parameters": null,
+        "python::module": "aicssegmentation.core.pre_processing_utils",
         "python::function": "edge_preserving_smoothing_3d",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
+        "parameters": null
+    },
+    "filament_filter_slice_by_slice": {
+        "name": "Filament Filter Slice by Slice",
+        "python::module": "aicssegmentation.core.vessel",
+        "python::function": "vesselnessSliceBySlice",
+        "parameters": {
+            "sigmas": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": 0.5,
+                    "max": 5,
+                    "increment": 0.5
+                }
+            ],
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "size_filter": {
+        "name": "Size Filter",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "size_filter",
+        "parameters": {
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            },
+            "method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            }
+        }
+    },
+    "filament_filter_3D": {
+        "name": "Filament Filter 3D",
+        "python::module": "aicssegmentation.core.vessel",
+        "python::function": "vesselness3D",
+        "parameters": {
+            "sigmas": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 5,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "gaussian_smoothing_slice_by_slice": {
+        "name": "Gaussian Smoothing Slice by Slice",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_slice_by_slice",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.5,
+                "max": 10,
+                "increment": 0.5
+            }
+        }
+    },
+    "spot_filter_3D": {
+        "name": "Spot Filter 3D",
+        "python::module": "aicssegmentation.core.seg_dot",
+        "python::function": "dot_3d",
+        "parameters": {
+            "log_sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 0.5,
+                "increment": 0.001
+            }
+        }
+    },
+    "gaussian_smoothing_3D": {
+        "name": "Gaussian Smoothing 3D",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_3d",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.5
+            }
+        }
+    },
+    "spot_filter_slice_by_slice": {
+        "name": "Spot Filter Slice by Slice",
+        "python::module": "aicssegmentation.core.seg_dot",
+        "python::function": "dot_slice_by_slice",
+        "parameters": {
+            "log_sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 1,
+                "increment": 0.001
+            }
+        }
+    },
+    "hole_filling": {
+        "name": "Hole Filling",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "hole_filling",
+        "parameters": {
+            "hole_min": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 50,
+                "increment": 1
+            },
+            "hole_max": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10000,
+                "increment": 1
+            },
+            "fill_2d": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "find_local_maxima": {
+        "name": "Find Local Maxima",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "peak_local_max_wrapper",
+        "parameters": null
+    },
+    "watershed_for_cutting": {
+        "name": "Watershed for cutting",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "watershed_wrapper",
+        "parameters": null
+    },
+    "watershed_for_segmentation": {
+        "name": "Watershed for segmentation",
+        "python::module": "skimage.segmentation",
+        "python::function": "watershed",
+        "parameters": {
+            "watershed_line": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "prune_z_slices": {
+        "name": "Prune Z-Slices",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "prune_z_slices",
+        "parameters": null
+    },
+    "topology_preserving_thinning": {
+        "name": "Topology Preserving Thinning",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "topology_preserving_thinning",
+        "parameters": {
+            "min_thickness": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 10,
+                "increment": 1
+            },
+            "thin": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 200,
+                "increment": 1
+            }
+        }
+    },
+    "masked_object_treshold_high_level": {
+        "name": "Masked Object Threshold - Part 2: high level",
+        "python::module": "aicssegmentation.core.MO_threshold",
+        "python::function": "MO_high_level",
+        "parameters": {
+            "extra_criteria": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            },
+            "local_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            }
+        }
+    },
+    "masked_object_treshold_low_level": {
+        "name": "Masked Object Threshold - Part 1: low level",
+        "python::module": "aicssegmentation.core.MO_threshold",
+        "python::function": "MO_low_level",
+        "parameters": {
+            "global_thresh_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "object_minArea": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "dilate": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "masked_object_treshold_combined": {
+        "name": "Masked Object Threshold - Combined",
+        "python::module": "aicssegmentation.core.MO_threshold",
+        "python::function": "MO",
+        "parameters": {
+            "global_thresh_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "object_minArea": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "extra_criteria": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            },
+            "local_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            },
+            "return_object": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            },
+            "dilate": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "invert_image": {
+        "name": "Invert Image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "invert_mask",
+        "parameters": null
+    },
+    "mask_image": {
+        "name": "Mask Image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "mask_image",
+        "parameters": {
+            "value": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 255,
+                "increment": 1
+            }
+        }
+    },
+    "merge_segmentation": {
+        "name": "Merge Segmentation",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "segmentation_union",
+        "parameters": null
+    },
+    "segmentation_xor": {
+        "name": "Segmentation XOR",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "segmentation_xor",
+        "parameters": null
+    },
+    "generate_seeding_image": {
+        "name": "Generate seeding image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "get_seed_for_objects",
+        "parameters": {
+            "area_min": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 1000,
+                "increment": 100
+            },
+            "area_max": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 50000,
+                "increment": 100
+            },
+            "bg_seed": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "remove_index_object": {
+        "name": "Remove Index Object",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "remove_index_object",
+        "parameters": null
     },
     "extract_boundary_of_objects": {
         "name": "Extract Boundary of Objects",
+        "python::module": "skimage.segmentation",
+        "python::function": "find_boundaries",
         "parameters": {
             "connectivity": {
                 "data_type": "int",
+                "widget_type": "drop-down",
                 "options": [
                     1,
                     2,
                     3
-                ],
-                "widget_type": "drop-down"
+                ]
             },
             "mode": {
                 "data_type": "str",
+                "widget_type": "drop-down",
                 "options": [
                     "thick",
                     "inner",
                     "outer"
-                ],
-                "widget_type": "drop-down"
+                ]
             }
-        },
-        "python::function": "find_boundaries",
-        "python::module": "skimage.segmentation"
+        }
     },
-    "filament_filter_3D": {
-        "name": "Filament Filter 3D",
-        "parameters": {
-            "cutoff": {
-                "data_type": "float",
-                "increment": 0.005,
-                "max": 0.5,
-                "min": 0.005,
-                "widget_type": "slider"
-            },
-            "sigmas": {
-                "data_type": "float",
-                "increment": 0.05,
-                "max": 5,
-                "min": 0,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "vesselness3D",
-        "python::module": "aicssegmentation.core.vessel"
+    "erosion": {
+        "name": "Erosion",
+        "python::module": "skimage.morphology",
+        "python::function": "erosion",
+        "parameters": null
     },
-    "filament_filter_slice_by_slice": {
-        "name": "Filament Filter Slice by Slice",
-        "parameters": {
-            "cutoff": {
-                "data_type": "float",
-                "increment": 0.005,
-                "max": 0.5,
-                "min": 0.005,
-                "widget_type": "slider"
-            },
-            "sigmas": [
-                {
-                    "data_type": "float",
-                    "increment": 0.5,
-                    "max": 5,
-                    "min": 0.5,
-                    "widget_type": "slider"
-                }
-            ]
-        },
-        "python::function": "vesselnessSliceBySlice",
-        "python::module": "aicssegmentation.core.vessel"
-    },
-    "find_local_maxima": {
-        "name": "Find Local Maxima",
-        "parameters": null,
-        "python::function": "peak_local_max_wrapper",
-        "python::module": "aicssegmentation.core.utils"
-    },
-    "find_optimal_Z": {
-        "name": "extract optimal Z slice",
-        "parameters": null,
-        "python::function": "find_optimal_Z",
-        "python::module": "infer_subc_2d.utils.img"
-    },
-    "gaussian_smoothing_3D": {
-        "name": "Gaussian Smoothing 3D",
+    "compute_3d_hessian_matrix": {
+        "name": "Compute 3D Hessian Matrix",
+        "python::module": "aicssegmentation.core.hessian",
+        "python::function": "compute_3d_hessian_matrix",
         "parameters": {
             "sigma": {
+                "widget_type": "slider",
                 "data_type": "float",
-                "increment": 0.25,
-                "max": 12.0,
-                "min": 0.75,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "image_smoothing_gaussian_3d",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
-    },
-    "generate_seeding_image": {
-        "name": "Generate seeding image",
-        "parameters": {
-            "area_max": {
-                "data_type": "int",
-                "increment": 100,
-                "max": 50000,
                 "min": 0,
-                "widget_type": "slider"
+                "max": 10,
+                "increment": 0.5
             },
-            "area_min": {
-                "data_type": "int",
-                "increment": 100,
-                "max": 1000,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "bg_seed": {
+            "scale": {
+                "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
                     true,
                     false
-                ],
-                "widget_type": "drop-down"
-            }
-        },
-        "python::function": "get_seed_for_objects",
-        "python::module": "aicssegmentation.core.utils"
-    },
-    "hole_filling": {
-        "name": "Hole Filling",
-        "parameters": {
-            "fill_2d": {
+                ]
+            },
+            "whiteonblack": {
+                "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
                     true,
                     false
-                ],
-                "widget_type": "drop-down"
-            },
-            "hole_max": {
-                "data_type": "int",
-                "increment": 1,
-                "max": 10000,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "hole_min": {
-                "data_type": "int",
-                "increment": 1,
-                "max": 50,
-                "min": 0,
-                "widget_type": "slider"
+                ]
             }
-        },
-        "python::function": "hole_filling",
-        "python::module": "aicssegmentation.core.utils"
+        }
     },
-    "image_smoothing_gaussian_slice_by_slice": {
-        "name": "Gaussian Smoothing Slice by Slice",
+    "absolute_3d_hessian_eigenvalues": {
+        "name": "Absolute 3d hessian eigenvalues",
+        "python::module": "aicssegmentation.core.hessian",
+        "python::function": "absolute_3d_hessian_eigenvalues",
         "parameters": {
             "sigma": {
+                "widget_type": "slider",
                 "data_type": "float",
-                "increment": 0.2,
-                "max": 20.0,
-                "min": 0.8,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "image_smoothing_gaussian_slice_by_slice",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
-    },
-    "infer_nuclei": {
-        "name": "infer nuclei",
-        "parameters": null,
-        "python::function": "infer_nuclei",
-        "python::module": "infer_subc_2d.organelles"
-    },
-    "infer_soma": {
-        "name": "extract optimal Z slice",
-        "parameters": null,
-        "python::function": "infer_soma",
-        "python::module": "infer_subc_2d.organelles"
-    },
-    "intensity_normalization": {
-        "name": "Intensity Normalization",
-        "parameters": {
-            "scaling_param": [
-                {
-                    "data_type": "float",
-                    "increment": 0.005,
-                    "max": 30,
-                    "min": -10,
-                    "widget_type": "slider"
-                },
-                {
-                    "data_type": "float",
-                    "increment": 0.005,
-                    "max": 200,
-                    "min": -10,
-                    "widget_type": "slider"
-                }
-            ]
-        },
-        "python::function": "intensity_normalization",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
-    },
-    "intensity_normalization_min_max_with_bound": {
-        "name": "Intensity Normalization using min-max with bound",
-        "parameters": {
-            "scaling_param": [
-                {
-                    "data_type": "int",
-                    "increment": 50,
-                    "max": 10000,
-                    "min": 50,
-                    "widget_type": "slider"
-                }
-            ]
-        },
-        "python::function": "intensity_normalization",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
-    },
-    "intensity_normalization_with_bound": {
-        "name": "Intensity Normalization with bound",
-        "parameters": {
-            "scaling_param": [
-                {
-                    "data_type": "float",
-                    "increment": 0.005,
-                    "max": 30,
-                    "min": -10,
-                    "widget_type": "slider"
-                },
-                {
-                    "data_type": "float",
-                    "increment": 0.005,
-                    "max": 200,
-                    "min": -10,
-                    "widget_type": "slider"
-                },
-                {
-                    "data_type": "int",
-                    "increment": 20,
-                    "max": 1000,
-                    "min": 20,
-                    "widget_type": "slider"
-                },
-                {
-                    "data_type": "int",
-                    "increment": 50,
-                    "max": 8000,
-                    "min": 50,
-                    "widget_type": "slider"
-                }
-            ]
-        },
-        "python::function": "intensity_normalization",
-        "python::module": "aicssegmentation.core.pre_processing_utils"
-    },
-    "invert_image": {
-        "name": "Invert Image",
-        "parameters": null,
-        "python::function": "invert_mask",
-        "python::module": "aicssegmentation.core.utils"
-    },
-    "label": {
-        "name": "label objects",
-        "parameters": null,
-        "python::function": "label",
-        "python::module": "skimage.measure"
-    },
-    "mask_image": {
-        "name": "Mask Image",
-        "parameters": {
-            "value": {
-                "data_type": "int",
-                "increment": 1,
-                "max": 255,
                 "min": 0,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "mask_image",
-        "python::module": "aicssegmentation.core.utils"
-    },
-    "masked_object_treshold_combined": {
-        "name": "Masked Object Threshold - Combined",
-        "parameters": {
-            "dilate": {
+                "max": 10,
+                "increment": 0.5
+            },
+            "scale": {
+                "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
                     true,
                     false
-                ],
-                "widget_type": "drop-down"
+                ]
             },
-            "extra_criteria": {
+            "whiteonblack": {
+                "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
                     true,
                     false
-                ],
-                "widget_type": "drop-down"
-            },
-            "global_thresh_method": {
-                "data_type": "str",
-                "options": [
-                    "triangle",
-                    "median",
-                    "ave_tri_med"
-                ],
-                "widget_type": "drop-down"
-            },
-            "local_adjust": {
-                "data_type": "float",
-                "increment": 0.02,
-                "max": 2,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "object_minArea": {
-                "data_type": "int",
-                "increment": 50,
-                "max": 2000,
-                "min": 0,
-                "widget_type": "slider"
-            },
-            "return_object": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
+                ]
             }
-        },
-        "python::function": "MO",
-        "python::module": "aicssegmentation.core.MO_threshold"
-    },
-    "masked_object_treshold_high_level": {
-        "name": "Masked Object Threshold - Part 2: high level",
-        "parameters": {
-            "extra_criteria": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            },
-            "local_adjust": {
-                "data_type": "float",
-                "increment": 0.02,
-                "max": 2,
-                "min": 0,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "MO_high_level",
-        "python::module": "aicssegmentation.core.MO_threshold"
-    },
-    "masked_object_treshold_low_level": {
-        "name": "Masked Object Threshold - Part 1: low level",
-        "parameters": {
-            "dilate": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
-            },
-            "global_thresh_method": {
-                "data_type": "str",
-                "options": [
-                    "triangle",
-                    "median",
-                    "ave_tri_med"
-                ],
-                "widget_type": "drop-down"
-            },
-            "object_minArea": {
-                "data_type": "int",
-                "increment": 50,
-                "max": 2000,
-                "min": 0,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "MO_low_level",
-        "python::module": "aicssegmentation.core.MO_threshold"
-    },
-    "median_filter_slice_by_slice": {
-        "name": "Median Smoothing Slice by Slice",
-        "parameters": {
-            "size": {
-                "data_type": "int",
-                "increment": 1,
-                "max": 20,
-                "min": 1,
-                "widget_type": "slider"
-            }
-        },
-        "python::function": "median_filter_slice_by_slice",
-        "python::module": "infer_subc_2d.utils.img"
-    },
-    "merge_segmentation": {
-        "name": "Merge Segmentation",
-        "parameters": null,
-        "python::function": "segmentation_union",
-        "python::module": "aicssegmentation.core.utils"
-    },
-    "min_max_intensity_normalization": {
-        "name": "Min-Max Intensity Normalization",
-        "parameters": null,
-        "python::function": "min_max_intensity_normalization",
-        "python::module": "infer_subc_2d.utils.img"
-    },
-    "prune_z_slices": {
-        "name": "Prune Z-Slices",
-        "parameters": null,
-        "python::function": "prune_z_slices",
-        "python::module": "aicssegmentation.core.utils"
+        }
     },
     "remove_hot_pixel": {
         "name": "Remove Hot Pixel",
-        "parameters": {},
+        "python::module": "aicssegmentation.core.utils",
         "python::function": "remove_hot_pixel",
-        "python::module": "aicssegmentation.core.utils"
+        "parameters": {}
     },
-    "remove_index_object": {
-        "name": "Remove Index Object",
-        "parameters": null,
-        "python::function": "remove_index_object",
-        "python::module": "aicssegmentation.core.utils"
+    "fixed_find_optimal_Z": {
+        "name": "find the optimal Z slice (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_find_optimal_Z",
+        "parameters": null
     },
-    "segmentation_xor": {
-        "name": "Segmentation XOR",
-        "parameters": null,
-        "python::function": "segmentation_xor",
-        "python::module": "aicssegmentation.core.utils"
+    "fixed_get_optimal_Z_img": {
+        "name": "extract optimal Z slice (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_get_optimal_Z_image",
+        "parameters": null
     },
     "select_channel_from_raw": {
         "name": "select a channel ",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "select_channel_from_raw",
         "parameters": {
             "chan": {
                 "data_type": "int",
@@ -554,128 +602,842 @@
                 ],
                 "widget_type": "drop-down"
             }
-        },
-        "python::function": "select_channel_from_raw",
-        "python::module": "infer_subc_2d.utils.img"
+        }
     },
-    "size_filter": {
-        "name": "Size Filter",
+    "fixed_infer_soma": {
+        "name": " infer soma mask (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_soma",
+        "parameters": null
+    },
+    "infer_soma": {
+        "name": " infer soma mask",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_soma",
         "parameters": {
-            "method": {
-                "data_type": "str",
-                "options": [
-                    "3D",
-                    "slice_by_slice"
-                ],
-                "widget_type": "drop-down"
+            "median_sz_soma": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
             },
-            "min_size": {
+            "gauss_sig_soma": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "median_sz_nuc": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig_nuc": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "mo_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w_nuc": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 500,
-                "min": 0,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w_nuc": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            },
+            "max_hole_w_soma": {
+                "data_type": "int",
+                "increment": 2,
+                "max": 100,
+                "min": 20,
+                "widget_type": "slider"
+            },
+            "small_obj_w_soma": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
                 "widget_type": "slider"
             }
-        },
-        "python::function": "size_filter",
-        "python::module": "aicssegmentation.core.utils"
+        }
+    },
+    "raw_soma_MCZ": {
+        "name": "define weighted aggregate soma signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "raw_soma_MCZ",
+        "parameters": null
+    },
+    "non_linear_soma_transform_MCZ": {
+        "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "non_linear_soma_transform_MCZ",
+        "parameters": null
+    },
+    "masked_inverted_watershed": {
+        "name": "watershed on inverted image and masked",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "masked_inverted_watershed",
+        "parameters": null
+    },
+    "choose_max_label": {
+        "name": "keep only the label with the maximum raw signa",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "choose_max_label",
+        "parameters": null
+    },
+    "fixed_infer_nuclei": {
+        "name": "infer nuclei  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_nuclei",
+        "parameters": null
+    },
+    "infer_nuclei": {
+        "name": "infer nuclei",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_nuclei",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "median_filter_slice_by_slice": {
+        "name": "Median Smoothing Slice by Slice",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "median_filter_slice_by_slice",
+        "parameters": {
+            "size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 20,
+                "increment": 1
+            }
+        }
+    },
+    "image_smoothing_gaussian_slice_by_slice": {
+        "name": "Gaussian Smoothing Slice by Slice",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_slice_by_slice",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.8,
+                "max": 20,
+                "increment": 0.2
+            }
+        }
+    },
+    "apply_log_li_threshold": {
+        "name": "threshold log Li",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "apply_log_li_threshold",
+        "parameters": {
+            "thresh_factor": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.1,
+                "increment": 0.05
+            },
+            "thresh_min": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.0,
+                "max": 0.8,
+                "increment": 0.01
+            },
+            "thresh_max": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.0,
+                "increment": 0.05
+            }
+        }
+    },
+    "label": {
+        "name": "label objects",
+        "python::module": "skimage.measure",
+        "python::function": "label",
+        "parameters": null
+    },
+    "apply_mask": {
+        "name": "apply mask",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "apply_mask",
+        "parameters": null
     },
     "size_filter_2D": {
         "name": "Size Filter 2D",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "size_filter_2D",
         "parameters": {
             "min_size": {
+                "widget_type": "slider",
                 "data_type": "int",
-                "increment": 1,
+                "min": 0,
                 "max": 500,
+                "increment": 1
+            }
+        }
+    },
+    "infer_cytosol": {
+        "name": "infer infer_cytosol",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_cytosol",
+        "parameters": {
+            "erode_nuclei": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "min_max_intensity_normalization": {
+        "name": "Min Max Intesity Normalization",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "min_max_intensity_normalization",
+        "parameters": null
+    },
+    "fixed_infer_lysosomes": {
+        "name": "infer lysosomes  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_lysosomes",
+        "parameters": null
+    },
+    "infer_lysosomes": {
+        "name": "infer lysosomes",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_lysosomes",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "dot_scale_1": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
                 "min": 0,
                 "widget_type": "slider"
-            }
-        },
-        "python::function": "size_filter_2D",
-        "python::module": "infer_subc_2d.utils.img"
-    },
-    "spot_filter_3D": {
-        "name": "Spot Filter 3D",
-        "parameters": {
-            "cutoff": {
+            },
+            "dot_cut_1": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "log_sigma": {
+            "dot_scale_2": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
-            }
-        },
-        "python::function": "dot_3d",
-        "python::module": "aicssegmentation.core.seg_dot"
-    },
-    "spot_filter_slice_by_slice": {
-        "name": "Spot Filter Slice by Slice",
-        "parameters": {
-            "cutoff": {
+            },
+            "dot_cut_2": {
                 "data_type": "float",
                 "increment": 0.001,
-                "max": 1,
+                "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "log_sigma": {
+            "dot_scale_3": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
-            }
-        },
-        "python::function": "dot_slice_by_slice",
-        "python::module": "aicssegmentation.core.seg_dot"
-    },
-    "topology_preserving_thinning": {
-        "name": "Topology Preserving Thinning",
-        "parameters": {
-            "min_thickness": {
-                "data_type": "int",
-                "increment": 1,
-                "max": 10,
-                "min": 1,
+            },
+            "dot_cut_3": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
                 "widget_type": "slider"
             },
-            "thin": {
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "min_hole_w": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 200,
+                "max": 30,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
                 "min": 1,
                 "widget_type": "slider"
             }
-        },
-        "python::function": "topology_preserving_thinning",
-        "python::module": "aicssegmentation.core.utils"
+        }
     },
-    "watershed_for_cutting": {
-        "name": "Watershed for cutting",
-        "parameters": null,
-        "python::function": "watershed_wrapper",
-        "python::module": "aicssegmentation.core.utils"
+    "lysosome_spot_filter": {
+        "name": "lysosome spot filter",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "lysosome_spot_filter",
+        "parameters": null
     },
-    "watershed_for_segmentation": {
-        "name": "Watershed for segmentation",
+    "lysosome_filiment_filter": {
+        "name": "lysosome filiment filter",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "lysosome_filiment_filter",
+        "parameters": null
+    },
+    "logical_or": {
+        "name": "logical or",
+        "python::module": "numpy",
+        "python::function": "logical_or",
+        "parameters": null
+    },
+    "fixed_infer_mitochondria": {
+        "name": "infer lysosomes  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_mitochondria",
+        "parameters": null
+    },
+    "infer_mitochondria": {
+        "name": "infer mitochondria",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_mitochondria",
         "parameters": {
-            "watershed_line": {
-                "data_type": "bool",
-                "options": [
-                    true,
-                    false
-                ],
-                "widget_type": "drop-down"
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "vesselness_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "vesselness_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
             }
-        },
-        "python::function": "watershed",
-        "python::module": "skimage.segmentation"
+        }
+    },
+    "vesselness_slice_by_slice": {
+        "name": "vesselness filter (e.g. mitochondria)",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "vesselness_slice_by_slice",
+        "parameters": {
+            "sigma": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": 0.5,
+                    "max": 5,
+                    "increment": 0.5
+                }
+            ],
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "fixed_infer_golgi": {
+        "name": "infer lysosomes  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_golgi",
+        "parameters": null
+    },
+    "infer_golgi": {
+        "name": "infer golgi",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_golgi",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "mo_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "min_thickness": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 10,
+                "increment": 1
+            },
+            "thin": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 200,
+                "increment": 1
+            },
+            "dot_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_peroxisome": {
+        "name": "infer peroxisome (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_peroxisome",
+        "parameters": null
+    },
+    "infer_peroxisome": {
+        "name": "infer peroxisome",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_peroxisome",
+        "parameters": {
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "dot_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut": {
+                "data_type": "float",
+                "increment": 0.005,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_er": {
+        "name": "infer lysosomes  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_endoplasmic_reticulum",
+        "parameters": null
+    },
+    "infer_er": {
+        "name": "Infer Endoplasmic Reticulum",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_endoplasmic_reticulum",
+        "parameters": {
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_lipid": {
+        "name": "infer lipid bodies (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_lipid",
+        "parameters": null
+    },
+    "infer_lipid": {
+        "name": "infer lipid",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_lipid",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "otsu",
+                    "li",
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "filament_filter": {
+        "name": "filament filter thresholding",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "filament_filter",
+        "parameters": {
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "apply_threshold": {
+        "name": "Apply Threshold",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "apply_threshold",
+        "parameters": {
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "otsu",
+                    "li",
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "masked_object_thresh": {
+        "name": "Masked Object Threshold wrapper for widgets",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "masked_object_thresh",
+        "parameters": {
+            "th_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "cutoff_size": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "th_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            }
+        }
+    },
+    "fixed_infer_organelles": {
+        "name": "infer all organelles (fixed parameters)",
+        "python::module": "infer_subc_2d.batch.batch_process",
+        "python::function": "fixed_infer_organelles",
+        "parameters": null
+    },
+    "stack_organelle_objects": {
+        "name": "stack organelles, argv spelled out",
+        "python::module": "infer_subc_2d.batch",
+        "python::function": "stack_organelle_objects",
+        "parameters": null
+    },
+    "stack_organelle_layers": {
+        "name": "stack organelles, *argv ",
+        "python::module": "infer_subc_2d.batch",
+        "python::function": "stack_organelle_layers",
+        "parameters": null
     }
 }

@@ -4,9 +4,13 @@ from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, th
 # from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 from scipy.ndimage import median_filter, extrema
 import scipy
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+
+# from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import size_filter
 from aicssegmentation.core.vessel import vesselness2D
+from aicssegmentation.core.MO_threshold import MO
+
+from aicssegmentation.core.vessel import filament_2d_wrapper
 
 from typing import Tuple, List, Union, Any
 
@@ -137,6 +141,42 @@ def threshold_multiotsu_log(image_in):
     return thresholds
 
 
+def masked_object_thresh(
+    structure_img_smooth: np.ndarray, th_method: str, cutoff_size: int, th_adjust: float
+) -> np.ndarray:
+    """
+    wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
+    Parameters:
+    ------------
+    structure_img_smooth: np.ndarray
+        a 3d image
+    th_method: str
+         which method to use for calculating global threshold. Options include:
+         "triangle", "median", and "ave_tri_med".
+         "ave_tri_med" refers the average of "triangle" threshold and "mean" threshold.
+    cutoff_size: int
+        Masked Object threshold `size_min`
+    th_adjust: float
+        Masked Object threshold `local_adjust`
+
+
+    Returns:
+    -------------
+        np.ndimage
+
+    """
+    struct_obj = MO(
+        structure_img_smooth,
+        object_minArea=cutoff_size,
+        global_thresh_method=th_method,
+        extra_criteria=True,
+        local_adjust=th_adjust,
+        return_object=False,
+        dilate=False,  # WARNING: dilate=True causes a bug if there is only one Z
+    )
+    return struct_obj
+
+
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -176,13 +216,14 @@ def min_max_intensity_normalization(struct_img):
     """
     strech_min = struct_img.min()
     strech_max = struct_img.max()
-
+    # do we need to convert to float?
+    # #.astype(np.double)
     struct_img = (struct_img - strech_min + 1e-8) / (strech_max - strech_min + 1e-8)
 
     return struct_img
 
 
-def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
     Parameters:
@@ -190,11 +231,13 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     img_in: np.ndimage
 
     method: str="otsu"  or "li"
-    threshold_factor:float=1.0  scaling value for threshold
-
+        method for applying threshold.  "otsu"  or "li", "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
+    thresh_factor:float=1.0
+        scaling value for threshold
     thresh_min= None or min
-
+        absolute minumum for threshold
     thresh_max = None or max
+        absolute maximum for threshold
 
     Returns:
     -------------
@@ -218,7 +261,7 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     else:  # default to "otsu"
         threshold_val = threshold_otsu(img_in)
 
-    threshold = threshold_val * threshold_factor
+    threshold = threshold_val * thresh_factor
 
     if thresh_min is not None:
         threshold = max(threshold, thresh_min)
@@ -227,14 +270,14 @@ def apply_threshold(img_in, method="otsu", threshold_factor=1.0, thresh_min=None
     return img_in > threshold
 
 
-def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
     Parameters:
     ------------
     img_in: np.ndimage
 
-    threshold_factor:float=1.0  scaling value for threshold
+    thresh_factor:float=1.0  scaling value for threshold
 
     thresh_min= None or min
 
@@ -246,7 +289,7 @@ def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh
     """
     # struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(img_in)
-    threshold = threshold_value_log * threshold_factor
+    threshold = threshold_value_log * thresh_factor
 
     if thresh_min is not None:
         threshold = max(threshold, thresh_min)
@@ -256,17 +299,17 @@ def apply_log_li_threshold(img_in, threshold_factor=1.0, thresh_min=None, thresh
 
 
 # NOTE this is identical to veselnessSliceBySlice from aicssegmentation.core.vessel
-def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float = -1, tau: float = 0.75):
+def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float = -1, tau: float = 0.75):
     """
     wrapper for applying multi-scale 2D filament filter on 3D images in a
-    slice by slice fashion
+    slice by slice fashion,  Note that it only performs at a single scale....
 
     Parameters:
     -----------
     nd_array: np.ndarray
         the 3D image to be filterd on
-    sigmas: List
-        a list of scales to use
+    sigma: float
+        single scale to use
     cutoff: float
         the cutoff value to apply on the filter result. If the cutoff is
         negative, no cutoff will be applied. Default is -1.
@@ -275,17 +318,19 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         between 0.5 and 1. Lower tau means more intense output response.
         Default is 0.5
 
-
     hardcoded:
     whiteonblack = True
         segts the filamentous structures are bright on dark background
     """
+    # # this hack is to accomodate the workflow widgets
+    # if not isinstance(sigmas, List):
+    #     sigmas = [sigmas]
 
     mip = np.amax(nd_array, axis=0)
     response = np.zeros(nd_array.shape)
     for zz in range(nd_array.shape[0]):
         tmp = np.concatenate((nd_array[zz, :, :], mip), axis=1)
-        tmp = vesselness2D(tmp, sigmas=sigmas, tau=tau, whiteonblack=True)
+        tmp = vesselness2D(tmp, sigmas=[sigma], tau=tau, whiteonblack=True)
         response[zz, :, : nd_array.shape[2] - 3] = tmp[:, : nd_array.shape[2] - 3]
 
     if cutoff < 0:
@@ -294,21 +339,32 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         return response > cutoff
 
 
-
-def select_channel_from_raw(img_in:np.ndarray, ch:Union[int, Tuple[int]]) -> np.ndarray:
-    """" 
+def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) -> np.ndarray:
+    """ "
     Parameters:
     ------------
-    img_in: np.ndarray
+    img_in : np.ndarray
 
-    ch:int  
+    chan : int
         channel to extract.
 
     Returns:
     -------------
         np.ndarray
     """
-    return img_in[ch]
+    return img_in[chan]
+
+
+def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np.ndarray:
+    """
+    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    """
+    if isinstance(z_slice, int):
+        z_slice = [z_slice]
+    else:
+        z_slice = list(z_slice)
+
+    return img_in[:, z_slice, :, :]
 
 
 def aggregate_signal_channels(
@@ -348,7 +404,7 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     total_florescence_ = aggregate_signal_channels(img_in, chs)
     if mask is not None:
         total_florescence_[mask] = 0.0
-    return total_florescence_.sum(axis=(1, 2)).argmax()
+    return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
 
 # TODO: consider MOVE to soma.py?
@@ -381,7 +437,10 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
         the connectivity to use when computing object size
     """
     # return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
-    return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=1)
+    if img.any():  # protects against size_filter bug when there is no object (due to label first)
+        return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=connectivity)
+    else:
+        return img
 
 
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -458,6 +517,13 @@ def enhance_neurites(image, radius, volumetric=False):
     result[result < 0] = 0
 
     return result
+
+
+def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: float) -> np.ndarray:
+    """filament wrapper to properly pack parameters into filament_2d_wrapper"""
+    f2_param = [[filament_scale, filament_cut]]
+    # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
+    return filament_2d_wrapper(in_img, f2_param)
 
 
 ###___________________DEPRICATED BELOW ___________________
