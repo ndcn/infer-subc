@@ -3,7 +3,6 @@ from typing import Optional
 
 from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.utils import topology_preserving_thinning
-from aicssegmentation.core.MO_threshold import MO
 
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
@@ -15,6 +14,7 @@ from infer_subc_2d.utils.img import (
     min_max_intensity_normalization,
     size_filter_2D,
     select_channel_from_raw,
+    masked_object_thresh,
 )
 
 ##########################
@@ -25,8 +25,9 @@ def infer_golgi(
     cytosol_mask: np.ndarray,
     median_sz: int,
     gauss_sig: float,
-    obj_min_area: int,
-    thresh_method: str,
+    mo_method: str,
+    mo_adjust: float,
+    mo_cutoff_size: int,
     min_thickness: int,
     thin: int,
     dot_scale: float,
@@ -46,12 +47,14 @@ def infer_golgi(
          width of median filter for signal
      gauss_sig: float
          sigma for gaussian smoothing of  signal
-     obj_min_area: int
-         the size filter for excluding small object before applying local threshold
-     thresh_method: str
+    mo_method: str
          which method to use for calculating global threshold. Options include:
          "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
          "ave" refers the average of "triangle" threshold and "mean" threshold.
+    mo_adjust: float
+        Masked Object threshold `local_adjust`
+    mo_cutoff_size: int
+        Masked Object threshold `size_min`
      min_thinkness: int
          Half of the minimum width you want to keep from being thinned.
          For example, when the object width is smaller than 4, you don't
@@ -91,8 +94,8 @@ def infer_golgi(
     ###################
     # CORE_PROCESSING
     ###################
-    bw = MO(golgi, global_thresh_method=thresh_method, object_minArea=obj_min_area)
-
+    # bw = MO(golgi, global_thresh_method=thresh_method, object_minArea=obj_min_area)
+    bw = masked_object_thresh(golgi, th_method=mo_method, cutoff_size=mo_cutoff_size, th_adjust=mo_adjust)
     bw_thin = topology_preserving_thinning(bw, min_thickness, thin)
 
     s3_param = [(dot_cut, dot_scale)]
@@ -133,8 +136,9 @@ def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
 
     median_sz = 4
     gauss_sig = 1.34
-    obj_min_area = 1200
-    thresh_method = "tri"
+    mo_method = "tri"
+    mo_adjust = 0.90
+    mo_cutoff_size = 1200
     min_thickness = 1.6
     thin = 1
     dot_scale = 1.6
@@ -146,8 +150,9 @@ def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
         cytosol_mask,
         median_sz,
         gauss_sig,
-        obj_min_area,
-        thresh_method,
+        mo_method,
+        mo_adjust,
+        mo_cutoff_size,
         min_thickness,
         thin,
         dot_scale,

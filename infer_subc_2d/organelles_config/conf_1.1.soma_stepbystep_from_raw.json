@@ -20,7 +20,7 @@
     "4": {
         "category": "preprocessing",
         "function": "min_max_intensity_normalization",
-        "parent": 1
+        "parent": 2
     },
     "5": {
         "category": "preprocessing",
@@ -45,21 +45,26 @@
     },
     "8": {
         "category": "preprocessing",
+        "function": "min_max_intensity_normalization",
+        "parent": 3
+    },
+    "9": {
+        "category": "preprocessing",
         "function": "median_filter_slice_by_slice",
         "parameter_values": {
             "size": 4
         },
-        "parent": 3
+        "parent": 8
     },
-    "9": {
+    "10": {
         "category": "preprocessing",
         "function": "image_smoothing_gaussian_slice_by_slice",
         "parameter_values": {
             "sigma": 1.4
         },
-        "parent": 8
+        "parent": 9
     },
-    "10": {
+    "11": {
         "category": "core",
         "function": "masked_object_thresh",
         "parameter_values": {
@@ -69,7 +74,7 @@
         },
         "parent": 7
     },
-    "11": {
+    "12": {
         "category": "core",
         "function": "apply_log_li_threshold",
         "parameter_values": {
@@ -77,9 +82,9 @@
             "thresh_min": 0.1,
             "thresh_max": 1.0
         },
-        "parent": 9
+        "parent": 10
     },
-    "12": {
+    "13": {
         "category": "postprocessing",
         "function": "hole_filling",
         "parameter_values": {
@@ -87,22 +92,22 @@
             "hole_max": 25,
             "fill_2d": true
         },
-        "parent": 11
+        "parent": 12
     },
-    "13": {
+    "14": {
         "category": "postprocessing",
         "function": "size_filter_2D",
         "parameter_values": {
             "min_size": 225
         },
-        "parent": 12
-    },
-    "14": {
-        "category": "core",
-        "function": "label",
         "parent": 13
     },
     "15": {
+        "category": "postprocessing",
+        "function": "label",
+        "parent": 14
+    },
+    "16": {
         "category": "postprocessing",
         "function": "hole_filling",
         "parameter_values": {
@@ -110,23 +115,31 @@
             "hole_max": 625,
             "fill_2d": true
         },
-        "parent": 10
+        "parent": 11
     },
-    "16": {
+    "17": {
+        "category": "postprocessing",
+        "function": "size_filter_2D",
+        "parameter_values": {
+            "min_size": 225
+        },
+        "parent": 16
+    },
+    "18": {
         "category": "postprocessing",
         "function": "masked_inverted_watershed",
         "parent": [
-            6,
-            14,
-            16
+            7,
+            15,
+            17
         ]
     },
-    "17": {
+    "19": {
         "category": "postpostprocessing",
         "function": "choose_max_label",
         "parent": [
             6,
-            17
+            18
         ]
     }
 }

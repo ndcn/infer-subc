@@ -70,12 +70,12 @@ def infer_mitochondria(
     ###################
     # CORE_PROCESSING
     ###################
-    bw = vesselness_slice_by_slice(struct_img, sigmas=[vesselness_scale], cutoff=vesselness_cut, tau=0.75)
+    struct_img = vesselness_slice_by_slice(struct_img, sigma=vesselness_scale, cutoff=vesselness_cut, tau=0.75)
 
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = apply_mask(bw, cytosol_mask)
+    struct_obj = apply_mask(struct_img, cytosol_mask)
 
     struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
 
@@ -101,9 +101,9 @@ def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarr
         mask defined extent of mitochondria
     """
     median_sz = 3
-    gauss_sig = 1.34
+    gauss_sig = 1.4
     vesselness_scale = 1.5
     vesselness_cut = 0.05
     small_obj_w = 3
 
-    return infer_mitochondria(in_img, cytosol_mask, median_sz, gauss_sig, vesselness_cut, vesselness_scale, small_obj_w)
+    return infer_mitochondria(in_img, cytosol_mask, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)

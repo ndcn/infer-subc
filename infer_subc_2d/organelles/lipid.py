@@ -16,9 +16,9 @@ from infer_subc_2d.constants import LIPID_CH
 
 
 ##########################
-#  infer_lipid_body
+#  infer_lipid
 ##########################
-def infer_lipid_body(
+def infer_lipid(
     in_img: np.ndarray,
     cytosol_mask: np.ndarray,
     median_sz: int,
@@ -99,9 +99,9 @@ def infer_lipid_body(
 
 
 ##########################
-#  fixed_infer_lipid_body
+#  fixed_infer_lipid
 ##########################
-def fixed_infer_lipid_body(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_lipid(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
@@ -128,7 +128,7 @@ def fixed_infer_lipid_body(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray
     max_hole_w = 2.5
     small_obj_w = 4
 
-    return infer_lipid_body(
+    return infer_lipid(
         in_img,
         cytosol_mask,
         median_sz,

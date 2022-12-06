@@ -6,5 +6,5 @@ from .mitochondria import infer_mitochondria, fixed_infer_mitochondria
 from .golgi import infer_golgi, fixed_infer_golgi
 from .peroxisomes import infer_peroxisome, fixed_infer_peroxisome
 from .er import infer_endoplasmic_reticulum, fixed_infer_endoplasmic_reticulum
-from .lipid import infer_lipid_body, fixed_infer_lipid_body
+from .lipid import infer_lipid, fixed_infer_lipid
 from .zslice import find_optimal_Z, fixed_find_optimal_Z, get_optimal_Z_image, fixed_get_optimal_Z_image

@@ -167,8 +167,8 @@ def masked_object_thresh(
     """
     struct_obj = MO(
         structure_img_smooth,
-        global_thresh_method=th_method,
         object_minArea=cutoff_size,
+        global_thresh_method=th_method,
         extra_criteria=True,
         local_adjust=th_adjust,
         return_object=False,
@@ -299,17 +299,17 @@ def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_ma
 
 
 # NOTE this is identical to veselnessSliceBySlice from aicssegmentation.core.vessel
-def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float = -1, tau: float = 0.75):
+def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float = -1, tau: float = 0.75):
     """
     wrapper for applying multi-scale 2D filament filter on 3D images in a
-    slice by slice fashion
+    slice by slice fashion,  Note that it only performs at a single scale....
 
     Parameters:
     -----------
     nd_array: np.ndarray
         the 3D image to be filterd on
-    sigmas: List
-        a list of scales to use
+    sigma: float
+        single scale to use
     cutoff: float
         the cutoff value to apply on the filter result. If the cutoff is
         negative, no cutoff will be applied. Default is -1.
@@ -318,17 +318,19 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigmas: List, cutoff: float 
         between 0.5 and 1. Lower tau means more intense output response.
         Default is 0.5
 
-
     hardcoded:
     whiteonblack = True
         segts the filamentous structures are bright on dark background
     """
+    # # this hack is to accomodate the workflow widgets
+    # if not isinstance(sigmas, List):
+    #     sigmas = [sigmas]
 
     mip = np.amax(nd_array, axis=0)
     response = np.zeros(nd_array.shape)
     for zz in range(nd_array.shape[0]):
         tmp = np.concatenate((nd_array[zz, :, :], mip), axis=1)
-        tmp = vesselness2D(tmp, sigmas=sigmas, tau=tau, whiteonblack=True)
+        tmp = vesselness2D(tmp, sigmas=[sigma], tau=tau, whiteonblack=True)
         response[zz, :, : nd_array.shape[2] - 3] = tmp[:, : nd_array.shape[2] - 3]
 
     if cutoff < 0:
@@ -435,7 +437,10 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
         the connectivity to use when computing object size
     """
     # return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
-    return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=1)
+    if img.any():  # protects against size_filter bug when there is no object (due to label first)
+        return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=connectivity)
+    else:
+        return img
 
 
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:

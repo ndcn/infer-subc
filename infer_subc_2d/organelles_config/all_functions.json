@@ -1081,7 +1081,7 @@
         "python::module": "infer_subc_2d.utils.img",
         "python::function": "vesselness_slice_by_slice",
         "parameters": {
-            "sigmas": [
+            "sigma": [
                 {
                     "widget_type": "slider",
                     "data_type": "float",
@@ -1124,7 +1124,7 @@
                 "min": 1.25,
                 "widget_type": "slider"
             },
-            "global_thresh_method": {
+            "mo_method": {
                 "data_type": "str",
                 "widget_type": "drop-down",
                 "options": [
@@ -1133,12 +1133,19 @@
                     "ave_tri_med"
                 ]
             },
-            "obj_min_area": {
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
                 "data_type": "int",
-                "widget_type": "slider",
-                "min": 0,
-                "max": 2000,
-                "increment": 50
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
             },
             "min_thickness": {
                 "widget_type": "slider",
@@ -1375,6 +1382,13 @@
                 "max": 0.9,
                 "min": 0.0,
                 "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
             }
         }
     },
@@ -1407,5 +1421,23 @@
                 "increment": 0.02
             }
         }
+    },
+    "fixed_infer_organelles": {
+        "name": "infer all organelles (fixed parameters)",
+        "python::module": "infer_subc_2d.batch.batch_process",
+        "python::function": "fixed_infer_organelles",
+        "parameters": null
+    },
+    "stack_organelle_objects": {
+        "name": "stack organelles, argv spelled out",
+        "python::module": "infer_subc_2d.batch",
+        "python::function": "stack_organelle_objects",
+        "parameters": null
+    },
+    "stack_organelle_layers": {
+        "name": "stack organelles, *argv ",
+        "python::module": "infer_subc_2d.batch",
+        "python::function": "stack_organelle_layers",
+        "parameters": null
     }
 }

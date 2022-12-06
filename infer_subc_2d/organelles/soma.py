@@ -154,7 +154,6 @@ def infer_soma(
     # PRE_PROCESSING
     ###################
     ################# part 1- soma
-
     struct_img = min_max_intensity_normalization(struct_img)
 
     # make a copy for post-post processing

@@ -107,5 +107,5 @@ def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> i
     )
 
     optimal_Z = choose_agg_signal_zmax(raw_img, ch_to_agg, mask=struct_obj)
-
+    print(f"choosing _optimal_ z-slice::: {optimal_Z}")
     return optimal_Z
