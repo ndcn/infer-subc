@@ -33,10 +33,8 @@ def get_optimal_Z_image(img_data: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
-
     nuc_ch: int
         channel with nuclei signal
-
     ch_to_agg: Tuple[int]
         tuple of channels to aggregate for selecting Z
 
@@ -46,7 +44,7 @@ def get_optimal_Z_image(img_data: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]
         image array with single selected Z-slice   (Channels, 1, X, Y)
 
     """
-    optimal_Z = find_optimal_Z_params(img_data, nuc_ch, ch_to_agg)
+    optimal_Z = find_optimal_Z(img_data, nuc_ch, ch_to_agg)
     return select_z_from_raw(img_data, optimal_Z)
 
 
