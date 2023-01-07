@@ -1029,7 +1029,7 @@
         "parameters": null
     },
     "fixed_infer_mitochondria": {
-        "name": "infer lysosomes  (fixed parameters)",
+        "name": "infer mitochondria  (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
         "python::function": "fixed_infer_mitochondria",
         "parameters": null
@@ -1100,7 +1100,7 @@
         }
     },
     "fixed_infer_golgi": {
-        "name": "infer lysosomes  (fixed parameters)",
+        "name": "infer golgi  (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
         "python::function": "fixed_infer_golgi",
         "parameters": null
@@ -1226,7 +1226,7 @@
         }
     },
     "fixed_infer_er": {
-        "name": "infer lysosomes  (fixed parameters)",
+        "name": "infer endoplasmic reticulum  (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
         "python::function": "fixed_infer_endoplasmic_reticulum",
         "parameters": null
