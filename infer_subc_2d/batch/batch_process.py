@@ -43,9 +43,10 @@ def fixed_infer_organelles(img_data):
 
     # nuc_ch = NUC_CH
     # optimal_Z = find_optimal_Z(img_data, nuc_ch, ch_to_agg)
+    optimal_Z = fixed_find_optimal_Z(img_data)
     # # Stage 1:  nuclei, soma, cytosol
-    # img_2D = select_z_from_raw(img_data, optimal_Z)
-    img_2D = fixed_get_optimal_Z_image(img_data)
+    img_2D = select_z_from_raw(img_data, optimal_Z)
+    # img_2D = fixed_get_optimal_Z_image(img_data)
 
     soma_mask = fixed_infer_soma(img_2D)
 
