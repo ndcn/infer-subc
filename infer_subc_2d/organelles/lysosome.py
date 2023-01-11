@@ -20,7 +20,7 @@ from infer_subc_2d.utils.img import (
 ##########################
 #  infer_LYSOSOMES
 ##########################
-def infer_lysosomes(
+def infer_lysosome(
     in_img: np.ndarray,
     cytosol_mask: np.ndarray,
     median_sz: int,
@@ -39,7 +39,7 @@ def infer_lysosomes(
 ) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -64,7 +64,7 @@ def infer_lysosomes(
     small_obj_w: int
         minimu object size cutoff for nuclei post-processing
 
-    Returns:
+    Returns
     -------------
     lysosome_object
         mask defined extent of lysosome object
@@ -115,10 +115,10 @@ def infer_lysosomes(
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -126,7 +126,7 @@ def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray]
     cytosol_mask: Optional[np.ndarray] = None
         mask
 
-    Returns:
+    Returns
     -------------
     nuclei_object
         mask defined extent of NU
@@ -145,7 +145,7 @@ def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray]
     max_hole_w = 25
     small_obj_w = 3
 
-    return infer_lysosomes(
+    return infer_lysosome(
         in_img,
         cytosol_mask,
         median_sz,
@@ -165,7 +165,7 @@ def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray]
 
 
 def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosomes"""
+    """spot filter helper function for lysosome"""
     dot_scale_1 = 5
     dot_cut_1 = 0.09
     dot_scale_2 = 2.5
@@ -177,7 +177,7 @@ def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
 
 
 def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosomes (DEPRICATED)"""
+    """spot filter helper function for lysosome (DEPRICATED)"""
     filament_scale = 1
     filament_cut = 0.15
     f2_param = [[filament_scale, filament_cut]]

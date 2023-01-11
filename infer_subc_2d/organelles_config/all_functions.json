@@ -906,16 +906,16 @@
         "python::function": "min_max_intensity_normalization",
         "parameters": null
     },
-    "fixed_infer_lysosomes": {
-        "name": "infer lysosomes  (fixed parameters)",
+    "fixed_infer_lysosome": {
+        "name": "infer lysosome  (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "fixed_infer_lysosomes",
+        "python::function": "fixed_infer_lysosome",
         "parameters": null
     },
-    "infer_lysosomes": {
-        "name": "infer lysosomes",
+    "infer_lysosome": {
+        "name": "infer lysosome",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "infer_lysosomes",
+        "python::function": "infer_lysosome",
         "parameters": {
             "median_sz": {
                 "widget_type": "slider",

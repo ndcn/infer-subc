@@ -27,20 +27,12 @@ def infer_endoplasmic_reticulum(
     """
     Procedure to infer peroxisome from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
-    in_img: np.ndarray
+    in_img : np.ndarray
         a 3d image containing all the channels
-    cytosol_mask: np.ndarray
+    cytosol_mask : np.ndarray
         mask of cytosol
-     median_sz: int
-        width of median filter for signal
-    gauss_sig: float
-        sigma for gaussian smoothing of  signal
-    dot_scale: float
-        scales (log_sigma) for dot filter (1,2, and 3)
-    dot_cut: float
-        threshold for dot filter thresholds (1,2,and 3)
     filament_scale: float
         scale (log_sigma) for filament filter
     filament_cut: float
@@ -51,8 +43,9 @@ def infer_endoplasmic_reticulum(
         hole filling cutoff for nuclei post-processing
     small_obj_w: int
         minimu object size cutoff for nuclei post-processing
-    Returns:
-    -------------
+
+    Returns
+    ---------
     peroxi_object
         mask defined extent of peroxisome object
     """
@@ -94,14 +87,14 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray, cytosol_mask: Optional
     """
     Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
     cytosol_mask: Optional[np.ndarray] = None
         mask
 
-    Returns:
+    Returns
     -------------
     peroxi_object
         mask defined extent of peroxisome object

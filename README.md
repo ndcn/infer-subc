@@ -45,7 +45,7 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 ### TO-DO
 - QC for each step, each organelle
 - testing
-- package exported needs for a napari plugin (e.g.  organelle-segmenter-npe2)
+- package exported needs for a napari plugin (e.g.  organelle-segmenter-plugin)
 
 ## FRAMEWORKS & RESOURCES
 

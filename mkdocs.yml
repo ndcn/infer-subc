@@ -1,2 +1,40 @@
 site_name: infer_subc_2d
-theme: readthedocs
+
+nav:
+  - Home: 'index.md'
+  - Main: 'infer_subc_2d/main.md'
+  - 'Organelles': 
+    - 'Overview' : 'infer_subc_2d/organelles.md'
+    - 'soma' : 'infer_subc_2d/organelles/soma.md'
+    - 'nuclei' : 'infer_subc_2d/organelles/nuclei.md'
+    - 'cytosol' : 'infer_subc_2d/organelles/cytosol.md'
+    - 'lysosome' : 'infer_subc_2d/organelles/lysosome.md'
+    - 'mitochondria' : 'infer_subc_2d/organelles/mitochontria.md'
+    - 'golgi complex' : 'infer_subc_2d/organelles/golgi.md'
+    - 'peroxisome' : 'infer_subc_2d/organelles/peroxisome.md'
+    - 'endoplasmic reticulum' : 'infer_subc_2d/organelles/er.md'
+    - 'lipid bodies' : 'infer_subc_2d/organelles/lipid.md'
+    
+  - Utils: 
+    - 'Overview' : 'infer_subc_2d/utils.md'
+    - 'file_io' : 'infer_subc_2d/utils/file_io.md'
+    - 'img' : 'infer_subc_2d/utils/img.md'
+    - 'etc' : 'infer_subc_2d/utils/etc.md'
+
+  - Notebooks: 
+    - 'Overview' : nbs/overview.md
+    - '00_setup' : '.../notebooks/00_pipeline_setup.ipynb'
+    - '01_setup' : '.../notebooks/01_infer_soma.ipynb'
+    - '02_setup' : '.../notebooks/02_infer_nuclei.ipynb'
+
+
+plugins:
+  - mkdocs-jupyter:
+      theme: dark
+  - search
+  - mkdocstrings
+
+theme:
+  name: material
+  palette:
+    scheme: slate

@@ -96,7 +96,7 @@ def infer_soma(
     """
     Procedure to infer soma from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -135,7 +135,7 @@ def infer_soma(
     small_obj_w_soma: int
         minimu object size cutoff for soma signal post-processing
 
-    Returns:
+    Returns
     -------------
     soma_mask: np.ndarray
         a logical/labels object defining boundaries of soma
@@ -224,12 +224,12 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
 
-    Returns:
+    Returns
     -------------
     soma_mask: np.ndarray
         a logical/labels object defining boundaries of soma

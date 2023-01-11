@@ -30,7 +30,7 @@
     },
     "5": {
         "category": "core",
-        "function": "fixed_infer_lysosomes",
+        "function": "fixed_infer_lysosome",
         "parent": [
             1,
             4

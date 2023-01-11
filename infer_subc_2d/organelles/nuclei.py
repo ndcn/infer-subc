@@ -67,7 +67,7 @@ def infer_nuclei(
 
     """
     Procedure to infer nuclei from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -88,7 +88,7 @@ def infer_nuclei(
     small_obj_w: int
         minimu object size cutoff for nuclei post-processing
 
-    Returns:
+    Returns
     -------------
     nuclei_object
         mask defined extent of NU
@@ -134,14 +134,14 @@ def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = Non
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
     soma_mask: Optional[np.ndarray] = None
         mask of soma extent
 
-    Returns:
+    Returns
     -------------
     nuclei_object
         mask defined extent of NU

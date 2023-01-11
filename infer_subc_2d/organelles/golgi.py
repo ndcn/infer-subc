@@ -37,7 +37,7 @@ def infer_golgi(
     """
      Procedure to infer golgi from linearly unmixed input.
 
-    Parameters:
+    Parameters
      ------------
      in_img: np.ndarray
          a 3d image containing all the channels
@@ -70,7 +70,7 @@ def infer_golgi(
      small_obj_w: int
          minimu object size cutoff for nuclei post-processing
 
-     Returns:
+     Returns
      -------------
     golgi_object
          mask defined extent of golgi object
@@ -121,14 +121,14 @@ def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
     """
      Procedure to infer golgi from linearly unmixed input with fixed parameters.
 
-    Parameters:
+    Parameters
      ------------
      in_img: np.ndarray
          a 3d image containing all the channels
      soma_mask: Optional[np.ndarray] = None
          mask
 
-     Returns:
+     Returns
      -------------
     golgi_object
          mask defined extent of golgi object

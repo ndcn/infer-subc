@@ -313,7 +313,7 @@ class InferSubC2dWorkflow(Workflow):
         Params:
             none
 
-        Returns:
+        Returns
             (WorkflowStep): next WorkflowStep object to perform on image
             None if all steps have already been executed
         """

@@ -45,7 +45,7 @@ class Workflow:
         Params:
             none
 
-        Returns:
+        Returns
             (WorkflowStep): next WorkflowStep object to perform on image
             None if all steps have already been executed
         """
@@ -61,7 +61,7 @@ class Workflow:
             parameters: Optional dictionary of parameter inputs to use when executing the step
                         If parameters are not provided, the step's default parameters will be used
 
-        Returns:
+        Returns
             result (np.ndarray): resultant image from running the
             next workflow step
         """
@@ -108,7 +108,7 @@ class Workflow:
             step_index (int): index of the WorkflowStep in the
             workflowengine to get the result image of.
 
-        Returns:
+        Returns
             self.image (np.ndarray): Result of performing workflow step
                                      on the given image
                                      None if step has not been executed yet.
@@ -127,7 +127,7 @@ class Workflow:
         Params:
            none
 
-        Returns:
+        Returns
             (np.ndarray): Result of the last executed WorkflowStep,
                             returns the starting image if no Workflowsteps have
                             been run.
@@ -146,7 +146,7 @@ class Workflow:
         Params:
             none
 
-        Returns:
+        Returns
             (np.ndarray): Result of the final WorkflowStep.
         """
         self.reset()
@@ -160,7 +160,7 @@ class Workflow:
         Args:
             i: step number (0 indexed) that you want to run
 
-        Returns:
+        Returns
 
         """
         # TODO: discuss using selected layer for all types
@@ -185,7 +185,7 @@ class Workflow:
         Params:
             none
 
-        Returns:
+        Returns
             (bool): True if all WorkflowSteps have been executed, False if not
         """
         return self._next_step >= len(self._definition.steps)

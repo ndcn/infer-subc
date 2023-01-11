@@ -9,7 +9,7 @@ def infer_cytosol(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei
     """
     Procedure to infer infer from linearly unmixed input. (logical soma AND NOT nucleus)
 
-    Parameters:
+    Parameters
     ------------
     nuclei_object: np.ndarray
         a 3d image containing the nuclei object
@@ -20,7 +20,7 @@ def infer_cytosol(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei
     erode_nuclei: bool
         should we erode?
 
-    Returns:
+    Returns
     -------------
     cytosol_mask: np.ndarray (bool)
 

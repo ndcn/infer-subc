@@ -146,7 +146,7 @@ def masked_object_thresh(
 ) -> np.ndarray:
     """
     wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
-    Parameters:
+    Parameters
     ------------
     structure_img_smooth: np.ndarray
         a 3d image
@@ -160,7 +160,7 @@ def masked_object_thresh(
         Masked Object threshold `local_adjust`
 
 
-    Returns:
+    Returns
     -------------
         np.ndimage
 
@@ -180,7 +180,7 @@ def masked_object_thresh(
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
-    Parameters:
+    Parameters
     ------------
     img: np.ndarray
         a 3d image
@@ -188,7 +188,7 @@ def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarra
     size: int
         the linear "size" which will be squared for
 
-    Returns:
+    Returns
     -------------
         np.ndimage
 
@@ -205,12 +205,12 @@ def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarra
 def min_max_intensity_normalization(struct_img):
     """Normalize the intensity of input image so that the value range is from 0 to 1.
 
-    Parameters:
+    Parameters
     ------------
     img: np.ndarray
         a 3d image
 
-    Returns:
+    Returns
     -------------
         np.ndimage
     """
@@ -226,7 +226,7 @@ def min_max_intensity_normalization(struct_img):
 def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
-    Parameters:
+    Parameters
     ------------
     img_in: np.ndimage
 
@@ -239,7 +239,7 @@ def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, t
     thresh_max = None or max
         absolute maximum for threshold
 
-    Returns:
+    Returns
     -------------
         np.ndimage
     """
@@ -273,7 +273,7 @@ def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, t
 def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_max=None):
     """return a binary mask after applying a log_li threshold
 
-    Parameters:
+    Parameters
     ------------
     img_in: np.ndimage
 
@@ -283,7 +283,7 @@ def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_ma
 
     thresh_max = None or max
 
-    Returns:
+    Returns
     -------------
         np.ndimage
     """
@@ -304,7 +304,7 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float 
     wrapper for applying multi-scale 2D filament filter on 3D images in a
     slice by slice fashion,  Note that it only performs at a single scale....
 
-    Parameters:
+    Parameters
     -----------
     nd_array: np.ndarray
         the 3D image to be filterd on
@@ -341,14 +341,14 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float 
 
 def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) -> np.ndarray:
     """ "
-    Parameters:
+    Parameters
     ------------
     img_in : np.ndarray
 
     chan : int
         channel to extract.
 
-    Returns:
+    Returns
     -------------
         np.ndarray
     """
@@ -427,7 +427,7 @@ def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray):
 def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
     """size filter in 2D
 
-    Parameters:
+    Parameters
     ------------
     img: np.ndarray
         the image to filter on
@@ -446,14 +446,14 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """mask the image
 
-    Parameters:
+    Parameters
     ------------
     img_in: np.ndarray
         the image to filter on
     mask: np.ndarray
         the mask to apply
 
-    Returns:
+    Returns
     img_out: np.ndarray
         a new (copied) array with mask applied
     """
@@ -468,7 +468,7 @@ def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 def enhance_speckles(image, radius, volumetric=False):
     """enhance "spreckles" small dots
-    Parameters:
+    Parameters
     ------------
     image: np.ndarray
         the image to filter on
@@ -496,7 +496,7 @@ def enhance_speckles(image, radius, volumetric=False):
 
 def enhance_neurites(image, radius, volumetric=False):
     """enhance "neurites" or filiments
-    Parameters:
+    Parameters
     ------------
     image: np.ndarray
         the image to filter on
