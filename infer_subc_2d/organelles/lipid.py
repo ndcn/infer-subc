@@ -33,7 +33,7 @@ def infer_lipid(
     """
     Procedure to infer peroxisome from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -55,7 +55,7 @@ def infer_lipid(
         hole filling cutoff for nuclei post-processing
     small_obj_w: int
         minimu object size cutoff for nuclei post-processing
-    Returns:
+    Returns
     -------------
     peroxi_object
         mask defined extent of peroxisome object
@@ -105,14 +105,14 @@ def fixed_infer_lipid(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
      cytosol_mask: Optional[np.ndarray] = None
          mask
 
-    Returns:
+    Returns
     -------------
     lipid_body_object
         mask defined extent of liipid body

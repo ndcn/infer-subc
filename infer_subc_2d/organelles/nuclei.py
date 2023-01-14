@@ -67,28 +67,28 @@ def infer_nuclei(
 
     """
     Procedure to infer nuclei from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    soma_mask: np.ndarray
+    soma_mask:
         mask of soma extent
-    median_sz: int
+    median_sz:
         width of median filter for signal
-    gauss_sig: float
+    gauss_sig:
         sigma for gaussian smoothing of  signal
-    thresh_factor: float
+    thresh_factor:
         adjustment factor for log Li threholding
-    thresh_min: float
+    thresh_min:
         abs min threhold for log Li threholding
-    thresh_max: float
+    thresh_max:
         abs max threhold for log Li threholding
-    max_hole_w: int
+    max_hole_w:
         hole filling cutoff for nuclei post-processing
-    small_obj_w: int
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
 
-    Returns:
+    Returns
     -------------
     nuclei_object
         mask defined extent of NU
@@ -134,14 +134,14 @@ def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = Non
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    Parameters:
+    Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
     soma_mask: Optional[np.ndarray] = None
         mask of soma extent
 
-    Returns:
+    Returns
     -------------
     nuclei_object
         mask defined extent of NU

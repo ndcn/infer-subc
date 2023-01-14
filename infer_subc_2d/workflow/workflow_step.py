@@ -57,7 +57,7 @@ class WorkflowStep:
             parameters (Dict): Dictionary of parameters to pass to the
                                 underlying function
 
-        Returns:
+        Returns
             self.result (np.ndarray): Result of performing workflow step
                                         on the given image.
         """

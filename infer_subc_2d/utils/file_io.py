@@ -156,7 +156,7 @@ def get_raw_meta_data(meta_dict):
 
 
 # TODO:  refactor this and napari plugin so napari_aicsimageio is not a dependency
-# can then export to the organelle-segmenter-npe2 plugin
+# can then export to the organelle-segment-plugin 
 def read_input_image(image_name):
     """
     send output from napari aiscioimage reader wrapped in dataclass

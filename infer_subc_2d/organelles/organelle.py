@@ -32,7 +32,7 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the NUCLEI signal
@@ -40,7 +40,7 @@ def infer_CELL_MEMBRANE(struct_img, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object

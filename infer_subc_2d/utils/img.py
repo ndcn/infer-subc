@@ -29,13 +29,20 @@ from infer_subc_2d.constants import (
 )
 
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
-def log_transform(image: np.ndarray) -> np.ndarray:
+def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:
     """Renormalize image intensities to log space
 
-    Returns a tuple of transformed image and a dictionary to be passed into
-    inverse_log_transform. The minimum and maximum from the dictionary
-    can be applied to an image by the inverse_log_transform to
-    convert it back to its former intensity values.
+    Parameters
+    ------------
+    image:
+        a 3d image
+
+    Returns
+    -------------
+        Returns a tuple of transformed image and a dictionary to be passed into
+        inverse_log_transform. The minimum and maximum from the dictionary
+        can be applied to an image by the inverse_log_transform to
+        convert it back to its former intensity values.
     """
 
     orig_min, orig_max = extrema(image)[:2]
@@ -53,20 +60,37 @@ def log_transform(image: np.ndarray) -> np.ndarray:
     return stretch(limage), d
 
 
-def inverse_log_transform(image, d):
+def inverse_log_transform(image: np.ndarray, d: dict) -> np.ndarray:
     """Convert the values in image back to the scale prior to log_transform
 
-    image - an image or value or values similarly scaled to image
-    d - object returned by log_transform
+    Parameters
+    ------------
+    image:
+        a 3d image
+    d:
+        dictionary returned by log_transform
+
+    Returns
+    -------------
+        de-logged image (np.ndarray)
     """
     return np.exp(unstretch(image, d["log_min"], d["log_max"]))
 
 
-def stretch(image, mask=None):
+def stretch(image: np.ndarray, mask: Union[np.ndarray, None] = None) -> np.ndarray:
     """Normalize an image to make the minimum zero and maximum one
-    image - pixel data to be normalized
-    mask  - optional mask of relevant pixels. None = don't mask
-    returns the stretched image
+
+    Parameters
+    ------------
+    image:
+        a 3d image to be normalized
+    mask:
+        optional mask of relevant pixels. None (default) means don't mask
+
+    Returns
+    -------------
+        stretched (normalized to [0,1]) image (np.ndarray)
+
     """
     image = np.array(image, float)
     if np.product(image.shape) == 0:
@@ -97,18 +121,37 @@ def stretch(image, mask=None):
         return image
 
 
-def unstretch(image, minval, maxval):
+def unstretch(image: np.ndarray, minval: Union[int, float], maxval: Union[int, float]) -> np.ndarray:
     """Perform the inverse of stretch, given a stretched image
-    image - an image stretched by stretch or similarly scaled value or values
-    minval - minimum of previously stretched image
-    maxval - maximum of previously stretched image
+
+    Parameters
+    ------------
+    image:
+        an image stretched by stretch or similarly scaled value or values
+    minval:
+        minimum of previously stretched image
+    maxval:
+        maximum of previously stretched image
+
+    Returns
+    -------------
+        stretched (normalized to [0,1]) image (np.ndarray)
     """
     return image * (maxval - minval) + minval
 
 
-def threshold_li_log(image_in):
+def threshold_li_log(image_in: np.ndarray) -> np.ndarray:
     """
     thin wrapper to log-scale and inverse log image for threshold finding using li minimum cross-entropy
+
+    Parameters
+    ------------
+    image:
+        an np.ndarray
+    Returns
+    -------------
+        boolean np.ndarray
+
     """
 
     image, d = log_transform(image_in.copy())
@@ -123,6 +166,14 @@ def threshold_li_log(image_in):
 def threshold_otsu_log(image_in):
     """
     thin wrapper to log-scale and inverse log image for threshold finding using otsu
+
+    Parameters
+    ------------
+    image:
+        an np.ndarray
+    Returns
+    -------------
+        boolean np.ndarray
     """
 
     image, d = log_transform(image_in.copy())
@@ -134,6 +185,14 @@ def threshold_otsu_log(image_in):
 def threshold_multiotsu_log(image_in):
     """
     thin wrapper to log-scale and inverse log image for threshold finding using otsu
+
+    Parameters
+    ------------
+    image:
+        an np.ndarray
+    Returns
+    -------------
+        boolean np.ndarray
     """
     image, d = log_transform(image_in.copy())
     thresholds = threshold_multiotsu(image)
@@ -146,21 +205,21 @@ def masked_object_thresh(
 ) -> np.ndarray:
     """
     wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
-    Parameters:
+
+    Parameters
     ------------
-    structure_img_smooth: np.ndarray
+    structure_img_smooth:
         a 3d image
-    th_method: str
+    th_method:
          which method to use for calculating global threshold. Options include:
          "triangle", "median", and "ave_tri_med".
          "ave_tri_med" refers the average of "triangle" threshold and "mean" threshold.
-    cutoff_size: int
+    cutoff_size:
         Masked Object threshold `size_min`
-    th_adjust: float
+    th_adjust:
         Masked Object threshold `local_adjust`
 
-
-    Returns:
+    Returns
     -------------
         np.ndimage
 
@@ -180,15 +239,16 @@ def masked_object_thresh(
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
-    Parameters:
+
+    Parameters
     ------------
-    img: np.ndarray
+    img:
         a 3d image
 
-    size: int
+    size:
         the linear "size" which will be squared for
 
-    Returns:
+    Returns
     -------------
         np.ndimage
 
@@ -202,15 +262,15 @@ def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarra
     return structure_img_denoise
 
 
-def min_max_intensity_normalization(struct_img):
+def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
     """Normalize the intensity of input image so that the value range is from 0 to 1.
 
-    Parameters:
+    Parameters
     ------------
-    img: np.ndarray
+    img:
         a 3d image
 
-    Returns:
+    Returns
     -------------
         np.ndimage
     """
@@ -223,25 +283,31 @@ def min_max_intensity_normalization(struct_img):
     return struct_img
 
 
-def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_threshold(
+    img_in: np.ndarray,
+    method: str = "otsu",
+    thresh_factor: float = 1.0,
+    thresh_min: Union[None, float] = None,
+    thresh_max: Union[None, float] = None,
+) -> np.ndarray:
     """return a binary mask after applying a log_li threshold
 
-    Parameters:
+    Parameters
     ------------
-    img_in: np.ndimage
+    img_in:
+        np.ndarray input image
+    method:
+        method for applying threshold.  "otsu"  or "li" (default), "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
+    thresh_factor:
+        scaling value for threshold, defaults=1.0
+    thresh_min
+        absolute minumum for threshold, default=None
+    thresh_max
+        absolute maximum for threshold, default=None
 
-    method: str="otsu"  or "li"
-        method for applying threshold.  "otsu"  or "li", "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
-    thresh_factor:float=1.0
-        scaling value for threshold
-    thresh_min= None or min
-        absolute minumum for threshold
-    thresh_max = None or max
-        absolute maximum for threshold
-
-    Returns:
+    Returns
     -------------
-        np.ndimage
+        thresholded boolean np.ndarray
     """
 
     if method == "tri" or method == "triangle":
@@ -270,22 +336,28 @@ def apply_threshold(img_in, method="otsu", thresh_factor=1.0, thresh_min=None, t
     return img_in > threshold
 
 
-def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_max=None):
+def apply_log_li_threshold(
+    img_in: np.ndarray,
+    thresh_factor: float = 1.0,
+    thresh_min: Union[None, float] = None,
+    thresh_max: Union[None, float] = None,
+) -> np.ndarray:
     """return a binary mask after applying a log_li threshold
 
-    Parameters:
+    Parameters
     ------------
-    img_in: np.ndimage
+    img_in:
+        input ndimage array (np.ndimage)
+    thresh_factor:
+        scaling value for threshold, defaults=1.0
+    thresh_min
+        absolute minumum for threshold, default=None
+    thresh_max
+        absolute maximum for threshold, default=None
 
-    thresh_factor:float=1.0  scaling value for threshold
-
-    thresh_min= None or min
-
-    thresh_max = None or max
-
-    Returns:
+    Returns
     -------------
-        np.ndimage
+        thresholded boolean np.ndarray
     """
     # struct_obj = struct_img > filters.threshold_li(struct_img)
     threshold_value_log = threshold_li_log(img_in)
@@ -302,26 +374,24 @@ def apply_log_li_threshold(img_in, thresh_factor=1.0, thresh_min=None, thresh_ma
 def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float = -1, tau: float = 0.75):
     """
     wrapper for applying multi-scale 2D filament filter on 3D images in a
-    slice by slice fashion,  Note that it only performs at a single scale....
+    slice by slice fashion,  Note that it only performs at a single scale....     NOTE: The paramater
+    whiteonblack = True is hardcoded which sets the filamentous structures are bright on dark background
 
-    Parameters:
+    Parameters
     -----------
-    nd_array: np.ndarray
+    nd_array:
         the 3D image to be filterd on
-    sigma: float
+    sigma:
         single scale to use
-    cutoff: float
+    cutoff:
         the cutoff value to apply on the filter result. If the cutoff is
         negative, no cutoff will be applied. Default is -1.
-    tau: float
+    tau:
         parameter that controls response uniformity. The value has to be
         between 0.5 and 1. Lower tau means more intense output response.
         Default is 0.5
-
-    hardcoded:
-    whiteonblack = True
-        segts the filamentous structures are bright on dark background
     """
+
     # # this hack is to accomodate the workflow widgets
     # if not isinstance(sigmas, List):
     #     sigmas = [sigmas]
@@ -341,14 +411,15 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float 
 
 def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) -> np.ndarray:
     """ "
-    Parameters:
+    select channel from multi-channel 3D image (np.ndarray)
+    Parameters
     ------------
-    img_in : np.ndarray
-
-    chan : int
+    img_in :
+        the 3D image to be filterd on
+    chan :
         channel to extract.
 
-    Returns:
+    Returns
     -------------
         np.ndarray
     """
@@ -357,7 +428,18 @@ def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) ->
 
 def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np.ndarray:
     """
-    Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
+    select Z-slice from 3D multi-channel image (np.ndarray)
+
+    Parameters
+    ------------
+    img_in :
+        the 3D image to be filterd on
+    chan :
+        channel to extract.
+
+    Returns
+    -------------
+        np.ndarray
     """
     if isinstance(z_slice, int):
         z_slice = [z_slice]
@@ -373,9 +455,18 @@ def aggregate_signal_channels(
     """
     return a weighted sum of the image across channels
 
-    img_in:  np.ndarray  [ch,z,x,y]
-    chs: list/tuple of channels to aggregate
-    ws: list/tuple/ of weights for aggregation
+    Parameters
+    ------------
+    img_in:
+        np.ndarray  [ch,z,x,y]
+    chs:
+        list/tuple of channels to aggregate
+    ws:
+        list/tuple/ of weights for aggregation
+
+    Returns
+    -------------
+        np.ndarray
     """
     n_chan = len(chs)
     if n_chan <= 1:
@@ -390,16 +481,24 @@ def aggregate_signal_channels(
     # return img_in[ch_to_agg,].astype( np.double ).sum(axis=0)
 
 
-def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=None):
+def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=None) -> np.ndarray:
     """
     return z the maximum signal for the aggregate signal
 
-    img_in:  np.ndarray  [ch,z,x,y]
-    chs: list of channels to aggregate
-    ws: list of weights for aggregation
-    mask: mask for img_in
+    Parameters
+    ------------
+    img_in:
+        np.ndarray  [ch,z,x,y]
+    chs:
+        list of channels to aggregate
+    ws:
+        list of weights for aggregation
+    mask:
+        mask for img_in
 
-    returns z with maximum signal
+    Returns
+    -------------
+        np.ndarray z with maximum signal
     """
     total_florescence_ = aggregate_signal_channels(img_in, chs)
     if mask is not None:
@@ -408,7 +507,7 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
 
 
 # TODO: consider MOVE to soma.py?
-def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray):
+def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
     """keep only the label with the maximum raw signal"""
 
     all_labels = np.unique(labels_in)[1:]
@@ -424,17 +523,20 @@ def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray):
 
 # TODO: depricate this...call
 #     size_filter(img, min_size=min_size, method = "slice_by_slice", connectivity = 1)
-def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
+def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1) -> np.ndarray:
     """size filter in 2D
 
-    Parameters:
+    Parameters
     ------------
-    img: np.ndarray
+    img:
         the image to filter on
     min_size: int
         the minimum size to keep
     connnectivity: int
         the connectivity to use when computing object size
+    Returns
+    -------------
+        np.ndarray
     """
     # return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
     if img.any():  # protects against size_filter bug when there is no object (due to label first)
@@ -446,15 +548,16 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1):
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """mask the image
 
-    Parameters:
+    Parameters
     ------------
-    img_in: np.ndarray
+    img_in:
         the image to filter on
-    mask: np.ndarray
+    mask:
         the mask to apply
 
-    Returns:
-    img_out: np.ndarray
+    Returns
+    -----------
+    img_out:
         a new (copied) array with mask applied
     """
     img_out = img_in.copy()
@@ -466,9 +569,10 @@ def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return img_out
 
 
-def enhance_speckles(image, radius, volumetric=False):
+def enhance_speckles(image: np.ndarray, radius: int, volumetric: bool = False) -> np.ndarray:
     """enhance "spreckles" small dots
-    Parameters:
+
+    Parameters
     ------------
     image: np.ndarray
         the image to filter on
@@ -477,6 +581,10 @@ def enhance_speckles(image, radius, volumetric=False):
     volumetric: bool
         True for 3D analysis
 
+    Returns
+    -----------
+    result:
+        filtered boolean np.ndarray
     """
     radius = radius / 2
     if volumetric:
@@ -494,17 +602,22 @@ def enhance_speckles(image, radius, volumetric=False):
     return result
 
 
-def enhance_neurites(image, radius, volumetric=False):
+def enhance_neurites(image: np.ndarray, radius: int, volumetric: bool = False) -> np.ndarray:
     """enhance "neurites" or filiments
-    Parameters:
-    ------------
-    image: np.ndarray
-        the image to filter on
-    radius: int
-        radius of the "filter"
-    volumetric: bool
-        True for 3D analysis
 
+    Parameters
+     ------------
+     image: np.ndarray
+         the image to filter on
+     radius: int
+         radius of the "filter"
+     volumetric: bool
+         True for 3D analysis
+
+     Returns
+     -----------
+     result:
+         filtered boolean np.ndarray
     """
     if volumetric:
         selem = ball(radius)
@@ -520,7 +633,25 @@ def enhance_neurites(image, radius, volumetric=False):
 
 
 def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: float) -> np.ndarray:
-    """filament wrapper to properly pack parameters into filament_2d_wrapper"""
+    """filament wrapper to properly pack parameters into filament_2d_wrapper
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        the image to filter on
+    filament_scale: float
+        scale or size of the "filter"
+    filament_cut: float
+        cutoff for thresholding
+
+    Returns
+    -----------
+    result:
+        filtered boolean np.ndarray
+
+
+
+    """
     f2_param = [[filament_scale, filament_cut]]
     # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     return filament_2d_wrapper(in_img, f2_param)

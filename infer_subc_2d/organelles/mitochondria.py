@@ -31,7 +31,7 @@ def infer_mitochondria(
     """
     Procedure to infer mitochondria from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
@@ -48,7 +48,7 @@ def infer_mitochondria(
     small_obj_w: int
         minimu object size cutoff for nuclei post-processing
 
-    Returns:
+    Returns
     -------------
     mitochondria_object
         mask defined extent of mitochondria object
@@ -88,14 +88,14 @@ def infer_mitochondria(
 def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
     in_img: np.ndarray
         a 3d image containing all the channels
     cytosol_mask: Optional[np.ndarray] = None
         mask
 
-    Returns:
+    Returns
     -------------
     mitochondria_object
         mask defined extent of mitochondria

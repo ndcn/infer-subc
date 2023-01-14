@@ -20,7 +20,7 @@ from infer_subc_2d.utils.img import (
 ##########################
 #  infer_LYSOSOMES
 ##########################
-def infer_lysosomes(
+def infer_lysosome(
     in_img: np.ndarray,
     cytosol_mask: np.ndarray,
     median_sz: int,
@@ -39,34 +39,34 @@ def infer_lysosomes(
 ) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    cytosol_mask: np.ndarray
+    cytosol_mask:
         mask
-    median_sz: int
+    median_sz:
         width of median filter for signal
-    gauss_sig: float
+    gauss_sig:
         sigma for gaussian smoothing of  signal
-    dot_scale: float
+    dot_scale:
         scales (log_sigma) for dot filter (1,2, and 3)
-    dot_cut: float
+    dot_cut:
         threshold for dot filter thresholds (1,2,and 3)
-    filament_scale: float
+    filament_scale:
         scale (log_sigma) for filament filter
-    filament_cut: float
+    filament_cut:
         threshold for filament fitered threshold
-    min_hole_w: int
+    min_hole_w:
         hole filling min for nuclei post-processing
-    max_hole_w: int
+    max_hole_w:
         hole filling cutoff for nuclei post-processing
-    small_obj_w: int
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
 
-    Returns:
+    Returns
     -------------
-    lysosome_object
+    lysosome_object:
         mask defined extent of lysosome object
 
     """
@@ -115,20 +115,20 @@ def infer_lysosomes(
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input,
-    Parameters:
+    Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
 
-    cytosol_mask: Optional[np.ndarray] = None
+    cytosol_mask:
         mask
 
-    Returns:
+    Returns
     -------------
-    nuclei_object
+    nuclei_object:
         mask defined extent of NU
     """
     median_sz = 4
@@ -145,7 +145,7 @@ def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray]
     max_hole_w = 25
     small_obj_w = 3
 
-    return infer_lysosomes(
+    return infer_lysosome(
         in_img,
         cytosol_mask,
         median_sz,
@@ -165,7 +165,7 @@ def fixed_infer_lysosomes(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray]
 
 
 def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosomes"""
+    """spot filter helper function for lysosome"""
     dot_scale_1 = 5
     dot_cut_1 = 0.09
     dot_scale_2 = 2.5
@@ -177,7 +177,7 @@ def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
 
 
 def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosomes (DEPRICATED)"""
+    """spot filter helper function for lysosome (DEPRICATED)"""
     filament_scale = 1
     filament_cut = 0.15
     f2_param = [[filament_scale, filament_cut]]

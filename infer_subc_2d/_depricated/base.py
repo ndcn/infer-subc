@@ -82,7 +82,7 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     """
     Procedure to infer NUCLEI from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the NUCLEI signal
@@ -90,7 +90,7 @@ def infer_NUCLEI(struct_img, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -174,7 +174,7 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     """
     Procedure to infer SOMA from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the SOMA signal
@@ -185,7 +185,7 @@ def infer_SOMA1(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -323,7 +323,7 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     """
     Procedure to infer SOMA from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the SOMA signal
@@ -334,7 +334,7 @@ def infer_SOMA2(struct_img: np.ndarray, NU_labels: np.ndarray, in_params: dict) 
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -470,7 +470,7 @@ def infer_SOMA3(struct_img, NU_labels, in_params) -> tuple:
     """
     Procedure to infer SOMA from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the SOMA signal
@@ -481,7 +481,7 @@ def infer_SOMA3(struct_img, NU_labels, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -618,7 +618,7 @@ def infer_CYTOSOL(SO_object, NU_object, erode_NU=True):
     """
     Procedure to infer CYTOSOL from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     SO_object: np.ndarray
         a 3d image containing the NUCLEI signal
@@ -629,7 +629,7 @@ def infer_CYTOSOL(SO_object, NU_object, erode_NU=True):
     erode_NU: bool
         should we erode?
 
-    Returns:
+    Returns
     -------------
     CY_object: np.ndarray (bool)
 
@@ -650,7 +650,7 @@ def infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer LYSOSOME from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the LYSOSOME signal
@@ -661,7 +661,7 @@ def infer_LYSOSOMES(struct_img, CY_object, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -755,7 +755,7 @@ def infer_MITOCHONDRIA(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer MITOCHONDRIA  from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the MITOCHONDRIA signal
@@ -766,7 +766,7 @@ def infer_MITOCHONDRIA(struct_img, CY_object, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -841,7 +841,7 @@ def infer_GOLGI(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer GOLGI COMPLEX  from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the GOLGI signal
@@ -852,7 +852,7 @@ def infer_GOLGI(struct_img, CY_object, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -940,7 +940,7 @@ def infer_PEROXISOME(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer PEROXISOME  from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the PEROXISOME signal
@@ -951,7 +951,7 @@ def infer_PEROXISOME(struct_img, CY_object, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -1023,7 +1023,7 @@ def infer_ENDOPLASMIC_RETICULUM(struct_img, CY_object, in_params) -> tuple:
     """
     Procedure to infer PEROXISOME  from linearly unmixed input.
 
-    Parameters:
+    Parameters
     ------------
     struct_img: np.ndarray
         a 3d image containing the PEROXISOME signal
@@ -1034,7 +1034,7 @@ def infer_ENDOPLASMIC_RETICULUM(struct_img, CY_object, in_params) -> tuple:
     in_params: dict
         holds the needed parameters
 
-    Returns:
+    Returns
     -------------
     tuple of:
         object
@@ -1108,7 +1108,7 @@ def median_filter_slice_by_slice(struct_img, size):
 def simple_intensity_normalization(struct_img, max_value=None):
     """Normalize the intensity of input image so that the value range is from 0 to 1.
 
-    Parameters:
+    Parameters
     ------------
     img: np.ndarray
         a 3d image

@@ -87,7 +87,7 @@ class BatchWorkflow:
         Use this to know when the batch workflow is complete if manually executing the workflow
         with execute_next()
 
-        Returns:
+        Returns
             (bool): True if all files/steps have been executed, False if not
         """
         return self._processed_files == self.total_files
@@ -177,7 +177,7 @@ class BatchWorkflow:
         Params:
             image_path (Path or str): image to format
 
-        Returns:
+        Returns
             np.ndarray: segment-able image for aics-segmentation
         """
         # if len(image.scenes) > 1:
@@ -211,7 +211,7 @@ class BatchWorkflow:
         Params:
             image (np.ndarray): segmented image
 
-        Returns:
+        Returns
             np.ndarray: image converted to uint8 for saving
         """
         image = image.astype(np.uint8)

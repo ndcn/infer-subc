@@ -1,15 +1,13 @@
-# Welcome to MkDocs
+# Welcome to infer_subc_2d
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+For full documentation visit [github.io.infer_subc_2d.org](https://www.mkdocs.org).
+Robust inference of subcellular objects:
 
-## Commands
+## A
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+FILL IN
 
-## Project layout
+## B
 
     mkdocs.yml    # The configuration file.
     docs/

@@ -24,7 +24,7 @@ from infer_subc_2d.organelles import (
     find_optimal_Z,
     fixed_get_optimal_Z_image,
     fixed_find_optimal_Z,
-    fixed_infer_lysosomes,
+    fixed_infer_lysosome,
     fixed_infer_mitochondria,
     fixed_infer_golgi,
     fixed_infer_endoplasmic_reticulum,
@@ -55,7 +55,7 @@ def fixed_infer_organelles(img_data):
     cytosol_mask = infer_cytosol(nuclei_object, soma_mask)
 
     # cyto masked objects.
-    lysosome_object = fixed_infer_lysosomes(img_2D, cytosol_mask)
+    lysosome_object = fixed_infer_lysosome(img_2D, cytosol_mask)
     mito_object = fixed_infer_mitochondria(img_2D, cytosol_mask)
     golgi_object = fixed_infer_golgi(img_2D, cytosol_mask)
     peroxi_object = fixed_infer_peroxisome(img_2D, cytosol_mask)
