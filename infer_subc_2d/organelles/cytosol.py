@@ -11,18 +11,19 @@ def infer_cytosol(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei
 
     Parameters
     ------------
-    nuclei_object: np.ndarray
+    nuclei_object:
         a 3d image containing the nuclei object
 
-    soma_mask: np.ndarray
+    soma_mask:
         a 3d image containing the soma object (mask)
 
-    erode_nuclei: bool
+    erode_nuclei:
         should we erode?
 
     Returns
     -------------
-    cytosol_mask: np.ndarray (bool)
+    cytosol_mask
+        boolean np.ndarray
 
     """
 
