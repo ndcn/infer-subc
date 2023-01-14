@@ -1,32 +1,44 @@
-site_name: infer_subc_2d
+site_name: 'infer_subc_2d'
 
 nav:
   - Home: 'index.md'
-  - Main: 'infer_subc_2d/main.md'
-  - 'Organelles': 
-    - 'Overview' : 'infer_subc_2d/organelles.md'
-    - 'soma' : 'infer_subc_2d/organelles/soma.md'
-    - 'nuclei' : 'infer_subc_2d/organelles/nuclei.md'
-    - 'cytosol' : 'infer_subc_2d/organelles/cytosol.md'
-    - 'lysosome' : 'infer_subc_2d/organelles/lysosome.md'
-    - 'mitochondria' : 'infer_subc_2d/organelles/mitochontria.md'
-    - 'golgi complex' : 'infer_subc_2d/organelles/golgi.md'
-    - 'peroxisome' : 'infer_subc_2d/organelles/peroxisome.md'
-    - 'endoplasmic reticulum' : 'infer_subc_2d/organelles/er.md'
-    - 'lipid bodies' : 'infer_subc_2d/organelles/lipid.md'
-    
-  - Utils: 
-    - 'Overview' : 'infer_subc_2d/utils.md'
-    - 'file_io' : 'infer_subc_2d/utils/file_io.md'
-    - 'img' : 'infer_subc_2d/utils/img.md'
-    - 'etc' : 'infer_subc_2d/utils/etc.md'
+  - framework: 'framework.md'
+  - 'infer_subc_2d module': 
+    - 'overview': 'infer_subc_2d/overview.md'
+    - 'organelles': 
+      - 'Overview' : 'infer_subc_2d/organelles.md'
+      - 'soma' : 'infer_subc_2d/organelles/soma.md'
+      - 'nuclei' : 'infer_subc_2d/organelles/nuclei.md'
+      - 'cytosol' : 'infer_subc_2d/organelles/cytosol.md'
+      - 'lysosome' : 'infer_subc_2d/organelles/lysosome.md'
+      - 'mitochondria' : 'infer_subc_2d/organelles/mitochondria.md'
+      - 'golgi complex' : 'infer_subc_2d/organelles/golgi.md'
+      - 'peroxisome' : 'infer_subc_2d/organelles/peroxisome.md'
+      - 'endoplasmic reticulum' : 'infer_subc_2d/organelles/er.md'
+      - 'lipid bodies' : 'infer_subc_2d/organelles/lipid.md' 
+    - 'utils': 
+      - 'file_io' : 'infer_subc_2d/utils/file_io.md'
+      - 'img' : 'infer_subc_2d/utils/img.md'
+      - 'etc' : 'infer_subc_2d/utils/etc.md'
+    - 'batch': 'infer_subc_2d/batch.md'
+    - 'workflow': 'infer_subc_2d/workflow.md'
 
   - Notebooks: 
-    - 'Overview' : nbs/overview.md
-    - '00_setup' : '.../notebooks/00_pipeline_setup.ipynb'
-    - '01_setup' : '.../notebooks/01_infer_soma.ipynb'
-    - '02_setup' : '.../notebooks/02_infer_nuclei.ipynb'
-
+    - 'Overview' : notebooks/nbs_overview.md
+    - '00_setup' : 'notebooks/nbs/00.1_pipeline_setup.ipynb'
+    - '00_choose_Z' : 'notebooks/nbs/00.2_extract_optimal_Z.ipynb'
+    - '01_soma' : 'notebooks/nbs/01_infer_soma.ipynb'
+    - '02_nuclei' : 'notebooks/nbs/02_infer_nuclei.ipynb'
+    - '03_cytosol' : 'notebooks/nbs/03_infer_cytosol.ipynb'
+    - '04_lysosome' : 'notebooks/nbs/04_infer_lysosome.ipynb'
+    - '05_mitochondria' : 'notebooks/nbs/05_infer_mitochondria.ipynb'
+    - '06_golgi' : 'notebooks/nbs/06_infer_golgi.ipynb'
+    - '07_peroxisome' : 'notebooks/nbs/07_infer_peroxisome.ipynb'
+    - '08_endoplasmic_reticulum' : 'notebooks/nbs/08_infer_endoplasmic_reticulum.ipynb'
+    - '09_lipid_body' : 'notebooks/nbs/09_infer_lipid_body.ipynb'
+    - 'batch processing' : 'notebooks/nbs/10_batch_processing.ipynb'
+    # - 'workflows' : 'notebooks/nbs/11_workflows.ipynb'
+    # - 'QC' : 'notebooks/nbs/12_QC.ipynb'
 
 plugins:
   - mkdocs-jupyter:

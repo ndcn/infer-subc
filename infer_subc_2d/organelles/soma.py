@@ -36,10 +36,12 @@ from infer_subc_2d.utils.img import (
 
 def raw_soma_MCZ(img_in):
     """define soma image
-
-    params
-    -------------
     uses pre-defined weights and channels
+
+    Parameters
+    ------------
+    in_img:
+        a 3d image containing all the channels
 
     """
     SOMA_W = (4.0, 1.0, 1.0)
@@ -51,7 +53,14 @@ def raw_soma_MCZ(img_in):
 
 
 def masked_inverted_watershed(img_in, markers, mask):
-    """wrapper for watershed on inverted image and masked"""
+    """wrapper for watershed on inverted image and masked
+
+    Parameters
+    ------------
+    in_img:
+        a 3d image containing all the channels
+
+    """
 
     labels_out = watershed(
         1.0 - img_in,
@@ -65,6 +74,12 @@ def masked_inverted_watershed(img_in, markers, mask):
 def non_linear_soma_transform_MCZ(in_img):
     """non-linear distortion to fill out soma
     log + edge of smoothed composite
+
+    Parameters
+    ------------
+    in_img:
+        a 3d image containing all the channels
+
     """
 
     # non-Linear processing
@@ -98,46 +113,42 @@ def infer_soma(
 
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    median_sz_soma: int
+    median_sz_soma:
         width of median filter for _soma_ signal
-    gauss_sig_soma: float
+    gauss_sig_soma:
         sigma for gaussian smoothing of _soma_ signal
-    median_sz_nuc: int
+    median_sz_nuc:
         width of median filter for _soma_ signal
-    gauss_sig_nuc: float
+    gauss_sig_nuc:
         sigma for gaussian smoothing of _soma_ signal
-    obj_min_area: int
-        Masked Object threshold `size_min`
-    obj_min_area: int
-         the size filter for excluding small object before applying local threshold
-    mo_method: str
+    mo_method:
          which method to use for calculating global threshold. Options include:
          "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
          "ave" refers the average of "triangle" threshold and "mean" threshold.
-    mo_adjust: float
+    mo_adjust:
         Masked Object threshold `local_adjust`
-    mo_cutoff_size: int
+    mo_cutoff_size:
         Masked Object threshold `size_min`
-    thresh_factor: float
+    thresh_factor:
         adjustment factor for log Li threholding
-    thresh_min: float
+    thresh_min:
         abs min threhold for log Li threholding
-    thresh_max: float
+    thresh_max:
         abs max threhold for log Li threholding
-    max_hole_w_nuc: int
+    max_hole_w_nuc:
         hole filling cutoff for nuclei post-processing
-    small_obj_w_nuc: int
+    small_obj_w_nuc:
         minimu object size cutoff for nuclei post-processing
-    max_hole_w_soma: int
+    max_hole_w_soma:
         hole filling cutoff for soma signal post-processing
-    small_obj_w_soma: int
+    small_obj_w_soma:
         minimu object size cutoff for soma signal post-processing
 
     Returns
     -------------
-    soma_mask: np.ndarray
+    soma_mask:
         a logical/labels object defining boundaries of soma
 
     """
@@ -226,13 +237,12 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
 
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
 
     Returns
     -------------
-    soma_mask: np.ndarray
-        a logical/labels object defining boundaries of soma
+    soma_mask  -  a logical/labels object defining boundaries of soma
     """
 
     ###################
