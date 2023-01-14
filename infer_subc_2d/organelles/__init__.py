@@ -1,6 +1,6 @@
 # infer_subc_2d/organelles
 
-"""The module contains the following submodules:
+"""The module exports the following functions from these submodules
 
 - `nuclei` - infer_nuclei, fixed_infer_nuclei
 - `soma` - infer_soma, fixed_infer_soma, non_linear_soma_transform_MCZ, masked_inverted_watershed, raw_soma_MCZ
@@ -12,17 +12,6 @@
 - `er` - infer_endoplasmic_reticulum, fixed_infer_endoplasmic_reticulum
 - `lipid` - infer_lipid, fixed_infer_lipid
 - `zslice` - find_optimal_Z, fixed_find_optimal_Z, get_optimal_Z_image, fixed_get_optimal_Z_image
-
-Examples:
-    >>> from calculator import calculations
-    >>> calculations.add(2, 4)
-    6.0
-    >>> calculations.multiply(2.0, 4.0)
-    8.0
-    >>> from calculator.calculations import divide
-    >>> divide(4.0, 2)
-    2.0
-
 """
 
 from .nuclei import infer_nuclei, fixed_infer_nuclei

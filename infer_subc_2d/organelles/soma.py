@@ -242,7 +242,8 @@ def fixed_infer_soma(in_img: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-    soma_mask  -  a logical/labels object defining boundaries of soma
+    soma_mask:
+        a logical/labels object defining boundaries of soma
     """
 
     ###################

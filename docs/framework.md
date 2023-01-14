@@ -6,8 +6,6 @@ SCohenLab 2D Image Processing
 
 Pipelines are [GET A GOOD DEFINITION / LINK].  They enable repoducability and scalabillity.
 
-
-
 --------------
 # PIPELINE FRAMEWORK OVERVIEW
 
@@ -25,19 +23,17 @@ Here we make explicit what we are trying to accomplish.
 To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
 As part of goal setting we will also enumerate the specific tasks that need to be done to reach the goal.
-### summary of _OBJECTIVES_ ✅
+#### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
-  - 1️⃣. [Infer ***soma***](./01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
-  -  2️⃣. [infer ***nuclei*** ](./02_infer_nuclei.ipynb) 
-  -  3️⃣. [Infer ***cytosol***](./03_infer_cytosol.ipynb)
-  -  4️⃣. [Infer ***lysosome***](./04_infer_lysosome.ipynb)
-  -  5️⃣. [Infer ***mitochondria***](./05_infer_mitochondria.ipynb)
-  -  6️⃣. [Infer ***golgi*** complex](./06_golgi.ipynb)
-  -  7️⃣. [Infer ***peroxisome***](./07_peroxisome.ipynb)
-  -  8️⃣. [Infer ***endoplasmic reticulum*** ](./08_endoplasmic_reticulum.ipynb)
-  -  9️⃣. [Infer ***lipid body***](./09_lipid_bodies.ipynb) 
-
-
+  - 1️⃣-***soma***
+  - 2️⃣-***nuclei***
+  - 3️⃣-***cytosol***
+  - 4️⃣-***lysosome***
+  - 5️⃣-***mitochondria***
+  - 6️⃣-***golgi***
+  - 7️⃣. ***peroxisome***
+  - 8️⃣-***endoplasmic reticulum***
+  - 9️⃣-***lipid body***
 
 ## 2. DATA CREATION
 The second step is to get the data.  Capturing the data could be either from running the experiment, or mining a database.   Implicitly we need to also capture all the assumptions and methodologies, or _meta-data_.
@@ -85,11 +81,7 @@ SUBCELLULAR COMPONENT METRICS
 -  shape
 -  position
 
-
-
-
 # ADDITIONAL CONSIDERATIONS
-
 
 ## NOTE: PIPELINE TOOL AND DESIGN CHOICES?
 We want to leverage the Allen Cell & Structure Segmenter.  It has been wrapped as a [napari-plugin](https://www.napari-hub.org/plugins/napari-allencell-segmenter) but fore the workflow we are proving out here we will want to call the `aicssegmentation` [package](https://github.com/AllenCell/aics-segmentation) directly.
@@ -99,6 +91,5 @@ We want to leverage the Allen Cell & Structure Segmenter.  It has been wrapped a
 
 More details about Segmenter can be found at https://allencell.org/segmenter
 In order to leverage the A
-
 
 ---------------------

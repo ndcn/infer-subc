@@ -31,17 +31,16 @@ def get_optimal_Z_image(img_data: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]
 
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    nuc_ch: int
+    nuc_ch:
         channel with nuclei signal
-    ch_to_agg: Tuple[int]
+    ch_to_agg:
         tuple of channels to aggregate for selecting Z
 
     Returns
     -------------
-    np.ndarray
-        image array with single selected Z-slice   (Channels, 1, X, Y)
+    image np.ndarray with single selected Z-slice   (Channels, 1, X, Y)
 
     """
     optimal_Z = find_optimal_Z(img_data, nuc_ch, ch_to_agg)
@@ -71,16 +70,16 @@ def find_optimal_Z(raw_img: np.ndarray, nuc_ch: int, ch_to_agg: Tuple[int]) -> i
 
     Parameters
     ------------
-    raw_img: np.ndarray
+    raw_img:
         a ch,z,x,y - image containing florescent signal
 
-    nuc_ch: int
+    nuc_ch:
         channel with nuclei signal
 
-    ch_to_agg: Tuple[int]
+    ch_to_agg:
         tuple of channels to aggregate for selecting Z
 
-    Returns
+    Returns:
     -------------
     opt_z:
         the "0ptimal" z-slice which has the most signal intensity for downstream 2D segmentation

@@ -1,5 +1,7 @@
 # explanatory notebooks
 
+This series of notebooks illustrates the 
+
 Robust inference of subcellular objects:
 
 * 1️⃣. [Infer ***soma***](https://github.com/ndcn/infer-subc-2D/tree/main/notebooks/01_infer_soma.ipynb)
