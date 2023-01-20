@@ -10,13 +10,15 @@ pip install aicssegmentation #downgrades napari and scikitlearn
 
 pip install napari-aicsimageio  
 
-<<<<<<< HEAD
+pip install -e <path to infer-subc-2d>
+pip install -e <path to organelle-segmenter-plugin>
+
+
+##  Execute this if installing via pypi (not yet available)
 pip install infer_subc_2d
 pip install napari-infer-subc  
 
-# pip install opencv-python
-# pip install opencv-contrib-python
-pip install opencv-python-headless  # seems to already be installed
+# # pip install opencv-python
+# # pip install opencv-contrib-python
+# pip install opencv-python-headless  # seems to already be installed
 
-=======
->>>>>>> parent of 08c72e0 (fix 09_lipid body nb)

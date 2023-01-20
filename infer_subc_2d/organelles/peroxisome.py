@@ -24,17 +24,17 @@ def infer_peroxisome(
 
     Parameters
      ------------
-     in_img: np.ndarray
+     in_img:
          a 3d image containing all the channels
-     cytosol_mask: np.ndarray
+     cytosol_mask:
          mask
-     gauss_sig: float
+     gauss_sig:
          sigma for gaussian smoothing of  signal
-     dot_scale: float
+     dot_scale:
          scales (log_sigma) for dot filter (1,2, and 3)
-     dot_cut: float
+     dot_cut:
          threshold for dot filter thresholds (1,2,and 3)
-     small_obj_w: int
+     small_obj_w:
          minimu object size cutoff for nuclei post-processing
 
      Returns
@@ -83,14 +83,14 @@ def infer_peroxisome(
 ##########################
 def fixed_infer_peroxisome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
-     Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
+      Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
 
     Parameters
      ------------
      in_img: np.ndarray
          a 3d image containing all the channels
-     cytosol_mask: Optional[np.ndarray] = None
-         mask
+     cytosol_mask:
+         mask - default=None
 
      Returns
      -------------
