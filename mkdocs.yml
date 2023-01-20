@@ -34,7 +34,8 @@ nav:
     - '05_mitochondria' : 'notebooks/nbs/05_infer_mitochondria.ipynb'
     - '06_golgi' : 'notebooks/nbs/06_infer_golgi.ipynb'
     - '07_peroxisome' : 'notebooks/nbs/07_infer_peroxisome.ipynb'
-git ad
+    - '08_endoplasmic_reticulum' : 'notebooks/nbs/08_infer_endoplasmic_reticulum.ipynb'
+    - '09_lipid_body' : 'notebooks/nbs/09_infer_lipid_body.ipynb'
     # - 'batch processing' : 'notebooks/nbs/10_batch_processing.ipynb'
     # # - 'workflows' : 'notebooks/nbs/11_workflows.ipynb'
     # # - 'QC' : 'notebooks/nbs/12_QC.ipynb'
