@@ -20,7 +20,7 @@ def infer_peroxisome(
     small_obj_w: int,
 ) -> np.ndarray:
     """
-     Procedure to infer peroxisome from linearly unmixed input.
+    Procedure to infer peroxisome from linearly unmixed input.
 
     Parameters
      ------------
