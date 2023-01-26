@@ -35,38 +35,38 @@ def infer_golgi(
     small_obj_w: int,
 ) -> np.ndarray:
     """
-     Procedure to infer golgi from linearly unmixed input.
+    Procedure to infer golgi from linearly unmixed input.
 
     Parameters
-     ------------
+    ------------
      in_img:
-         a 3d image containing all the channels
-     soma_mask:
-         mask default-None
-     median_sz:
-         width of median filter for signal
-     mo_method:
-          which method to use for calculating global threshold. Options include:
-          "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
-          "ave" refers the average of "triangle" threshold and "mean" threshold.
-     mo_adjust:
-         Masked Object threshold `local_adjust`
-     mo_cutoff_size:
-         Masked Object threshold `size_min`
-     min_thinkness:
-         Half of the minimum width you want to keep from being thinned.
-         For example, when the object width is smaller than 4, you don't
-         want to make this part even thinner (may break the thin object
-         and alter the topology), you can set this value as 2.
-     thin:
-         the amount to thin (has to be an positive integer). The number of
-          pixels to be removed from outter boundary towards center.
-     dot_scale:
-         scales (log_sigma) for dot filter (1,2, and 3)
-     dot_cut:
-         threshold for dot filter thresholds (1,2,and 3)
-     small_obj_w:
-         minimu object size cutoff for nuclei post-processing
+        a 3d image containing all the channels
+    soma_mask:
+        mask default-None
+    median_sz:
+        width of median filter for signal
+    mo_method:
+        which method to use for calculating global threshold. Options include:
+        "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
+        "ave" refers the average of "triangle" threshold and "mean" threshold.
+    mo_adjust:
+        Masked Object threshold `local_adjust`
+    mo_cutoff_size:
+        Masked Object threshold `size_min`
+    min_thinkness:
+        Half of the minimum width you want to keep from being thinned.
+        For example, when the object width is smaller than 4, you don't
+        want to make this part even thinner (may break the thin object
+        and alter the topology), you can set this value as 2.
+    thin:
+        the amount to thin (has to be an positive integer). The number of
+        pixels to be removed from outter boundary towards center.
+    dot_scale:
+        scales (log_sigma) for dot filter (1,2, and 3)
+    dot_cut:
+        threshold for dot filter thresholds (1,2,and 3)
+    small_obj_w:
+        minimu object size cutoff for nuclei post-processing
 
      Returns
      -------------
@@ -117,17 +117,17 @@ def infer_golgi(
 ##########################
 def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
-     Procedure to infer golgi from linearly unmixed input.
+    Procedure to infer golgi from linearly unmixed input.
 
-     Parameters
-     ------------
-     in_img:
-         a 3d image containing all the channels
-     cytosol_mask:
-         mask
+    Parameters
+    ------------
+    in_img:
+        a 3d image containing all the channels
+    cytosol_mask:
+        mask
 
-     Returns
-     -------------
+    Returns
+    -------------
     golgi_object
          mask defined extent of golgi object
     """
