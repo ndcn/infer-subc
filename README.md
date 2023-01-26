@@ -35,18 +35,6 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 
 
 ----------------------------
-## DEVELOPMENT STATUS
-### WIP
-- Infer subcellular objects:
-  -  ### 10. [batch process](./notebooks/10_batch_process.ipynb)
-
-- leverage [aics-segmenter]( https://allencell.org/segmenter ) `Workflows` paradigm (from [`aicssegmentation.workflow`](https://github.com/AllenCell/aics-segmentation) encode procedures as .json and execute programmically.
-- develop a [napari](https://napari.org/stable/) plugin: [napari-infer-subc](https://github.com/ergonyc/napari-infer-subc) 
-### TO-DO
-- QC for each step, each organelle
-- testing
-- package exported needs for a napari plugin (e.g.  organelle-segmenter-plugin)
-
 ## FRAMEWORKS & RESOURCES
 
 ### NOTE: PIPELINE TOOL AND DESIGN CHOICES?
@@ -70,7 +58,7 @@ More info can be found on their [website](https://napari.org/stable/) and at [th
 A powerful extension framework of **napari plugins**  extend `napari`s functionality.   More infor can be foudn at the [napari hub](https://www.napari-hub.org/about) The napari hub seeks to solve many of the challenges and needs in finding analysis solutions to bioimaging problems. 
 
 ## ADWB hints
-The medium term goal for this project is to execute it on ADDI's ADWB
+The medium term goal for this project is to execute it on ADDI's ADWB.  Given that the github repos are not yet whitelisted, the source directory needs to be zipped and uploaded in order to make an "editable" pip install.
 
 [uploading guide ](https://knowledgebase.aridhia.io/article/guidance-for-uploading-files/)
 [uploading files via the workspace article](https://knowledgebase.aridhia.io/article/uploading-files-via-the-workspace/).
