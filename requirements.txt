@@ -26,7 +26,7 @@ bleach @ file:///home/conda/feedstock_root/build_artifacts/bleach_1656355450470/
 brotlipy @ file:///Users/runner/miniforge3/conda-bld/brotlipy_1648854211613/work
 build==0.8.0
 cachey==0.2.1
-certifi==2022.9.14
+certifi==2022.12.7
 cffi @ file:///Users/runner/miniforge3/conda-bld/cffi_1656782892895/work
 cfgv==3.3.1
 chardet @ file:///Users/runner/miniforge3/conda-bld/chardet_1656142106840/work
