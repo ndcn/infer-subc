@@ -93,7 +93,7 @@ jedi @ file:///home/conda/feedstock_root/build_artifacts/jedi_1659959867326/work
 jgo==1.0.4
 Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1654302431367/work
 jinja2-time @ file:///home/conda/feedstock_root/build_artifacts/jinja2-time_1646750632133/work
-joblib==1.1.0
+joblib==1.2.0
 JPype1==1.4.0
 jsonschema @ file:///home/conda/feedstock_root/build_artifacts/jsonschema-meta_1659525086692/work
 jupyter==1.0.0
