@@ -38,7 +38,8 @@ def infer_lysosome(
     small_obj_w: int,
 ) -> np.ndarray:
     """
-    Procedure to infer lysosome from linearly unmixed input,
+    Procedure to infer lysosome from linearly unmixed input
+
     Parameters
     ------------
     in_img:
@@ -117,7 +118,8 @@ def infer_lysosome(
 ##########################
 def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
-    Procedure to infer lysosome from linearly unmixed input,
+    Procedure to infer lysosome from linearly unmixed input
+
     Parameters
     ------------
     in_img:

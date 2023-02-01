@@ -33,26 +33,25 @@ def infer_mitochondria(
 
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    soma_mask: Optional[np.ndarray] = None
-        mask
-    median_sz: int
+    soma_mask:
+        mask default-None
+    median_sz:
         width of median filter for signal
-    gauss_sig: float
+    gauss_sig:
         sigma for gaussian smoothing of  signal
-    vesselness_scale: float
+    vesselness_scale:
         scale (log_sigma) for vesselness filter
-    vesselness_cut: float
+    vesselness_cut:
         threshold for vesselness fitered threshold
-    small_obj_w: int
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
 
     Returns
     -------------
     mitochondria_object
-        mask defined extent of mitochondria object
-
+        mask defined extent of mitochondria
     """
     mito_ch = MITO_CH
 
@@ -87,12 +86,13 @@ def infer_mitochondria(
 ##########################
 def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
-    Procedure to infer lysosome from linearly unmixed input,
+    Procedure to infer mitochondria from linearly unmixed input
+
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    cytosol_mask: Optional[np.ndarray] = None
+    cytosol_mask:
         mask
 
     Returns

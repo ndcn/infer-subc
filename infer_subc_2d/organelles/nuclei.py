@@ -66,7 +66,8 @@ def infer_nuclei(
 ) -> np.ndarray:
 
     """
-    Procedure to infer nuclei from linearly unmixed input,
+    Procedure to infer nuclei from linearly unmixed input
+
     Parameters
     ------------
     in_img:

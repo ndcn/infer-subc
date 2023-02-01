@@ -29,23 +29,18 @@ def infer_endoplasmic_reticulum(
 
     Parameters
     ------------
-    in_img : np.ndarray
+    in_img:
         a 3d image containing all the channels
-    cytosol_mask : np.ndarray
+    cytosol_mask:
         mask of cytosol
-    filament_scale: float
+    filament_scale:
         scale (log_sigma) for filament filter
-    filament_cut: float
+    filament_cut:
         threshold for filament fitered threshold
-    min_hole_w: int
-        hole filling min for nuclei post-processing
-    max_hole_w: int
-        hole filling cutoff for nuclei post-processing
-    small_obj_w: int
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
-
     Returns
-    ---------
+    -------------
     peroxi_object
         mask defined extent of peroxisome object
     """
@@ -89,10 +84,10 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray, cytosol_mask: Optional
 
     Parameters
     ------------
-    in_img: np.ndarray
+    in_img:
         a 3d image containing all the channels
-    cytosol_mask: Optional[np.ndarray] = None
-        mask
+    cytosol_mask:
+        mask - default=None
 
     Returns
     -------------

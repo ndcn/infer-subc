@@ -1,15 +1,42 @@
 # Welcome to infer_subc_2d
 
-For full documentation visit [github.io.infer_subc_2d.org](https://www.mkdocs.org).
+ `infer_subc_2d` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
+
+This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
+
+## Overview
+
+Notebooks  found [here]( link ) provide the template
+
+### Sub-Cellular object Inference PIPELINE OVERVIEW
+
+#### GOAL:  Infer sub-cellular components in order to understand interactome 
+
+To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
+
+#### summary of _OBJECTIVES_ ✅
+- robust inference of subcellular objects:
+  -  #### 2️⃣. [Infer SOMA](./notebooks/01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
+  -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
+  -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 
+  -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
+  -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
+  -  #### 6️⃣. [Infer GOLGI complex](./notebooks/06_golgi.ipynb)
+  -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/07_peroxisome.ipynb)
+  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_endoplasmic_reticulum.ipynb)
+  -   #### 9️⃣. [Infer LB](./notebooks/09_lipid_bodies.ipynb) 
+
+
+----------------------------
+## FRAMEWORKS & RESOURCES
+
+### NOTE: PIPELINE TOOL AND DESIGN CHOICES?
+We want to leverage the Allen Cell & Structure Setmenter.  It has been wrapped as a [napari-plugin](https://www.napari-hub.org/plugins/napari-allencell-segmenter) but fore the workflow we are proving out here we will want to call the `aicssegmentation` [package](https://github.com/AllenCell/aics-segmentation) directly.
+
+#### ​The Allen Cell & Structure Segmenter 
+​The Allen Cell & Structure Segmenter is a Python-based open source toolkit developed at the Allen Institute for Cell Science for 3D segmentation of intracellular structures in fluorescence microscope images. This toolkit brings together classic image segmentation and iterative deep learning workflows first to generate initial high-quality 3D intracellular structure segmentations and then to easily curate these results to generate the ground truths for building robust and accurate deep learning models. The toolkit takes advantage of the high replicate 3D live cell image data collected at the Allen Institute for Cell Science of over 30 endogenous fluorescently tagged human induced pluripotent stem cell (hiPSC) lines. Each cell line represents a different intracellular structure with one or more distinct localization patterns within undifferentiated hiPS cells and hiPSC-derived cardiomyocytes.
+
+-------
+
+For full documentation visit [github.io.com/infer_subc_2d](https://ndcn.github.io/infer-subc-2D/).
 Robust inference of subcellular objects:
-
-## A
-
-FILL IN
-
-## B
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
