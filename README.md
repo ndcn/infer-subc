@@ -4,7 +4,7 @@
 [![CI](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml/badge.svg)](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml)
 
 ## About The Project
----
+
 `infer_subc_2d` 
 - aims to create a simple, extensible, and reproducible workflow to measure (or infer) the shape, position, size, and interaction of several sub-cellular components. These data can then be applied later to better understand the spatial coordination of these structures and the interactome during key biological processes.
 
@@ -13,7 +13,6 @@
 
 
 ## `infer_subc_2d` Workflow
----
 
 The staring point of this workflow is a set of multichannel images, where each channel labels a different sub-cellular component. The workflow can then be completed in a _**suggested**_ series of steps, outlined in the notebooks below.
 
@@ -33,7 +32,6 @@ The staring point of this workflow is a set of multichannel images, where each c
 9. [Infer lipid bodies](./notebooks/09_infer_lipid_body.ipynb) 
 
 ## Built With
----
 
 A quick note on tools and resources used.
 
@@ -47,7 +45,6 @@ A quick note on tools and resources used.
 - [`Alzheimer's Disease AD Workbench`](https://www.alzheimersdata.org/ad-workbench) -- We initially wanted to use the ADDI's ADWB as a method of data sharing and to serve as a computational resource.
 
 ## ADWB hints
----
 
 Given that the github repos are not yet whitelisted, the source directory needs to be zipped and uploaded in order to make an "editable" pip install.
 
@@ -59,7 +56,6 @@ Given that the github repos are not yet whitelisted, the source directory needs 
 > The file upload to Blob storage follows the process described in [uploading files via the workspace article](https://knowledgebase.aridhia.io/article/uploading-files-via-the-workspace/). Note that due to the nature of Blob storage, folder hierarchies cannot exist without content. This means that you won't be able to create empty folders, and after refreshing the page the empty folders will be gone from your Blob storage. There is a workaround: you can create an empty folder, and without closing the window, add or upload a new file to the folder.
 
 ## Getting Started
----
 
 ### Prerequisites
 
@@ -97,7 +93,6 @@ pip install infer_subc_2d
 ```
 
 ## Usage
----
 
 ```py
 from infer_subc_2d.organelles import infer_NUCLEI
@@ -115,22 +110,20 @@ $ infer_subc_2d
 ```
 
 ## Roadmap
----
+
  - [ ] Add `infer_subc_2d` to ADWB whitelist
  - [ ] Update prerequisites
  - [ ] Create `PyPI` package
  - [ ] Update installation instructions to reflect optimal use of `conda` environments
 
 ## Development
----
+
 Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## License
----
 
 Distributed under the Unlicense license. See `LICENSE` for more information.  
 
 ## Issues
----
 
 If you encounter any problems, please file an issue with a detailed description.
