@@ -1,0 +1,96 @@
+﻿"Organelles (assumed they were masked with whole cell region already) = ER, mito, lyso, perox, lipid droplets, golgi",,,,,,,,
+"Cell regions = whole cell (soma+neurites+nucleus), soma, neurites, cytosol(whole cell - nuclei)",,,,,,,,
+,,,,,,,,
+,Metric of interest,Image to measure from,Mask(s) needed,Input as,Pre-processing step(s),Per object measurement,Per object calculations,Per cell summary stat
+Size,Volume fraction,binary,"organelles, whole cell ","organelle channels, independently",,volume,,sum of organelle volumes / whole cell volume
+,Mean object volume,binary,organelles ,"organelle channels, independently",,volume,,average of organelle volumes
+,Median object volume,binary,organelles ,"organelle channels, independently",,volume,,median of organelle volumes
+,Mean object surface area to volume ratio,binary,organelles ,"organelle channels, independently",,"surface area, volume",surface area / volume,average of surface area/volume
+,Median object surface area to volume ratio,binary,organelles ,"organelle channels, independently",,"surface area, volume",surface area / volume,median of surface area/volume
+,Object count,binary,organelles ,"organelle channels, independently",,count,,highest object ID number
+,,,,,,,,
+Shape,Mean skeletonized length per cell,binary,organelles,"organelle channels, independently",skeletonize,skeleton total length,,average of organelle skeleton total length
+,Median skeletonized length per cell,binary,organelles,"organelle channels, independently",skeletonize,skeleton total length,,median of organelle skeleton total length
+,Mean skeleton branch length per object per cell,binary,organelles,"organelle channels, independently",skeletonize,skeleton branch length,average of skeleton branch length,average of average skeleton branch length
+,Median skeleton branch length per object per cell,binary,organelles,"organelle channels, independently",skeletonize,skeleton branch length,median of skeleton branch length,average of median skeleton branch length
+,Number of skeleton branch points per object per cell,binary,organelles,"organelle channels, independently",skeletonize,number of branch points,,average of number of branch points
+,***still looking for a measurement of circularity/sphericity,binary,,,,,,
+,,,,,,,,
+Distribution,XY distribution,binary,"organelles, soma, nuclei","organelle channels, independently","1. Make 2D sum projection of binary segmentation
+2. Create 5 concentric rings going out from the edge of the nuclei to the edge of the soma - these rings should be morphed to the shape of the nuclei and soma. 
+3. Use nucleus + concentric rings to mask the 2D sum project into radial distribution regions: nuclei = bin 1, ... largest/outter most ring = bin 6. (See reference tab for similar concept in CellProfiler)","For each bin measure:
+1. pixel ""intensity""
+2. bin area","For each bin:
+sum of pixel intensity per bin / bin area","1. Create a frequency table with bin number of the x axis and normalized pixel intensity on the y-axis
+2. Measure the frequency distribution's mean, median, and standard deviation for each cell"
+,Z distribution,binary,"organelles, soma, nuclei","organelle channels, independently","1. subtract nuclei from the soma --> soma cytosol
+2. mask organelle channels with soma cytosol mask","For each Z slice in the masked binary image measure:
+1. organelle area
+2. soma cytosol area","For each Z slice in the masked binary image:
+organelle area / soma cytosol area","1. create a frequency table with the z slice number on the x axis and the area fraction on the y axis
+2. Measure the frequency distribution's mean, median, and standard deviation for each cell"
+,distance along neurites after skeletonization,binary,"organelles, neurites, soma","organelle channels, independently","1. mask organelles with neurite region
+2. skeletonize neurites (starting point is the edge of the soma)",distance along skeleton from the soma point,,average of distances
+,"shortest distance to nearest cell membrane (separated for soma and neurites, maybe?)",binary,"organelles, whole cell","organelle channels, independently",,shortest distance to edge of whole cell,,average of distances
+,shortest distance to nuclei membrane,binary,"organelles, nuclei","organelle channels, independently",,shortest distance to edge of nuclei,,average of distances
+,,,,,,,,
+"Contacts 
+(at least one pixel of overlap with another organelle = contact site)",volume of overlapping region between organelles A and B normalized to volume of organelle A,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,"1. volume of AB overlap region
+2. volume of organelle A",AB overlap volume / organelle A volume,average of AB/A
+,volume of overlapping region between organelles A and B normalized to volume of organelle B,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,"1. volume of AB overlap region
+2. volume of organelle B",AB overlap volume / organelle B volume,average of AB/B
+,volume of overlapping region normalized to total organelle volume involved in contact,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,"1. volume of AB overlap region
+2. volume of organelle A
+3. volume of organelle B",AB overlap volume / (organelle A volume + organelle B volume),average of AB/A+B
+,surface area to volume ratio of overlap region,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,"1. surface area of AB overlap region
+2. volume of AB overlap region",AB surface area / AB volume,average of surface area / volume
+,Number of overlap regions per cell,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,count,,highest ID number of overlap region objects
+,fraction of objects involved in overlap with another organelle,binary,organelles,"pairs of organelle channels, every combination",logical and between organelles A and B --> AB overlap region,"1. number of organelle objects that contain an overlap region
+2. total number of organelle objects",number of organelles involved in overlap / total number of organelles,average fraction of organelles involved in contact
+,average surface area of organelle A involved in contact with organelle B,binary,organelles,"pairs of organelle channels, every combination","1. errode organelle A objects by 1 pixel --> A shell
+2. logical and between A shell and organelle B --> surface area of organelle A involved in contact ",number of pixels in remaining surface area for organelle A,,average of remaining surface area size for organelle A (pxl)
+,average surface area of organelle B involved in contact with organelle A,binary,organelles,"pairs of organelle channels, every combination","1. errode organelle B objects by 1 pixel --> B shell
+2. logical and between B shell and organelle A --> surface area of organelle B involved in contact ",number of pixels in remaining surface area for organelle B,,average of remaining surface area size for organelle B (pxl)
+,average surface area of organelle A involved in contact with organelle B normalized to organelle A total surface area,binary,organelles,"pairs of organelle channels, every combination","1. errode organelle A objects by 1 pixel --> A shell
+2. logical and between A shell and organelle B --> surface area of organelle A involved in contact ","1. number of pixels in remaining surface area for organelle A
+2. total number of pixels in organelle A shell",remaining surface area size for organelle A (pxl) / total pixels in organelle A shell (pxl),average of normalized remaining surface area size for organelle A
+,average surface area of organelle B involved in contact with organelle A normalized to organelle B total surface area,binary,organelles,"pairs of organelle channels, every combination","1. errode organelle B objects by 1 pixel --> B shell
+2. logical and between B shell and organelle A --> surface area of organelle B involved in contact ","1. number of pixels in remaining surface area for organelle B
+2. total number of pixels in organelle B shell",remaining surface area size for organelle B (pxl) / total pixels in organelle B shell (pxl),average of normalized remaining surface area size for organelle B
+,"3-way, 4-way, 5-way, 6-way contact number, volume, surface area",binary,organelles,"1. 3-way combinations of organelles, every combination
+2. 4-way combinations of organelles, every combination
+3. 5-way combinations of organelles, every combination
+4. 6-way combinations of organelles",logical and --> overlap region,"1. volume of overlap region
+2. surface area of overlap region
+3. number of overlap regions",surface area / volume ,"1. average volume
+2. median volume
+3. average surface area / volume
+4. highest ID number for x-way contact
+"
+,Table of organelles involved in each contact site,,,,,,,
+,,,,,,,,
+Intensity,intensity per cell,raw image,whole cell,"organelle channels, independently",mask raw image with whole cell mask,,,total fluorescence
+,mean intensity per cell,raw image,whole cell,"organelle channels, independently",mask raw image with whole cell mask,,,mean fluorescence
+,standard deviation of intensity per cell,raw image,whole cell,"organelle channels, independently",mask raw image with whole cell mask,,,standard deviation of fluorescence
+,intensity within each individual organelle object,raw image,organelles,"organelle channels, independently",mask raw image channel with associated organelle mask,total fluorescence,,average of total fluorescence per object
+,mean intensity within each individual organelle object,raw image,organelles,"organelle channels, independently",mask raw image channel with associated organelle mask,mean fluorescence,,average of mean fluorescence per object
+,standard deviation of intensity within each individual organelle,raw image,organelles,"organelle channels, independently",mask raw image channel with associated organelle mask,standard deviation of fluorescence,,average of standard deviation of fluorescence per object
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+Secondary priorty:,,,,,,,,
+Shape,"Mean hole volume (most specific to ER, but may not work in 3D if all holes are actually tunnels)",avg(volume of hole in an object),,,,,,
+,Median hole volume,median(volume of holes in an object),,,,,,
+,Hole count ,avg(number of holes in an object),,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+References:,,,,,,,,
+geodesci eccentricity,chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://graphics.stanford.edu/courses/cs468-08-fall/pdf/peyre.pdf,,,,,,,
+size shape measurements,"https://hcimage.com/help/Content/Quantitation/Measurements/Processing%20and%20Analysis/Measure/Object/Object%20Measurements.htm#:~:text=Object%20shape%20measurements%20are%20a,units%20have%20been%20canceled%20out.",,,,,,,
+mitometer (matlab analysis code),https://github.com/aelefebv/Mitometer,,,,,,,
+2D XY distribution in CellProfiler,https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.5/modules/measurement.html?highlight=distribution#module-cellprofiler.modules.measureobjectintensitydistribution,,,,,,,
+skeletonize in cellprofiler ,https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.5/modules/advanced.html?highlight=skeleton#module-cellprofiler.modules.morphologicalskeleton,,,,,,,
+,,,,,,,,

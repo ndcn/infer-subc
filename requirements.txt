@@ -26,7 +26,7 @@ bleach @ file:///home/conda/feedstock_root/build_artifacts/bleach_1656355450470/
 brotlipy @ file:///Users/runner/miniforge3/conda-bld/brotlipy_1648854211613/work
 build==0.8.0
 cachey==0.2.1
-certifi==2022.9.14
+certifi==2022.12.7
 cffi @ file:///Users/runner/miniforge3/conda-bld/cffi_1656782892895/work
 cfgv==3.3.1
 chardet @ file:///Users/runner/miniforge3/conda-bld/chardet_1656142106840/work
@@ -93,7 +93,7 @@ jedi @ file:///home/conda/feedstock_root/build_artifacts/jedi_1659959867326/work
 jgo==1.0.4
 Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1654302431367/work
 jinja2-time @ file:///home/conda/feedstock_root/build_artifacts/jinja2-time_1646750632133/work
-joblib==1.1.0
+joblib==1.2.0
 JPype1==1.4.0
 jsonschema @ file:///home/conda/feedstock_root/build_artifacts/jsonschema-meta_1659525086692/work
 jupyter==1.0.0
@@ -165,7 +165,7 @@ pathspec==0.10.1
 pep517==0.13.0
 pexpect @ file:///home/conda/feedstock_root/build_artifacts/pexpect_1602535608087/work
 pickleshare @ file:///home/conda/feedstock_root/build_artifacts/pickleshare_1602536217715/work
-Pillow==8.4.0
+Pillow==9.3.0
 Pint==0.19.2
 pkgutil_resolve_name @ file:///home/conda/feedstock_root/build_artifacts/pkgutil-resolve-name_1633981968097/work
 platformdirs==2.5.2
