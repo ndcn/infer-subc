@@ -12,7 +12,9 @@ from infer_subc_2d.utils.img import (
     apply_mask,
     median_filter_slice_by_slice,
     min_max_intensity_normalization,
+    hole_filling_linear_size,
     size_filter_linear_size,
+    scale_and_smooth, hole_filling_linear_size,
     select_channel_from_raw,
     filament_filter,
 )
@@ -80,12 +82,11 @@ def infer_lysosome(
     ###################
     # PRE_PROCESSING
     ###################
-    lyso = min_max_intensity_normalization(lyso)
+    # lyso = min_max_intensity_normalization(lyso)
+    # lyso = median_filter_slice_by_slice(lyso, size=median_sz)
+    # lyso = image_smoothing_gaussian_slice_by_slice(lyso, sigma=gauss_sig)
 
-    lyso = median_filter_slice_by_slice(lyso, size=median_sz)
-
-    lyso = image_smoothing_gaussian_slice_by_slice(lyso, sigma=gauss_sig)
-
+    lyso = scale_and_smooth(lyso, median_sz=median_sz, gauss_sig=gauss_sig)
     ###################
     # CORE_PROCESSING
     ###################
@@ -93,23 +94,21 @@ def infer_lysosome(
     s2_param = [[dot_scale_1, dot_cut_1], [dot_scale_2, dot_cut_2], [dot_scale_3, dot_cut_3]]
     bw_spot = dot_2d_slice_by_slice_wrapper(lyso, s2_param)
 
-    # f2_param = [[filament_scale, filament_cut]]
-    # # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
-    # bw_filament = filament_2d_wrapper(lyso, f2_param)
-    bw_filament = filament_filter(lyso, filament_scale, filament_cut)
+    f2_param = [[filament_scale, filament_cut]]
+    # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
+    bw_filament = filament_2d_wrapper(lyso, f2_param)
 
     bw = np.logical_or(bw_spot, bw_filament)
 
     ###################
     # POST_PROCESSING
     ###################
-
-    struct_obj = hole_filling(bw, hole_min=min_hole_w**2, hole_max=max_hole_w**2, fill_2d=True)
+    struct_obj = hole_filling_linear_size(bw, hole_min=min_hole_w, hole_max=max_hole_w)
+    struct_obj = size_filter_linear_size(
+        struct_obj, min_size=small_obj_w, connectivity=1  # wrapper to remove_small_objects which can do slice by slice
+    )
 
     struct_obj = apply_mask(struct_obj, cytosol_mask)
-
-    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
-
     return struct_obj
 
 
