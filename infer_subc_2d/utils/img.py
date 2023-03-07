@@ -609,17 +609,46 @@ def masked_inverted_watershed(img_in, markers, mask):
 
 # TODO: consider MOVE to soma.py?
 def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
-    """keep only the label with the maximum raw signal"""
+    """keep only the label with the maximum raw signal
+        Parameters
+    ------------
+    raw_signal:
+        the image to filter on
+    labels_in:
+        labels to consider
 
+    Returns
+    -------------
+        np.ndarray of labels corresponding to the largest total signal
+
+    """
+    keep_label = get_max_label(raw_signal, labels_in)
+    labels_max = np.zeros_like(labels_in)
+    labels_max[labels_in == keep_label] = 1
+    return labels_max
+
+
+def get_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
+    """keep only the label with the maximum raw signal
+        Parameters
+    ------------
+    raw_signal:
+        the image to filter on
+    labels_in:
+        labels to consider
+
+    Returns
+    -------------
+        np.ndarray of labels corresponding to the largest total signal
+
+    """
     all_labels = np.unique(labels_in)[1:]
 
     total_signal = [raw_signal[labels_in == label].sum() for label in all_labels]
     # combine NU and "labels" to make a SOMA
     keep_label = all_labels[np.argmax(total_signal)]
 
-    labels_max = np.zeros_like(labels_in)
-    labels_max[labels_in == keep_label] = 1
-    return labels_max
+    return keep_label
 
 
 # TODO: depricate this...call

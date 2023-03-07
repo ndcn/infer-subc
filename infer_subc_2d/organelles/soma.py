@@ -27,18 +27,19 @@ from infer_subc_2d.utils.img import (
     log_transform,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
-    apply_log_li_threshold,
+    # apply_log_li_threshold,
     size_filter_linear_size,
-    choose_max_label,
-    select_channel_from_raw,
+    # choose_max_label,
+    # select_channel_from_raw,
     weighted_aggregate,
     masked_inverted_watershed,
     hole_filling_linear_size,
+    get_max_label,
 )
 
 
 def _raw_soma_MCZ(img_in):
-    """define soma image (DEPRICATED)
+    """define soma image (DEPRICATED to leverage `weighted_aggregate`)
     uses pre-defined weights and channels
 
     Parameters
@@ -98,10 +99,42 @@ def non_linear_soma_transform_MCZ(in_img):
     return min_max_intensity_normalization(scharr(log_img)) + log_img
 
 
+def choose_max_label_soma_union_nucleus(
+    soma_img: np.ndarray, soma_obj: np.ndarray, nuclei_obj: np.ndarray
+) -> np.ndarray:
+    """find the label with the maximum soma from watershed on the nuclei + plus the corresponding nuclei labels
+
+        Parameters
+    ------------
+    soma_img:
+        the soma image intensities
+    soma_obj:
+        thresholded soma mask
+    nuclei_obj:
+        inferred nuclei
+
+    Returns
+    -------------
+        np.ndarray of soma+nuc labels corresponding to the largest total soma signal
+
+    """
+    nuc_labels = label(nuclei_obj)
+    soma_labels = masked_inverted_watershed(soma_img, nuc_labels, soma_obj)
+
+    keep_label = get_max_label(soma_img, soma_labels)
+
+    soma_out = np.zeros_like(soma_labels)
+    soma_out[soma_labels == keep_label] = 1
+    soma_out[nuc_labels == keep_label] = 1
+
+    return soma_out
+
+
 ##########################
 # 1. infer_soma
 ##########################
-def infer_soma(
+# TODO:  break up the logic so the EXTRACT / PRE-PROCESS functions are more flexible? i.e. not nescessarily MCZ
+def infer_soma_MCZ(
     in_img: np.ndarray,
     nuclei_obj: np.ndarray,
     median_sz: int,
@@ -177,20 +210,15 @@ def infer_soma(
 
     struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
 
-    labels_out = masked_inverted_watershed(
-        struct_img, label(nuclei_obj), struct_obj
-    )  # np.logical_or(struct_obj, NU_labels > 0)
-
     ###################
     # POST- POST_PROCESSING
     ###################
-    # keep the "SOMA" label which contains the highest total signal
-    soma_out = choose_max_label(scaled_signal, labels_out)
+    soma_out = choose_max_label_soma_union_nucleus(struct_img, struct_obj, nuclei_obj)
 
     return soma_out
 
 
-def fixed_infer_soma(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarray:
+def fixed_infer_soma_MCZ(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
@@ -214,11 +242,11 @@ def fixed_infer_soma(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarray:
     gauss_sig = 1.34
     mo_method = "ave"
     mo_adjust = 0.5
-    mo_cutoff_size = 100
-    max_hole_w = 40
-    small_obj_w = 15
+    mo_cutoff_size = 150
+    max_hole_w = 50
+    small_obj_w = 45
 
-    soma_out = infer_soma(
+    soma_out = infer_soma_MCZ(
         in_img, nuclei_obj, median_sz, gauss_sig, mo_method, mo_adjust, mo_cutoff_size, max_hole_w, small_obj_w
     )
 

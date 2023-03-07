@@ -13,7 +13,7 @@ from infer_subc_2d.utils.img import (
     apply_mask,
     select_channel_from_raw,
     hole_filling_linear_size,
-    scale_and_smooth
+    scale_and_smooth,
 )
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -155,7 +155,7 @@ def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = Non
     thresh_factor = 0.9
     thresh_min = 0.1
     thresh_max = 1.0
-    max_hole_w = 5
+    max_hole_w = 25
     small_obj_w = 15
 
     return infer_nuclei(
