@@ -11,7 +11,7 @@ from infer_subc_2d.utils.img import (
     apply_mask,
     median_filter_slice_by_slice,
     min_max_intensity_normalization,
-    size_filter_2D,
+    size_filter_linear_size,
     vesselness_slice_by_slice,
     select_channel_from_raw,
 )
@@ -76,7 +76,7 @@ def infer_mitochondria(
     ###################
     struct_obj = apply_mask(struct_img, cytosol_mask)
 
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
 
     return struct_obj
 

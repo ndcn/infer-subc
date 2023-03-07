@@ -300,6 +300,8 @@ def reader_function(path: "PathLike", in_memory: Optional[bool] = None) -> Optio
 
 def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
+    wrapper for exporting ome tiff
+    
     #  data_in: types.ArrayLike,
     #  meta_in: dict,
     # img_name: types.PathLike,

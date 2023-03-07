@@ -6,15 +6,17 @@ from scipy.ndimage import median_filter, extrema
 import scipy
 
 # from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
-from aicssegmentation.core.utils import size_filter
+from aicssegmentation.core.utils import size_filter, hole_filling
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
 from aicssegmentation.core.vessel import filament_2d_wrapper
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
 from typing import Tuple, List, Union, Any
 
-from skimage.morphology import remove_small_objects, white_tophat, ball, disk, black_tophat
+from skimage.morphology import remove_small_objects, white_tophat, ball, disk, black_tophat, label
+from skimage.segmentation import clear_border, watershed
 
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -44,7 +46,6 @@ def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:
         can be applied to an image by the inverse_log_transform to
         convert it back to its former intensity values.
     """
-
     orig_min, orig_max = extrema(image)[:2]
     #
     # We add 1/2 bit noise to an 8 bit image to give the log a bottom
@@ -153,7 +154,6 @@ def threshold_li_log(image_in: np.ndarray) -> np.ndarray:
         boolean np.ndarray
 
     """
-
     image, d = log_transform(image_in.copy())
     threshold = threshold_li(image)
     threshold = inverse_log_transform(threshold, d)
@@ -175,7 +175,6 @@ def threshold_otsu_log(image_in):
     -------------
         boolean np.ndarray
     """
-
     image, d = log_transform(image_in.copy())
     threshold = threshold_otsu(image)
     threshold = inverse_log_transform(threshold, d)
@@ -236,6 +235,30 @@ def masked_object_thresh(
     return struct_obj
 
 
+def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
+    """
+    gets the labeled objects from the X,Y "interior" of the image. We only want to clear the objects touching the sides of the volume, but not the top and bottom, so we pad and crop the volume along the 0th axis to avoid clearing the mitotic nucleus
+
+    Parameters
+    ------------
+    img_in: np.ndarray
+        a 3d image
+
+    Returns
+    -------------
+        np.ndimage of labeled segmentations NOT touching the sides
+
+    """
+    segmented_padded = np.pad(
+        label(img_in),
+        ((1, 1), (0, 0), (0, 0)),
+        mode="constant",
+        constant_values=0,
+    )
+    interior_labels = clear_border(segmented_padded)[1:-1]
+    return interior_labels
+
+
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -281,6 +304,30 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
     struct_img = (struct_img - strech_min + 1e-8) / (strech_max - strech_min + 1e-8)
 
     return struct_img
+
+
+def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
+    """
+    helper to
+    Parameters
+    ------------
+    img_in:
+        a 3d imagenp.ndarray
+    *weights:
+        list of integer weights to apply to our channels.  if the weights are less than 1, they will NOT be included (and might not be there)
+
+    Returns
+    -------------
+        np.ndimage of weighted sum of channels
+
+    """
+
+    img_out = np.zeros_like(img_in[0]).astype(np.double)
+    for ch, w in enumerate(weights):
+        if w > 0:
+            img_out += (w * 1.0) * img_in[ch]
+
+    return img_out
 
 
 def apply_threshold(
@@ -449,11 +496,47 @@ def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np
     return img_in[:, z_slice, :, :]
 
 
+def scale_and_smooth(
+    img_in: np.ndarray, median_sz: int = 1, gauss_sig: float = 1.34, slice_by_slice: bool = True
+) -> np.ndarray:
+    """
+    helper to perform min-max scaling, and median+gaussian smoothign all at once
+    Parameters
+    ------------
+    img_in: np.ndarray
+        a 3d image
+    median_sz: int
+        width of median filter for signal
+    gauss_sig: float
+        sigma for gaussian smoothing of  signal
+    slice_by_slice:
+        NOT IMPLIMENTED.  toggles whether to do 3D operations or slice by slice in Z
+
+    Returns
+    -------------
+        np.ndimage
+
+    """
+    img = min_max_intensity_normalization(img_in.copy())  # is this copy nescesa
+
+    # TODO:  make non-slice-by-slice work
+    slice_by_slice = True
+    if slice_by_slice:
+        if median_sz > 1:
+            img = median_filter_slice_by_slice(img, size=median_sz)
+        img = image_smoothing_gaussian_slice_by_slice(img, sigma=gauss_sig)
+    else:
+        print(" PLEASE CHOOOSE 'slice-by-slice', 3D is not yet implimented")
+
+    return img
+
+
+# DEPRICATED
 def aggregate_signal_channels(
     img_in: np.ndarray, chs: Union[List, Tuple], ws: Union[List, Tuple, Any] = None
 ) -> np.ndarray:
     """
-    return a weighted sum of the image across channels
+    return a weighted sum of the image across channels (DEPRICATED)
 
     Parameters
     ------------
@@ -506,6 +589,24 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
 
+def masked_inverted_watershed(img_in, markers, mask):
+    """wrapper for watershed on inverted image and masked
+
+    Parameters
+    ------------
+    in_img:
+        a 3d image containing all the channels
+
+    """
+    labels_out = watershed(
+        1.0 - img_in,
+        markers=markers,
+        connectivity=np.ones((1, 3, 3), bool),
+        mask=mask,
+    )
+    return labels_out
+
+
 # TODO: consider MOVE to soma.py?
 def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
     """keep only the label with the maximum raw signal"""
@@ -523,15 +624,19 @@ def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarra
 
 # TODO: depricate this...call
 #     size_filter(img, min_size=min_size, method = "slice_by_slice", connectivity = 1)
-def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1) -> np.ndarray:
-    """size filter in 2D
+def size_filter_linear_size(
+    img: np.ndarray, min_size: int, method: str = "slice_by_slice", connectivity: int = 1
+) -> np.ndarray:
+    """size filter wraper to aiscsegmentation `size_filter` with size argument in linear units
 
     Parameters
     ------------
     img:
         the image to filter on
     min_size: int
-        the minimum size to keep
+        the minimum size expressed as 1D length (so squared for slice-by-slice, cubed for 3D)
+    method: str
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
     connnectivity: int
         the connectivity to use when computing object size
     Returns
@@ -539,10 +644,32 @@ def size_filter_2D(img: np.ndarray, min_size: int, connectivity: int = 1) -> np.
         np.ndarray
     """
     # return remove_small_objects(img > 0, min_size=min_size, connectivity=connectivity, in_place=False)
-    if img.any():  # protects against size_filter bug when there is no object (due to label first)
-        return size_filter(img, min_size=min_size, method="slice_by_slice", connectivity=connectivity)
-    else:
+    if not img.any():
         return img
+
+    if method == "3D":
+        return size_filter(img, min_size=min_size**3, method="3D", connectivity=connectivity)
+    elif method == "slice_by_slice":
+        return size_filter(img, min_size=min_size**2, method="slice_by_slice", connectivity=connectivity)
+    else:
+        raise NotImplementedError(f"unsupported method {method}")
+
+
+def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int) -> np.ndarray:
+    """Fill holes  wraper to aiscsegmentation `hole_filling` with size argument in linear units.  always does slice-by-slice
+
+    Parameters
+    ------------
+    img:
+        the image to filter on
+    hole_min: int
+        the minimum width of the holes to be filled
+    hole_max: int
+        the maximum width of the holes to be filled
+    Return:
+        a binary image after hole filling
+    """
+    return hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
 
 
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:

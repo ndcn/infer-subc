@@ -6,7 +6,12 @@ from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
 from infer_subc_2d.constants import PEROXI_CH
 
-from infer_subc_2d.utils.img import apply_mask, min_max_intensity_normalization, size_filter_2D, select_channel_from_raw
+from infer_subc_2d.utils.img import (
+    apply_mask,
+    min_max_intensity_normalization,
+    size_filter_linear_size,
+    select_channel_from_raw,
+)
 
 ##########################
 #  infer_peroxisome
@@ -73,7 +78,7 @@ def infer_peroxisome(
     #     bw = watershed(watershed_map, label(seed_), mask=mask_, watershed_line=True)
     struct_obj = apply_mask(bw, cytosol_mask)
 
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
 
     return struct_obj
 

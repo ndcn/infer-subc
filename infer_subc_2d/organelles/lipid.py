@@ -9,7 +9,7 @@ from infer_subc_2d.utils.img import (
     apply_mask,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
-    size_filter_2D,
+    size_filter_linear_size,
     select_channel_from_raw,
 )
 from infer_subc_2d.constants import LIPID_CH
@@ -35,15 +35,15 @@ def infer_lipid(
 
     Parameters
     ------------
-    in_img: 
+    in_img:
         a 3d image containing all the channels
-    cytosol_mask: 
+    cytosol_mask:
         mask of cytosol
-    median_sz: 
+    median_sz:
         width of median filter for signal
-    gauss_sig: 
+    gauss_sig:
         sigma for gaussian smoothing of  signal
-    method: 
+    method:
         method for applying threshold.  "otsu"  or "li", "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
     thresh_factor:
         scaling value for threshold
@@ -51,9 +51,9 @@ def infer_lipid(
         absolute minumum for threshold
     thresh_max :
         absolute maximum for threshold
-    max_hole_w: 
+    max_hole_w:
         hole filling cutoff for nuclei post-processing
-    small_obj_w: 
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
     Returns
     -------------
@@ -89,7 +89,7 @@ def infer_lipid(
 
     struct_obj = apply_mask(struct_obj, cytosol_mask)
 
-    struct_obj = size_filter_2D(
+    struct_obj = size_filter_linear_size(
         struct_obj,  # wrapper to remove_small_objects which can do slice by slice
         min_size=small_obj_w**2,
         connectivity=1,
@@ -107,11 +107,11 @@ def fixed_infer_lipid(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
 
     Parameters
     ------------
-    in_img: 
+    in_img:
         a 3d image containing all the channels
      cytosol_mask:
         mask - default=None
-        
+
     Returns
     -------------
     lipid_body_object

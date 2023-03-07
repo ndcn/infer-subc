@@ -12,7 +12,7 @@ from infer_subc_2d.utils.img import (
     apply_mask,
     median_filter_slice_by_slice,
     min_max_intensity_normalization,
-    size_filter_2D,
+    size_filter_linear_size,
     select_channel_from_raw,
     filament_filter,
 )
@@ -108,7 +108,7 @@ def infer_lysosome(
 
     struct_obj = apply_mask(struct_obj, cytosol_mask)
 
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
 
     return struct_obj
 
