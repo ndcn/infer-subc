@@ -1,63 +1,19 @@
-from skimage.measure import label
 import numpy as np
-from typing import Optional, Union
-
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
-from aicssegmentation.core.utils import hole_filling
+from typing import Union
 
 from infer_subc_2d.utils.img import (
-    size_filter_linear_size,
-    min_max_intensity_normalization,
-    median_filter_slice_by_slice,
+    fill_and_filter_linear_size,
     apply_log_li_threshold,
-    apply_mask,
     select_channel_from_raw,
-    hole_filling_linear_size,
     scale_and_smooth,
 )
-from infer_subc_2d.constants import (
-    TEST_IMG_N,
-    NUC_CH,
-    LYSO_CH,
-    MITO_CH,
-    GOLGI_CH,
-    PEROXI_CH,
-    ER_CH,
-    LIPID_CH,
-    RESIDUAL_CH,
-)
-
-# from .qc import ObjectCheck, ObjectStats, ArrayLike
-
-
-# def NucleiCheck(ObjectCheck):
-#     """
-#     Checker class for NUCLEI priors
-#     """
-#     def __init__(self, priors: ObjectStats)
-#         self.prior = priors
-
-#     @property
-#     def self.prior(self):
-#         if self.__stats is None:
-#             return
-#         return self.__stats
-
-#     @prior.setter
-#     def self.prior(self, prior: ObjectStats):
-#         return self.__stats
-
-#     def self.check_prior(self, test_image:ArrayLike):
-#         pass
-
-# copy this to base.py for easy import
+from infer_subc_2d.constants import NUC_CH
 
 ##########################
 #  infer_nuclei
 ##########################
 def infer_nuclei(
     in_img: np.ndarray,
-    soma_mask: np.ndarray,
     nuc_ch: Union[int, None],
     median_sz: int,
     gauss_sig: float,
@@ -72,23 +28,21 @@ def infer_nuclei(
 
     Parameters
     ------------
-    in_img: np.ndarray
-        a 3d image containing all the channels
-    soma_mask: Optional[np.ndarray] = None
-        mask
-    median_sz: int
+    in_img:
+        a 3d image containing all the channels; np.ndarray
+    median_sz:
         width of median filter for signal
-    gauss_sig: float
+    gauss_sig:
         sigma for gaussian smoothing of  signal
-    thresh_factor: float
+    thresh_factor:
         adjustment factor for log Li threholding
-    thresh_min: float
+    thresh_min:
         abs min threhold for log Li threholding
-    thresh_max: float
+    thresh_max:
         abs max threhold for log Li threholding
-    max_hole_w: int
+    max_hole_w:
         hole filling cutoff for nuclei post-processing
-    small_obj_w: int
+    small_obj_w:
         minimu object size cutoff for nuclei post-processing
 
     Returns
@@ -115,24 +69,17 @@ def infer_nuclei(
         nuclei, thresh_factor=thresh_factor, thresh_min=thresh_min, thresh_max=thresh_max
     )
 
-    NU_labels = label(nuclei_object)
     ###################
     # POST_PROCESSING
     ###################
-    nuclei_object = hole_filling_linear_size(nuclei_object, hole_min=0, hole_max=max_hole_w)
-
-    if soma_mask is not None:
-        nuclei_object = apply_mask(nuclei_object, soma_mask)
-
-    nuclei_object = size_filter_linear_size(nuclei_object, min_size=small_obj_w)
-
+    nuclei_object = fill_and_filter_linear_size(nuclei_object, hole_min=0, hole_max=max_hole_w, min_size=small_obj_w)
     return nuclei_object
 
 
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_nuclei(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
@@ -140,13 +87,11 @@ def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = Non
     ------------
     in_img:
         a 3d image containing all the channels
-    soma_mask: Optional[np.ndarray] = None
-        mask of soma extent
 
     Returns
     -------------
     nuclei_object
-        mask defined extent of NU
+        inferred nuclei
 
     """
     nuc_ch = NUC_CH
@@ -159,5 +104,5 @@ def fixed_infer_nuclei(in_img: np.ndarray, soma_mask: Optional[np.ndarray] = Non
     small_obj_w = 15
 
     return infer_nuclei(
-        in_img, soma_mask, nuc_ch, median_sz, gauss_sig, thresh_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
+        in_img, nuc_ch, median_sz, gauss_sig, thresh_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
     )

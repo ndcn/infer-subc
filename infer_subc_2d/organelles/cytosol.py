@@ -1,6 +1,5 @@
 import numpy as np
-from skimage.morphology import binary_erosion, binary_dilation
-
+from skimage.morphology import binary_erosion
 
 ##########################
 #  infer_cytosol

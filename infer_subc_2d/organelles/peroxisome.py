@@ -1,15 +1,12 @@
 import numpy as np
-from typing import Optional
 
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
 from infer_subc_2d.constants import PEROXI_CH
 
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    min_max_intensity_normalization,
     size_filter_linear_size,
+    scale_and_smooth,
     select_channel_from_raw,
 )
 
@@ -18,7 +15,6 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_peroxisome(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
     gauss_sig: float,
     dot_scale: float,
     dot_cut: float,
@@ -56,9 +52,7 @@ def infer_peroxisome(
     ###################
     # PRE_PROCESSING
     ###################
-    peroxi = min_max_intensity_normalization(peroxi)
-
-    peroxi = image_smoothing_gaussian_slice_by_slice(peroxi, sigma=gauss_sig)
+    peroxi = scale_and_smooth(peroxi, median_sz=0, gauss_sig=gauss_sig)  # skips for median_sz < 2
 
     ###################
     # CORE_PROCESSING
@@ -69,16 +63,7 @@ def infer_peroxisome(
     ###################
     # POST_PROCESSING
     ###################
-    # do_watershed = False
-    # if do_watershed: # BUG: this makes bw into labels... but we are returning a binary object...
-    #     minArea = 4
-    #     mask_ = remove_small_objects(bw>0, min_size=minArea, connectivity=1, in_place=False)
-    #     seed_ = dilation(peak_local_max(struct_img,labels=label(mask_), min_distance=2, indices=False), selem=ball(1))
-    #     watershed_map = -1*ndi.distance_transform_edt(bw)
-    #     bw = watershed(watershed_map, label(seed_), mask=mask_, watershed_line=True)
-    struct_obj = apply_mask(bw, cytosol_mask)
-
-    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
 
     return struct_obj
 
@@ -86,7 +71,7 @@ def infer_peroxisome(
 ##########################
 #  fixed_infer_peroxisome
 ##########################
-def fixed_infer_peroxisome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_peroxisome(in_img: np.ndarray) -> np.ndarray:
     """
       Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
 
@@ -94,8 +79,6 @@ def fixed_infer_peroxisome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray
      ------------
      in_img: np.ndarray
          a 3d image containing all the channels
-     cytosol_mask:
-         mask - default=None
 
      Returns
      -------------
@@ -109,7 +92,6 @@ def fixed_infer_peroxisome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray
 
     return infer_peroxisome(
         in_img,
-        cytosol_mask,
         gauss_sig,
         dot_scale,
         dot_cut,

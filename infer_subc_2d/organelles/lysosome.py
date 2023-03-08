@@ -1,22 +1,14 @@
 import numpy as np
-from typing import Optional
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
-from aicssegmentation.core.utils import hole_filling
 from aicssegmentation.core.vessel import filament_2d_wrapper
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
 from infer_subc_2d.constants import LYSO_CH
 
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    median_filter_slice_by_slice,
-    min_max_intensity_normalization,
-    hole_filling_linear_size,
-    size_filter_linear_size,
-    scale_and_smooth, hole_filling_linear_size,
+    scale_and_smooth,
+    fill_and_filter_linear_size,
     select_channel_from_raw,
-    filament_filter,
 )
 
 ##########################
@@ -24,7 +16,6 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_lysosome(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
     median_sz: int,
     gauss_sig: float,
     dot_scale_1: float,
@@ -46,8 +37,6 @@ def infer_lysosome(
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask
     median_sz:
         width of median filter for signal
     gauss_sig:
@@ -82,20 +71,15 @@ def infer_lysosome(
     ###################
     # PRE_PROCESSING
     ###################
-    # lyso = min_max_intensity_normalization(lyso)
-    # lyso = median_filter_slice_by_slice(lyso, size=median_sz)
-    # lyso = image_smoothing_gaussian_slice_by_slice(lyso, sigma=gauss_sig)
-
     lyso = scale_and_smooth(lyso, median_sz=median_sz, gauss_sig=gauss_sig)
+
     ###################
     # CORE_PROCESSING
     ###################
-    # s2_param = [[5,0.09], [2.5,0.07], [1,0.01]]
     s2_param = [[dot_scale_1, dot_cut_1], [dot_scale_2, dot_cut_2], [dot_scale_3, dot_cut_3]]
     bw_spot = dot_2d_slice_by_slice_wrapper(lyso, s2_param)
 
     f2_param = [[filament_scale, filament_cut]]
-    # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     bw_filament = filament_2d_wrapper(lyso, f2_param)
 
     bw = np.logical_or(bw_spot, bw_filament)
@@ -103,19 +87,14 @@ def infer_lysosome(
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = hole_filling_linear_size(bw, hole_min=min_hole_w, hole_max=max_hole_w)
-    struct_obj = size_filter_linear_size(
-        struct_obj, min_size=small_obj_w, connectivity=1  # wrapper to remove_small_objects which can do slice by slice
-    )
-
-    struct_obj = apply_mask(struct_obj, cytosol_mask)
+    struct_obj = fill_and_filter_linear_size(bw, hole_min=min_hole_w, hole_max=max_hole_w, min_size=small_obj_w)
     return struct_obj
 
 
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input
 
@@ -123,9 +102,6 @@ def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] 
     ------------
     in_img:
         a 3d image containing all the channels
-
-    cytosol_mask:
-        mask
 
     Returns
     -------------
@@ -148,7 +124,6 @@ def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] 
 
     return infer_lysosome(
         in_img,
-        cytosol_mask,
         median_sz,
         gauss_sig,
         dot_cut_1,

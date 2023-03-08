@@ -1,19 +1,13 @@
 import numpy as np
-from typing import Optional
-
-from aicssegmentation.core.pre_processing_utils import (
-    image_smoothing_gaussian_slice_by_slice,
-)
 
 from infer_subc_2d.constants import MITO_CH
 
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    median_filter_slice_by_slice,
-    min_max_intensity_normalization,
+    size_filter_linear_size,
     size_filter_linear_size,
     vesselness_slice_by_slice,
     select_channel_from_raw,
+    scale_and_smooth,
 )
 
 ##########################
@@ -21,7 +15,6 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_mitochondria(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
     median_sz: int,
     gauss_sig: float,
     vesselness_scale: float,
@@ -35,8 +28,6 @@ def infer_mitochondria(
     ------------
     in_img:
         a 3d image containing all the channels
-    soma_mask:
-        mask default-None
     median_sz:
         width of median filter for signal
     gauss_sig:
@@ -54,17 +45,15 @@ def infer_mitochondria(
         mask defined extent of mitochondria
     """
     mito_ch = MITO_CH
+    ###################
+    # EXTRACT
+    ###################
+    mito = select_channel_from_raw(in_img, MITO_CH)
 
     ###################
     # PRE_PROCESSING
     ###################
-    mito = select_channel_from_raw(in_img, MITO_CH)
-
-    mito = min_max_intensity_normalization(mito)
-
-    mito = median_filter_slice_by_slice(mito, size=median_sz)
-
-    struct_img = image_smoothing_gaussian_slice_by_slice(mito, sigma=gauss_sig)
+    struct_img = scale_and_smooth(mito, median_sz=median_sz, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
@@ -74,9 +63,7 @@ def infer_mitochondria(
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = apply_mask(struct_img, cytosol_mask)
-
-    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_img, min_size=small_obj_w)
 
     return struct_obj
 
@@ -84,7 +71,7 @@ def infer_mitochondria(
 ##########################
 #  fixed_infer_mitochondria
 ##########################
-def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer mitochondria from linearly unmixed input
 
@@ -92,8 +79,6 @@ def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarr
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask
 
     Returns
     -------------
@@ -106,4 +91,4 @@ def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarr
     vesselness_cut = 0.05
     small_obj_w = 3
 
-    return infer_mitochondria(in_img, cytosol_mask, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
+    return infer_mitochondria(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)

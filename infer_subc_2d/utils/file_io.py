@@ -69,6 +69,38 @@ def export_ndarray(data_in, img_name, out_path) -> str:
     data_in.tofile(out_name)
     return out_name
 
+
+# TODO throw exception and call with try
+def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
+    """
+    read inferred organelle from ome.tif file
+
+    Parameters
+    ------------
+    name: str
+        name of organelle.  i.e. nuclei, lysosome, etc.
+    meta_dict:
+        dictionary of meta-data (ome) from original file
+    out_data_path:
+        Path object of directory where tiffs are read from
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    img_name = meta_dict["file_name"]
+
+    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
+    organelle_path = out_data_path / organelle_fname
+
+    if Path.exists(organelle_path):
+        organelle_obj, _meta_dict = read_ome_image(organelle_path)
+        return organelle_obj
+    else:
+        print(f"`{name}` object not found: {organelle_path}")
+
+
 def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, out_data_path: Path) -> str:
     """
     write inferred organelle to ome.tif file
@@ -111,6 +143,9 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
 
 
 def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_path):
+    """
+    stack all the inferred objects and stack along 0 dimension
+    """
     # get some top-level info about the RAW data
     channel_names = meta_dict["name"]
     img = meta_dict["metadata"]["aicsimage"]
@@ -213,12 +248,12 @@ def read_ome_image(image_name):
     meta_out["file_name"] = image_name
     return (data_out, meta_out)
 
+
 def read_czi_image(image_name):
     """
     return output from napari aiscioimage reader (alias for read_ome_image)
     """
     return read_ome_image(image_name)
-
 
 
 # function to collect all the

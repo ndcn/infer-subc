@@ -11,7 +11,7 @@ from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
 from aicssegmentation.core.vessel import filament_2d_wrapper
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice, edge_preserving_smoothing_3d
 
 from typing import Tuple, List, Union, Any
 
@@ -305,6 +305,23 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
 
     return struct_img
 
+def normalized_edge_preserving_smoothing(img_in: np.ndarray) -> np.ndarray:
+    """wrapper to min-max normalize + aicssegmentaion. edge_preserving_smoothing_3d
+
+    Parameters
+    ------------
+    img:
+        a 3d image
+
+    Returns
+    -------------
+        smoothed and normalized np.ndimage
+    """
+    struct_img = min_max_intensity_normalization( img_in )
+    # edge-preserving smoothing (Option 2, used for Sec61B)
+    struct_img = edge_preserving_smoothing_3d(struct_img)
+    # 10 seconds!!!!  tooooo slow... for maybe no good reason
+    return min_max_intensity_normalization( struct_img )
 
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """
@@ -607,10 +624,10 @@ def masked_inverted_watershed(img_in, markers, mask):
     return labels_out
 
 
-# TODO: consider MOVE to soma.py?
 def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
     """keep only the label with the maximum raw signal
-        Parameters
+
+    Parameters
     ------------
     raw_signal:
         the image to filter on
@@ -651,8 +668,38 @@ def get_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
     return keep_label
 
 
-# TODO: depricate this...call
-#     size_filter(img, min_size=min_size, method = "slice_by_slice", connectivity = 1)
+def fill_and_filter_linear_size(
+    img: np.ndarray, hole_min: int, hole_max: int, min_size: int, method: str = "slice_by_slice", connectivity: int = 1
+) -> np.ndarray:
+    """wraper to aiscsegmentation `hole_filling` and `size_filter` with size argument in linear units
+
+    Parameters
+    ------------
+    img:
+        the image to filter on
+    hole_min: int
+        the minimum width of the holes to be filled
+    hole_max: int
+        the maximum width of the holes to be filled
+    min_size: int
+        the minimum size expressed as 1D length (so squared for slice-by-slice, cubed for 3D)
+    method: str
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
+    connnectivity: int
+        the connectivity to use when computing object size
+    Returns
+    -------------
+        a binary image after hole filling and filtering small objects; np.ndarray
+    """
+    if not img.any():
+        return img
+    img = hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
+    if method == "3D":
+        return size_filter(img, min_size=min_size**3, method="3D", connectivity=connectivity)
+    elif method == "slice_by_slice":
+        return size_filter(img, min_size=min_size**2, method="slice_by_slice", connectivity=connectivity)
+
+
 def size_filter_linear_size(
     img: np.ndarray, min_size: int, method: str = "slice_by_slice", connectivity: int = 1
 ) -> np.ndarray:
@@ -695,7 +742,9 @@ def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int) -> n
         the minimum width of the holes to be filled
     hole_max: int
         the maximum width of the holes to be filled
-    Return:
+
+    Returns
+    -----------
         a binary image after hole filling
     """
     return hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
@@ -793,12 +842,12 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
 
     Parameters
     ------------
-    in_img: np.ndarray
-        the image to filter on
-    filament_scale: float
-        scale or size of the "filter"
-    filament_cut: float
-        cutoff for thresholding
+    in_img:
+        the image to filter on np.ndarray
+    filament_scale:
+        scale or size of the "filter" float
+    filament_cut:
+        cutoff for thresholding float
 
     Returns
     -----------

@@ -1,12 +1,7 @@
 from skimage.filters import scharr
-from skimage.segmentation import watershed
 from skimage.measure import label
 
 import numpy as np
-
-# from napari_aicsimageio.core import  reader_function
-
-from aicssegmentation.core.utils import hole_filling
 
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
@@ -27,13 +22,9 @@ from infer_subc_2d.utils.img import (
     log_transform,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
-    # apply_log_li_threshold,
-    size_filter_linear_size,
-    # choose_max_label,
-    # select_channel_from_raw,
     weighted_aggregate,
     masked_inverted_watershed,
-    hole_filling_linear_size,
+    fill_and_filter_linear_size,
     get_max_label,
 )
 
@@ -206,9 +197,12 @@ def infer_soma_MCZ(
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = hole_filling_linear_size(struct_obj, hole_min=0, hole_max=max_hole_w)
-
-    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
+    # struct_obj = hole_filling_linear_size(struct_obj,
+    #                                             hole_min =0 ,
+    #                                             hole_max=max_hole_w)
+    # struct_obj = size_filter_linear_size(struct_obj,
+    #                                                 min_size= small_obj_w)
+    struct_obj = fill_and_filter_linear_size(struct_obj, hole_min=0, hole_max=max_hole_w, min_size=small_obj_w)
 
     ###################
     # POST- POST_PROCESSING
