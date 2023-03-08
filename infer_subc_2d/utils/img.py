@@ -11,7 +11,10 @@ from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
 from aicssegmentation.core.vessel import filament_2d_wrapper
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice, edge_preserving_smoothing_3d
+from aicssegmentation.core.pre_processing_utils import (
+    image_smoothing_gaussian_slice_by_slice,
+    edge_preserving_smoothing_3d,
+)
 
 from typing import Tuple, List, Union, Any
 
@@ -305,6 +308,7 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
 
     return struct_img
 
+
 def normalized_edge_preserving_smoothing(img_in: np.ndarray) -> np.ndarray:
     """wrapper to min-max normalize + aicssegmentaion. edge_preserving_smoothing_3d
 
@@ -317,11 +321,12 @@ def normalized_edge_preserving_smoothing(img_in: np.ndarray) -> np.ndarray:
     -------------
         smoothed and normalized np.ndimage
     """
-    struct_img = min_max_intensity_normalization( img_in )
+    struct_img = min_max_intensity_normalization(img_in)
     # edge-preserving smoothing (Option 2, used for Sec61B)
     struct_img = edge_preserving_smoothing_3d(struct_img)
     # 10 seconds!!!!  tooooo slow... for maybe no good reason
-    return min_max_intensity_normalization( struct_img )
+    return min_max_intensity_normalization(struct_img)
+
 
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """
