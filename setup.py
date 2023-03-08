@@ -22,25 +22,19 @@ def read(*paths, **kwargs):
 
 
 def read_requirements(path):
-    return [
-        line.strip()
-        for line in read(path).split("\n")
-        if not line.startswith(('"', "#", "-", "git+"))
-    ]
+    return [line.strip() for line in read(path).split("\n") if not line.startswith(('"', "#", "-", "git+"))]
 
 
 setup(
     name="infer_subc_2d",
     version=read("infer_subc_2d", "VERSION"),
     description="Awesome infer_subc_2d created by ergonyc",
-    url="https://github.com/ergonyc/infer-subc/",
+    url="https://github.com/ndcn/infer-subc/",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     author="ergonyc",
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
-    entry_points={
-        "console_scripts": ["infer_subc_2d = infer_subc_2d.__main__:main"]
-    },
-    extras_require={"test": read_requirements("requirements-test.txt")},
+    entry_points={"console_scripts": ["infer_subc_2d = infer_subc_2d.__main__:main"]},
+    # extras_require={"test": read_requirements("requirements-test.txt")},
 )

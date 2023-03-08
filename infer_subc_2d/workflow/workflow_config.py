@@ -78,7 +78,7 @@ class WorkflowConfig:
         with open(file_path) as file:
             try:
                 obj = json.load(file)
-                print(obj)
+                # print(obj)
                 return self._workflow_decoder(obj, workflow_name or file_path.name, prebuilt)
             except Exception as ex:
                 raise ConfigurationException(f"Error reading json configuration from {file_path}") from ex
@@ -145,7 +145,7 @@ class WorkflowConfig:
         steps: List[WorkflowStep] = list()
 
         for step_k, step_v in obj.items():
-            print(f"step_k{step_k}  - step_v{step_v}")
+            # print(f"step_k{step_k}  - step_v{step_v}")
 
             step_number = int(step_k)
             function_id = step_v["function"]
@@ -176,7 +176,7 @@ class WorkflowConfig:
                     param_defaults[param_name] = param_v
 
                 step.parameter_values = param_defaults
-            print(f"adding step {step_number}")
+            # print(f"adding step {step_number}")
             steps.append(step)
 
         steps.sort(key=lambda s: s.step_number)
