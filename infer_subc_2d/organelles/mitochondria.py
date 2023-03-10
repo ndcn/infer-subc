@@ -1,7 +1,9 @@
 import numpy as np
+from typing import Dict
+from pathlib import Path
 
 from infer_subc_2d.constants import MITO_CH
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
     size_filter_linear_size,
     size_filter_linear_size,
@@ -92,3 +94,54 @@ def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
     small_obj_w = 3
 
     return infer_mitochondria(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
+
+
+def infer_and_export_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer mitochondria and write inferred mitochondria to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    mitochondria = fixed_infer_mitochondria(in_img)
+    out_file_n = export_inferred_organelle(mitochondria, "mitochondria", meta_dict, out_data_path)
+    print(f"inferred mitochondria. wrote {out_file_n}")
+    return mitochondria
+
+
+def get_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load mitochondria if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    mitochondria = import_inferred_organelle("mitochondria", meta_dict, out_data_path)
+    if mitochondria is None:
+        mitochondria = infer_and_export_mitochondria(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded mitochondria from {out_data_path}")
+
+    return mitochondria

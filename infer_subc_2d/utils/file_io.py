@@ -17,59 +17,6 @@ import ome_types
 from tifffile import imwrite, tiffcomment
 
 
-# TODO:  depricate AICSImageReaderWrap
-@dataclass
-class AICSImageReaderWrap:
-    """
-    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
-    TODO: make a nice reppr
-    """
-
-    name: str
-    image: np.ndarray
-    meta: Dict[str, Any]
-    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
-
-    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
-        self.name = name
-        self.image = image
-        self.meta = meta
-        self.raw_meta = get_raw_meta_data(meta)
-
-
-def save_parameters(out_p, img_name, out_path) -> str:
-    """
-    #  out_p: defaultdict,
-    # img_name: str,
-    # out_path: types.PathLike,
-    """
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "wb") as f:
-        pickle.dump(out_p, f)
-    return out_name
-
-
-def load_parameters(img_name, out_path) -> defaultdict:
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "rb") as f:
-        x = pickle.load(f)
-    return x
-
-
-def export_ndarray(data_in, img_name, out_path) -> str:
-    """
-    #  data_in: types.ArrayLike,
-    #  meta_in: dict,
-    # img_name: types.PathLike,
-    # out_path: types.PathLike,
-    # curr_chan: int
-    # assumes a single image
-    """
-    out_name = out_path + img_name + ".npy"
-    data_in.tofile(out_name)
-    return out_name
-
-
 # TODO throw exception and call with try
 def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
     """
@@ -188,7 +135,7 @@ def append_ome_metadata(filename, meta_add):
 ### UTILS
 def etree_to_dict(t):
     """
-    etree dumper from stackoverflow
+    etree dumper from stackoverflow use to dump meta_dict['metadata']['raw_image_metadata']
     """
     d = {t.tag: {} if t.attrib else None}
     children = list(t)
@@ -231,12 +178,6 @@ def get_raw_meta_data(meta_dict):
 
 # TODO:  refactor this and napari plugin so napari_aicsimageio is not a dependency
 # can then export to the organelle-segment-plugin
-def read_input_image(image_name):
-    """
-    send output from napari aiscioimage reader wrapped in dataclass
-    """
-    data_out, meta_out, layer_type = reader_function(image_name)[0]
-    return AICSImageReaderWrap(image_name, data_out, meta_out)
 
 
 def read_ome_image(image_name):
@@ -263,3 +204,67 @@ def list_image_files(data_folder: Path, file_type: str) -> List:
     TODO: aics has cleaner functions than this "lambda"
     """
     return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
+
+
+## DEPRICATE BELOW?
+
+
+# TODO:  depricate AICSImageReaderWrap
+def read_input_image(image_name):
+    """
+    send output from napari aiscioimage reader wrapped in dataclass
+    """
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
+    return AICSImageReaderWrap(image_name, data_out, meta_out)
+
+
+@dataclass
+class AICSImageReaderWrap:
+    """
+    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
+    TODO: make a nice reppr
+    """
+
+    name: str
+    image: np.ndarray
+    meta: Dict[str, Any]
+    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
+
+    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
+        self.name = name
+        self.image = image
+        self.meta = meta
+        self.raw_meta = get_raw_meta_data(meta)
+
+
+def save_parameters(out_p, img_name, out_path) -> str:
+    """
+    #  out_p: defaultdict,
+    # img_name: str,
+    # out_path: types.PathLike,
+    """
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "wb") as f:
+        pickle.dump(out_p, f)
+    return out_name
+
+
+def load_parameters(img_name, out_path) -> defaultdict:
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "rb") as f:
+        x = pickle.load(f)
+    return x
+
+
+def export_ndarray(data_in, img_name, out_path) -> str:
+    """
+    #  data_in: types.ArrayLike,
+    #  meta_in: dict,
+    # img_name: types.PathLike,
+    # out_path: types.PathLike,
+    # curr_chan: int
+    # assumes a single image
+    """
+    out_name = out_path + img_name + ".npy"
+    data_in.tofile(out_name)
+    return out_name

@@ -576,5 +576,133 @@
         "python::module": "skimage.measure",
         "python::function": "label",
         "parameters": null
+    },
+    "fixed_infer_lysosome": {
+        "name": "infer lysosome  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_lysosome",
+        "parameters": null
+    },
+    "infer_lysosome": {
+        "name": "infer lysosome",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_lysosome",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "dot_scale_1": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_1": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_scale_2": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_2": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_scale_3": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_3": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "min_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 30,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "lysosome_spot_filter": {
+        "name": "lysosome spot filter",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "lysosome_spot_filter",
+        "parameters": null
+    },
+    "lysosome_filiment_filter": {
+        "name": "lysosome filiment filter",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "lysosome_filiment_filter",
+        "parameters": null
+    },
+    "logical_or": {
+        "name": "logical or",
+        "python::module": "numpy",
+        "python::function": "logical_or",
+        "parameters": null
+    },
+    "fixed_infer_nuclei": {
+        "name": "infer nuclei  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_nuclei",
+        "parameters": null
     }
 }

@@ -1,10 +1,12 @@
 import numpy as np
+from typing import Dict
+from pathlib import Path
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.vessel import filament_2d_wrapper
 
 from infer_subc_2d.constants import LYSO_CH
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
     scale_and_smooth,
     fill_and_filter_linear_size,
@@ -81,6 +83,7 @@ def infer_lysosome(
 
     f2_param = [[filament_scale, filament_cut]]
     bw_filament = filament_2d_wrapper(lyso, f2_param)
+    # TODO: consider 3D version to call: aicssegmentation::vesselness3D
 
     bw = np.logical_or(bw_spot, bw_filament)
 
@@ -140,6 +143,30 @@ def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
     )
 
 
+def infer_and_export_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer lysosome and write inferred lysosome to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    lysosome = fixed_infer_lysosome(in_img)
+    out_file_n = export_inferred_organelle(lysosome, "lysosome", meta_dict, out_data_path)
+    print(f"inferred lysosome. wrote {out_file_n}")
+    return lysosome
+
+
 def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
     """spot filter helper function for lysosome"""
     dot_scale_1 = 5
@@ -159,3 +186,32 @@ def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
     f2_param = [[filament_scale, filament_cut]]
     # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     return filament_2d_wrapper(in_img, f2_param)
+
+
+def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load lysosome if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+
+    lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
+
+    if lysosome is None:
+        lysosome = infer_and_export_lysosome(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded lysosome from {out_data_path}")
+
+    return lysosome

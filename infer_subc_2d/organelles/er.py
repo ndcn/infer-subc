@@ -1,12 +1,15 @@
 import numpy as np
+from typing import Dict
+from pathlib import Path
 
 from infer_subc_2d.constants import ER_CH
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 
 from infer_subc_2d.utils.img import (
     size_filter_linear_size,
     select_channel_from_raw,
     filament_filter,
-    normalized_edge_preserving_smoothing
+    normalized_edge_preserving_smoothing,
 )
 
 ##########################
@@ -39,15 +42,15 @@ def infer_endoplasmic_reticulum(
     er_ch = ER_CH
     ###################
     # EXTRACT
-    ###################    
+    ###################
     er = select_channel_from_raw(in_img, er_ch)
 
     ###################
     # PRE_PROCESSING
-    ###################    
+    ###################
     er = normalized_edge_preserving_smoothing(er)
 
-   ###################
+    ###################
     # CORE_PROCESSING
     ###################
     # f2_param = [[filament_scale, filament_cut]]
@@ -57,9 +60,8 @@ def infer_endoplasmic_reticulum(
 
     ###################
     # POST_PROCESSING
-    ################### 
-    struct_obj = size_filter_linear_size(struct_obj, 
-                                                    min_size= small_obj_w)
+    ###################
+    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
 
     return struct_obj
 
@@ -81,9 +83,60 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray) -> np.ndarray:
     Returns
     -------------
     peroxi_object
-        mask defined extent of peroxisome object
+        mask defined extent of er object
     """
     filament_scale = 1
     filament_cut = 0.15
     small_obj_w = 2
     return infer_endoplasmic_reticulum(in_img, filament_scale, filament_cut, small_obj_w)
+
+
+def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer endoplasmic reticulum and write inferred endoplasmic reticulum to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    er = fixed_infer_endoplasmic_reticulum(in_img)
+    out_file_n = export_inferred_organelle(er, "er", meta_dict, out_data_path)
+    print(f"inferred endoplasmic reticulum. wrote {out_file_n}")
+    return er
+
+def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load endoplasmic_reticulum if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    er = import_inferred_organelle("er", meta_dict, out_data_path)
+
+    if er is None:
+        er = infer_and_export_endoplasmic_reticulum(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded endoplasmic reticulum from {out_data_path}")
+
+    return er

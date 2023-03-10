@@ -99,7 +99,7 @@
     },
     "14": {
         "category": "postprocessing",
-        "function": "size_filter_2D",
+        "function": "size_filter_linear_size",
         "parameter_values": {
             "min_size": 9
         },

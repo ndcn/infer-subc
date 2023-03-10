@@ -1,8 +1,11 @@
 import numpy as np
+from typing import Dict
+from pathlib import Path
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
 from infer_subc_2d.constants import PEROXI_CH
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 
 from infer_subc_2d.utils.img import (
     size_filter_linear_size,
@@ -97,3 +100,54 @@ def fixed_infer_peroxisome(in_img: np.ndarray) -> np.ndarray:
         dot_cut,
         small_obj_w,
     )
+
+
+def infer_and_export_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer peroxisome and write inferred peroxisome to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    peroxisome = fixed_infer_peroxisome(in_img)
+    out_file_n = export_inferred_organelle(peroxisome, "peroxisome", meta_dict, out_data_path)
+    print(f"inferred peroxisome. wrote {out_file_n}")
+    return peroxisome
+
+
+def get_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load peroxisome if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    peroxisome = import_inferred_organelle("peroxisome", meta_dict, out_data_path)
+    if peroxisome is None:
+        peroxisome = infer_and_export_peroxisome(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded peroxisome from {out_data_path}")
+
+    return peroxisome

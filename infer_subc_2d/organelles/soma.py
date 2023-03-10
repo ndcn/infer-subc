@@ -1,9 +1,11 @@
-from skimage.filters import scharr
-from skimage.measure import label
+from typing import Dict
+from pathlib import Path
 
 import numpy as np
-
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+
+from skimage.filters import scharr
+from skimage.measure import label
 
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -16,7 +18,7 @@ from infer_subc_2d.constants import (
     LIPID_CH,
     RESIDUAL_CH,
 )
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
     masked_object_thresh,
     log_transform,
@@ -245,3 +247,69 @@ def fixed_infer_soma_MCZ(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarr
     )
 
     return soma_out
+
+
+def infer_and_export_soma(
+    in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path
+) -> np.ndarray:
+    """
+    infer soma and write inferred soma to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    nuclei_obj:
+        a 3d image containing the inferred nuclei
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
+
+    out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
+    print(f"inferred soma. wrote {out_file_n}")
+    return soma
+
+
+
+
+def get_soma(
+    in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path
+) -> np.ndarray:
+    """
+    load soma if it exists, otherwise calculate and write inferred soma to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    nuclei_obj:
+        a 3d image containing the inferred nuclei
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+
+    soma = import_inferred_organelle("soma", meta_dict, out_data_path)
+
+    if soma is None:
+        soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
+        out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
+        print(f"calculated soma. wrote {out_file_n}")
+    else:
+        print(f"loaded soma from {out_data_path}")
+    return soma
+

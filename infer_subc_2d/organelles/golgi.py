@@ -1,11 +1,12 @@
 import numpy as np
-from typing import Optional
+from typing import Dict, Optional
+from pathlib import Path
 
 from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.utils import topology_preserving_thinning
 
 from infer_subc_2d.constants import GOLGI_CH
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
     size_filter_linear_size,
     select_channel_from_raw,
@@ -140,3 +141,54 @@ def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = N
         dot_cut,
         small_obj_w,
     )
+
+
+def infer_and_export_golgi(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer golgi and write inferred golgi to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    golgi = fixed_infer_golgi(in_img)
+    out_file_n = export_inferred_organelle(golgi, "golgi", meta_dict, out_data_path)
+    print(f"inferred golgi. wrote {out_file_n}")
+    return golgi
+
+
+def get_golgi(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load golgi if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    golgi = import_inferred_organelle("golgi", meta_dict, out_data_path)
+    if golgi is None:
+        golgi = infer_and_export_golgi(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded golgi from {out_data_path}")
+
+    return golgi

@@ -1,11 +1,14 @@
 import numpy as np
-from typing import Union
+from typing import Union, Dict
+from pathlib import Path
 
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
     fill_and_filter_linear_size,
     apply_log_li_threshold,
     select_channel_from_raw,
     scale_and_smooth,
+    apply_mask,
 )
 from infer_subc_2d.constants import NUC_CH
 
@@ -106,3 +109,58 @@ def fixed_infer_nuclei(in_img: np.ndarray) -> np.ndarray:
     return infer_nuclei(
         in_img, nuc_ch, median_sz, gauss_sig, thresh_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
     )
+
+
+def infer_and_export_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer nuclei and write inferred nuclei to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    nuclei = fixed_infer_nuclei(in_img)
+
+    out_file_n = export_inferred_organelle(nuclei, "nuclei", meta_dict, out_data_path)
+    print(f"inferred nuclei. wrote {out_file_n}")
+    return nuclei
+
+
+def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load nucleus if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+
+    nuclei = import_inferred_organelle("nuclei", meta_dict, out_data_path)
+
+    if nuclei is None:
+        nuclei = infer_and_export_nuclei(in_img, meta_dict, out_data_path)
+    else:
+        print(f"loaded nuclei from {out_data_path}")
+
+    return nuclei
