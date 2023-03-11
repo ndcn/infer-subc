@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
+import time
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
@@ -144,10 +145,13 @@ def get_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> 
     exported file name
 
     """
-    peroxisome = import_inferred_organelle("peroxisome", meta_dict, out_data_path)
-    if peroxisome is None:
+    try:
+        peroxisome = import_inferred_organelle("peroxisome", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         peroxisome = infer_and_export_peroxisome(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded peroxisome from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) peroxisome in ({(end - start):0.2f}) sec")
 
     return peroxisome

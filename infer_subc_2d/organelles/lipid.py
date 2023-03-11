@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
+import time
 
 from infer_subc_2d.utils.img import (
     apply_threshold,
@@ -154,10 +155,14 @@ def get_lipid(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.nd
     exported file name
 
     """
-    lipid = import_inferred_organelle("lipid", meta_dict, out_data_path)
-    if lipid is None:
+
+    try:
+        lipid = import_inferred_organelle("lipid", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         lipid = infer_and_export_lipid(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded lipid from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) lipid in ({(end - start):0.2f}) sec")
 
     return lipid

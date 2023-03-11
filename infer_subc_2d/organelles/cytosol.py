@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
+import time
 
 from skimage.morphology import binary_erosion
 from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
@@ -87,11 +88,13 @@ def get_cytosol(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict, 
     exported file name
 
     """
-    cytosol = import_inferred_organelle("cytosol", meta_dict, out_data_path)
-
-    if cytosol is None:
+    try:
+        cytosol = import_inferred_organelle("cytosol", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         cytosol = infer_and_export_cytosol(nuclei_obj, soma_mask, meta_dict, out_data_path)
-    else:
-        print(f"loaded cytosol from {out_data_path}")
+        end = time.time()
+        print(f"inferred cytosol in ({(end - start):0.2f}) sec")
 
     return cytosol

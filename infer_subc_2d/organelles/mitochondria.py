@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
-
+import time
 from infer_subc_2d.constants import MITO_CH
 from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
@@ -138,10 +138,14 @@ def get_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -
     exported file name
 
     """
-    mitochondria = import_inferred_organelle("mitochondria", meta_dict, out_data_path)
-    if mitochondria is None:
+
+    try:
+        mitochondria = import_inferred_organelle("mitochondria", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         mitochondria = infer_and_export_mitochondria(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded mitochondria from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) mitochondria in ({(end - start):0.2f}) sec")
 
     return mitochondria

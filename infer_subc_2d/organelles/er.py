@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
+import time
 
 from infer_subc_2d.constants import ER_CH
 from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
@@ -132,11 +133,14 @@ def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path
     exported file name
 
     """
-    er = import_inferred_organelle("er", meta_dict, out_data_path)
 
-    if er is None:
+    try:
+        er = import_inferred_organelle("er", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         er = infer_and_export_endoplasmic_reticulum(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded endoplasmic reticulum from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) er in ({(end - start):0.2f}) sec")
 
     return er

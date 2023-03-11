@@ -2,8 +2,7 @@ import numpy as np
 from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 
 # from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
-from scipy.ndimage import median_filter, extrema
-import scipy
+from scipy.ndimage import median_filter, extrema, distance_transform_edt, sum, minimum_filter, maximum_filter
 
 # from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import size_filter, hole_filling
@@ -867,534 +866,275 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
     return filament_2d_wrapper(in_img, f2_param)
 
 
-###___________________DEPRICATED BELOW ___________________
-
-# ## we need to define some image processing wrappers... partials should work great
-# from functools import partial
-
-# # derived from CellProfiler not sure if they work in 2D...
-# def enhance_speckles(image, radius, volumetric = False):
-#     if volumetric:
-#         selem = ball(radius)
-#     else:
-#         selem = disk(radius)
-#     retval = white_tophat(image, footprint=selem)
-#     return retval
-
-# # derived from CellProfiler
-# def enhance_neurites(image, radius, volumetric = False):
-#     if volumetric:
-#         selem = ball(radius)
-#     else:
-#         selem = disk(radius)
-#     white = white_tophat(image, footprint=selem)
-#     black = black_tophat(image, footprint=selem)
-#     result = image + white - black
-#     result[result > 1] = 1
-#     result[result < 0] = 0
-#     return result
+# centrosome routines
 
 
-# # takein from cellprofiler / centrosome
-# # since i'm not limiting myself to integers it might not work...
-# def fill_labeled_holes(labels, mask=None, size_fn=None):
-#     """Fill all background pixels that are holes inside the foreground
+def size_similarly(labels, secondary):
+    """Size the secondary matrix similarly to the labels matrix
 
-#     A pixel is a hole inside a foreground object if
+    labels - labels matrix
+    secondary - a secondary image or labels matrix which might be of
+                different size.
+    Return the resized secondary matrix and a mask indicating what portion
+    of the secondary matrix is bogus (manufactured values).
 
-#     * there is no path from the pixel to the edge AND
-
-#     * there is no path from the pixel to any other non-hole
-#       pixel AND
-
-#     * there is no path from the pixel to two similarly-labeled pixels that
-#       are adjacent to two differently labeled non-hole pixels.
-
-#     labels - the current labeling
-
-#     mask - mask of pixels to ignore
-
-#     size_fn - if not None, it is a function that takes a size and a boolean
-#               indicating whether it is foreground (True) or background (False)
-#               The function should return True to analyze and False to ignore
-
-#     returns a filled copy of the labels matrix
-#     """
-#     #
-#     # The algorithm:
-#     #
-#     # Label the background to get distinct background objects
-#     # Construct a graph of both foreground and background objects.
-#     # Walk the graph according to the rules.
-#     #
-#     labels_type = labels.dtype
-#     background = labels == 0
-#     if mask is not None:
-#         background &= mask
-#     four_connect = 0 # what is this?
-
-#     blabels, count = ndi.label(background, four_connect)
-#     labels = labels.copy().astype(int)
-#     lcount = np.max(labels)
-#     labels[blabels != 0] = blabels[blabels != 0] + lcount + 1
-#     lmax = lcount + count + 1
-#     is_not_hole = np.ascontiguousarray(np.zeros(lmax + 1, np.uint8))
-#     #
-#     # Find the indexes on the edge and use to populate the to-do list
-#     #
-#     to_do = np.unique(
-#         np.hstack((labels[0, :], labels[:, 0], labels[-1, :], labels[:, -1]))
-#     )
-#     to_do = to_do[to_do != 0]
-#     is_not_hole[to_do] = True
-#     to_do = list(to_do)
-#     #
-#     # An array that names the first non-hole object
-#     #
-#     adjacent_non_hole = np.ascontiguousarray(np.zeros(lmax + 1), np.uint32)
-#     #
-#     # Find all 4-connected adjacent pixels
-#     # Note that there will be some i, j not in j, i
-#     #
-#     i = np.hstack([labels[:-1, :].flatten(), labels[:, :-1].flatten()])
-#     j = np.hstack([labels[1:, :].flatten(), labels[:, 1:].flatten()])
-#     i, j = i[i != j], j[i != j]
-#     if (len(i)) > 0:
-#         order = np.lexsort((j, i))
-#         i = i[order]
-#         j = j[order]
-#         # Remove duplicates and stack to guarantee that j, i is in i, j
-#         first = np.hstack([[True], (i[:-1] != i[1:]) | (j[:-1] != j[1:])])
-#         i, j = np.hstack((i[first], j[first])), np.hstack((j[first], i[first]))
-#         # Remove dupes again. (much shorter)
-#         order = np.lexsort((j, i))
-#         i = i[order]
-#         j = j[order]
-#         first = np.hstack([[True], (i[:-1] != i[1:]) | (j[:-1] != j[1:])])
-#         i, j = i[first], j[first]
-#         #
-#         # Now we make a ragged array of i and j
-#         #
-#         i_count = np.bincount(i)
-#         if len(i_count) < lmax + 1:
-#             i_count = np.hstack((i_count, np.zeros(lmax + 1 - len(i_count), int)))
-#         indexer = Indexes([i_count])
-#         #
-#         # Filter using the size function passed, if any
-#         #
-#         if size_fn is not None:
-#             areas = np.bincount(labels.flatten())
-#             for ii, area in enumerate(areas):
-#                 if (
-#                     ii > 0
-#                     and area > 0
-#                     and not is_not_hole[ii]
-#                     and not size_fn(area, ii <= lcount)
-#                 ):
-#                     is_not_hole[ii] = True
-#                     to_do.append(ii)
-
-#         to_do_count = len(to_do)
-#         if len(to_do) < len(is_not_hole):
-#             to_do += [0] * (len(is_not_hole) - len(to_do))
-#         to_do = np.ascontiguousarray(np.array(to_do), np.uint32)
-#         fill_labeled_holes_loop(
-#                                     np.ascontiguousarray(i, np.uint32),
-#                                     np.ascontiguousarray(j, np.uint32),
-#                                     np.ascontiguousarray(indexer.fwd_idx, np.uint32),
-#                                     np.ascontiguousarray(i_count, np.uint32),
-#                                     is_not_hole,
-#                                     adjacent_non_hole,
-#                                     to_do,
-#                                     lcount,
-#                                     to_do_count,
-#                                 )
-#     #
-#     # Make an array that assigns objects to themselves and background to 0
-#     #
-#     new_indexes = np.arange(len(is_not_hole)).astype(np.uint32)
-#     new_indexes[(lcount + 1) :] = 0
-#     #
-#     # Fill the holes by replacing the old value by the value of the
-#     # enclosing object.
-#     #
-#     is_not_hole = is_not_hole.astype(bool)
-#     new_indexes[~is_not_hole] = adjacent_non_hole[~is_not_hole]
-#     if mask is not None:
-#         labels[mask] = new_indexes[labels[mask]]
-#     else:
-#         labels = new_indexes[labels]
-#     return labels.astype(labels_type)
-
-
-TS_GLOBAL = "Global"
-TS_ADAPTIVE = "Adaptive"
-TM_MANUAL = "Manual"
-TM_MEASUREMENT = "Measurement"
-TM_LI = "Minimum Cross-Entropy"
-TM_OTSU = "Otsu"
-TM_ROBUST_BACKGROUND = "Robust Background"
-TM_SAUVOLA = "Sauvola"
-
-# GET_GLOBAL_THRESHOLD
-def get_global_threshold(
-    image, mask, threshold_operation=TM_LI, automatic=False, two_class_otsu=False, assign_mid_to_fg=True
-):
-
-    image_data = image[mask]
-    # Shortcuts - Check if image array is empty or all pixels are the same value.
-    if len(image_data) == 0:
-        threshold = 0.0
-
-    elif np.all(image_data == image_data[0]):
-        threshold = image_data[0]
-
-    elif automatic or threshold_operation in (TM_LI, TM_SAUVOLA):
-        # tol = max(np.min(np.diff(np.unique(image_data))) / 2, 0.5 / 65536)
-        threshold = threshold_li(image_data)  # , tolerance=tol)
-
-    elif threshold_operation == TM_OTSU:
-        if two_class_otsu:
-            threshold = threshold_otsu(image_data)
-        else:
-            bin_wanted = 0 if assign_mid_to_fg else 1
-            threshold = threshold_multiotsu(image_data, nbins=128)
-            threshold = threshold[bin_wanted]
-    else:
-        raise ValueError("Invalid thresholding settings")
-    return threshold
-
-
-# GET_LOCAL_THRESHOLD
-def get_local_threshold(
-    image, mask, volumetric, adaptive_window_size=40, threshold_operation=TM_LI, two_class_otsu=False
-):
-
-    image_data = np.where(mask, image, np.nan)
-
-    if len(image_data) == 0 or np.all(image_data == np.nan):
-        local_threshold = np.zeros_like(image_data)
-
-    elif np.all(image_data == image_data[0]):
-        local_threshold = np.full_like(image_data, image_data[0])
-
-    elif threshold_operation == TM_LI:
-        local_threshold = _run_local_threshold(
-            image_data,
-            method=threshold_li,
-            volumetric=volumetric,
-            # tolerance=max(np.min(np.diff(np.unique(image))) / 2, 0.5 / 65536)
-        )
-    elif threshold_operation == TM_OTSU:
-        if two_class_otsu:
-            local_threshold = _run_local_threshold(
-                image_data,
-                method=threshold_otsu,
-                volumetric=volumetric,
-            )
-        else:
-            local_threshold = _run_local_threshold(
-                image_data,
-                method=threshold_multiotsu,
-                volumetric=volumetric,
-                nbins=128,
-            )
-
-    elif threshold_operation == TM_SAUVOLA:
-        image_data = np.where(mask, image, 0)
-        adaptive_window = adaptive_window_size
-        if adaptive_window % 2 == 0:
-            adaptive_window += 1
-        local_threshold = threshold_sauvola(image_data, window_size=adaptive_window)
-
-    else:
-        raise ValueError("Invalid thresholding settings")
-    return local_threshold
-
-
-# RUN_GLOBAL_THRESHOLD
-def _run_local_threshold(
-    image_data,
-    method,
-    volumetric,
-    threshold_operation=TM_LI,
-    automatic=False,
-    two_class_otsu=False,
-    assign_mid_to_fg=True,
-    adaptive_window_size=80,
-):
-    if volumetric:
-        t_local = np.zeros_like(image_data)
-        for index, plane in enumerate(image_data):
-            t_local[index] = _get_adaptive_threshold(
-                plane,
-                method,
-                threshold_operation=threshold_operation,
-                automatic=automatic,
-                two_class_otsu=two_class_otsu,
-                assign_mid_to_fg=assign_mid_to_fg,
-                adaptive_window_size=adaptive_window_size,
-            )
-    else:
-        t_local = _get_adaptive_threshold(
-            image_data,
-            method,
-            threshold_operation=threshold_operation,
-            automatic=automatic,
-            two_class_otsu=two_class_otsu,
-            assign_mid_to_fg=assign_mid_to_fg,
-            adaptive_window_size=adaptive_window_size,
-        )
-    retval = np.img_as_float(t_local)
-    return retval
-
-
-# _GET_ADAPTIVE_THRESHOLD
-def _get_adaptive_threshold(
-    image_data,
-    threshold_method,
-    threshold_operation=TM_LI,
-    automatic=False,
-    two_class_otsu=False,
-    assign_mid_to_fg=True,
-    adaptive_window_size=80,
-):
-    """Given a global threshold, compute a threshold per pixel
-    Break the image into blocks, computing the threshold per block.
-    Afterwards, constrain the block threshold to .7 T < t < 1.5 T.
+    Either the mask is all ones or the result is a copy, so you can
+    modify the output within the unmasked region w/o destroying the original.
     """
-    # for the X and Y direction, find the # of blocks, given the
-    # size constraints
-    if threshold_operation == TM_OTSU:
-        bin_wanted = 0 if assign_mid_to_fg else 1
-    image_size = np.array(image_data.shape[:2], dtype=int)
-    nblocks = image_size // adaptive_window_size
-    if any(n < 2 for n in nblocks):
-        raise ValueError(
-            "Adaptive window cannot exceed 50%% of an image dimension.\n"
-            "Window of %dpx is too large for a %sx%s image" % (adaptive_window_size, image_size[1], image_size[0])
-        )
+    if labels.shape[:2] == secondary.shape[:2]:
+        return secondary, np.ones(secondary.shape, bool)
+    if labels.shape[0] <= secondary.shape[0] and labels.shape[1] <= secondary.shape[1]:
+        if secondary.ndim == 2:
+            return (
+                secondary[: labels.shape[0], : labels.shape[1]],
+                np.ones(labels.shape, bool),
+            )
+        else:
+            return (
+                secondary[: labels.shape[0], : labels.shape[1], :],
+                np.ones(labels.shape, bool),
+            )
+
     #
-    # Use a floating point block size to apportion the roundoff
-    # roughly equally to each block
+    # Some portion of the secondary matrix does not cover the labels
     #
-    increment = np.array(image_size, dtype=float) / np.array(nblocks, dtype=float)
+    result = np.zeros(list(labels.shape) + list(secondary.shape[2:]), secondary.dtype)
+    i_max = min(secondary.shape[0], labels.shape[0])
+    j_max = min(secondary.shape[1], labels.shape[1])
+    if secondary.ndim == 2:
+        result[:i_max, :j_max] = secondary[:i_max, :j_max]
+    else:
+        result[:i_max, :j_max, :] = secondary[:i_max, :j_max, :]
+    mask = np.zeros(labels.shape, bool)
+    mask[:i_max, :j_max] = 1
+    return result, mask
+
+
+def distance_to_edge(labels):
+    """Compute the distance of a pixel to the edge of its object
+
+    labels - a labels matrix
+
+    returns a matrix of distances
+    """
+    colors = color_labels(labels)
+    max_color = np.max(colors)
+    result = np.zeros(labels.shape)
+    if max_color == 0:
+        return result
+
+    for i in range(1, max_color + 1):
+        mask = colors == i
+        result[mask] = distance_transform_edt(mask)[mask]
+    return result
+
+
+def color_labels(labels, distance_transform=False):
+    """Color a labels matrix so that no adjacent labels have the same color
+
+    distance_transform - if true, distance transform the labels to find out
+         which objects are closest to each other.
+
+    Create a label coloring matrix which assigns a color (1-n) to each pixel
+    in the labels matrix such that all pixels similarly labeled are similarly
+    colored and so that no similiarly colored, 8-connected pixels have
+    different labels.
+
+    You can use this function to partition the labels matrix into groups
+    of objects that are not touching; you can then operate on masks
+    and be assured that the pixels from one object won't interfere with
+    pixels in another.
+
+    returns the color matrix
+    """
+    if distance_transform:
+        i, j = distance_transform_edt(labels == 0, return_distances=False, return_indices=True)
+        dt_labels = labels[i, j]
+    else:
+        dt_labels = labels
+    # Get the neighbors for each object
+    v_count, v_index, v_neighbor = find_neighbors(dt_labels)
+    # Quickly get rid of labels with no neighbors. Greedily assign
+    # all of these a color of 1
+    v_color = np.zeros(len(v_count) + 1, int)  # the color per object - zero is uncolored
+    zero_count = v_count == 0
+    if np.all(zero_count):
+        # can assign all objects the same color
+        return (labels != 0).astype(int)
+    v_color[1:][zero_count] = 1
+    v_count = v_count[~zero_count]
+    v_index = v_index[~zero_count]
+    v_label = np.argwhere(~zero_count).transpose()[0] + 1
+    # If you process the most connected labels first and use a greedy
+    # algorithm to preferentially assign a label to an existing color,
+    # you'll get a coloring that uses 1+max(connections) at most.
     #
-    # Put the answer here
+    # Welsh, "An upper bound for the chromatic number of a graph and
+    # its application to timetabling problems", The Computer Journal, 10(1)
+    # p 85 (1967)
     #
-    thresh_out = np.zeros(image_size, image_data.dtype)
-    #
-    # Loop once per block, computing the "global" threshold within the
-    # block.
-    #
-    block_threshold = np.zeros([nblocks[0], nblocks[1]])
-    for i in range(nblocks[0]):
-        i0 = int(i * increment[0])
-        i1 = int((i + 1) * increment[0])
-        for j in range(nblocks[1]):
-            j0 = int(j * increment[1])
-            j1 = int((j + 1) * increment[1])
-            block = image_data[i0:i1, j0:j1]
-            block = block[~np.isnan(block)]
-            if len(block) == 0:
-                threshold_out = 0.0
-            elif np.all(block == block[0]):
-                # Don't compute blocks with only 1 value.
-                threshold_out = block[0]
-            elif threshold_operation == TM_OTSU and two_class_otsu and len(np.unique(block)) < 3:
-                # Can't run 3-class otsu on only 2 values.
-                threshold_out = threshold_otsu(block)
+    sort_order = np.lexsort([-v_count])
+    v_count = v_count[sort_order]
+    v_index = v_index[sort_order]
+    v_label = v_label[sort_order]
+    for i in range(len(v_count)):
+        neighbors = v_neighbor[v_index[i] : v_index[i] + v_count[i]]
+        colors = np.unique(v_color[neighbors])
+        if colors[0] == 0:
+            if len(colors) == 1:
+                # only one color and it's zero. All neighbors are unlabeled
+                v_color[v_label[i]] = 1
+                continue
             else:
-                try:
-                    threshold_out = threshold_method(block)
-                except ValueError:
-                    # Drop nbins kwarg when multi-otsu fails. See issue #6324 scikit-image
-                    threshold_out = threshold_method(block)
-            if isinstance(threshold_out, np.ndarray):
-                # Select correct bin if running multiotsu
-                threshold_out = threshold_out[bin_wanted]
-            block_threshold[i, j] = threshold_out
+                colors = colors[1:]
+        # The colors of neighbors will be ordered, so there are two cases:
+        # * all colors up to X appear - colors == np.arange(1,len(colors)+1)
+        # * some color is missing - the color after the first missing will
+        #   be mislabeled: colors[i] != np.arange(1, len(colors)+1)
+        crange = np.arange(1, len(colors) + 1)
+        misses = crange[colors != crange]
+        if len(misses):
+            color = misses[0]
+        else:
+            color = len(colors) + 1
+        v_color[v_label[i]] = color
+    return v_color[labels]
 
+
+def find_neighbors(labels):
+    """Find the set of objects that touch each object in a labels matrix
+
+    Construct a "list", per-object, of the objects 8-connected adjacent
+    to that object.
+    Returns three 1-d arrays:
+    * array of #'s of neighbors per object
+    * array of indexes per object to that object's list of neighbors
+    * array holding the neighbors.
+
+    For instance, say 1 touches 2 and 3 and nobody touches 4. The arrays are:
+    [ 2, 1, 1, 0], [ 0, 2, 3, 4], [ 2, 3, 1, 1]
+    """
+    max_label = np.max(labels)
+    # Make a labels matrix with zeros around the edges so we can do index
+    # offsets without worrying.
     #
-    # Use a cubic spline to blend the thresholds across the image to avoid image artifacts
+    new_labels = np.zeros(np.array(labels.shape) + 2, labels.dtype)
+    new_labels[1:-1, 1:-1] = labels
+    labels = new_labels
+    # Only consider the points that are next to others
+    adjacent_mask = adjacent(labels)
+    adjacent_i, adjacent_j = np.argwhere(adjacent_mask).transpose()
+    # Get matching vectors of labels and neighbor labels for the 8
+    # compass directions.
+    count = len(adjacent_i)
+    if count == 0:
+        return (np.zeros(max_label, int), np.zeros(max_label, int), np.zeros(0, int))
+    # The following bizarre construct does the following:
+    # labels[adjacent_i, adjacent_j] looks up the label for each pixel
+    # [...]*8 creates a list of 8 references to it
+    # np.hstack concatenates, giving 8 repeats of the list
+    v_label = np.hstack([labels[adjacent_i, adjacent_j]] * 8)
+    v_neighbor = np.zeros(count * 8, int)
+    index = 0
+    for i, j in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)):
+        v_neighbor[index : index + count] = labels[adjacent_i + i, adjacent_j + j]
+        index += count
     #
-    spline_order = min(3, np.min(nblocks) - 1)
-    xStart = int(increment[0] / 2)
-    xEnd = int((nblocks[0] - 0.5) * increment[0])
-    yStart = int(increment[1] / 2)
-    yEnd = int((nblocks[1] - 0.5) * increment[1])
-    xtStart = 0.5
-    xtEnd = image_data.shape[0] - 0.5
-    ytStart = 0.5
-    ytEnd = image_data.shape[1] - 0.5
-    block_x_coords = np.linspace(xStart, xEnd, nblocks[0])
-    block_y_coords = np.linspace(yStart, yEnd, nblocks[1])
-    adaptive_interpolation = scipy.interpolate.RectBivariateSpline(
-        block_x_coords,
-        block_y_coords,
-        block_threshold,
-        bbox=(xtStart, xtEnd, ytStart, ytEnd),
-        kx=spline_order,
-        ky=spline_order,
+    # sort by label and neighbor
+    #
+    sort_order = np.lexsort((v_neighbor, v_label))
+    v_label = v_label[sort_order]
+    v_neighbor = v_neighbor[sort_order]
+    #
+    # eliminate duplicates by comparing each element after the first one
+    # to its previous
+    #
+    first_occurrence = np.ones(len(v_label), bool)
+    first_occurrence[1:] = (v_label[1:] != v_label[:-1]) | (v_neighbor[1:] != v_neighbor[:-1])
+    v_label = v_label[first_occurrence]
+    v_neighbor = v_neighbor[first_occurrence]
+    #
+    # eliminate neighbor = self and neighbor = background
+    #
+    to_remove = (v_label == v_neighbor) | (v_neighbor == 0)
+    v_label = v_label[~to_remove]
+    v_neighbor = v_neighbor[~to_remove]
+    #
+    # The count of # of neighbors
+    #
+    v_count = fixup_scipy_ndimage_result(sum(np.ones(v_label.shape), v_label, np.arange(max_label, dtype=np.int32) + 1))
+    v_count = v_count.astype(int)
+    #
+    # The index into v_neighbor
+    #
+    v_index = np.cumsum(v_count)
+    v_index[1:] = v_index[:-1]
+    v_index[0] = 0
+    return (v_count, v_index, v_neighbor)
+
+
+def fixup_scipy_ndimage_result(whatever_it_returned):
+    """Convert a result from scipy.ndimage to a numpy array
+
+    scipy.ndimage has the annoying habit of returning a single, bare
+    value instead of an array if the indexes passed in are of length 1.
+    For instance:
+    scipy.ndimage.maximum(image, labels, [1]) returns a float
+    but
+    scipy.ndimage.maximum(image, labels, [1,2]) returns a list
+    """
+    if getattr(whatever_it_returned, "__getitem__", False):
+        return np.array(whatever_it_returned)
+    else:
+        return np.array([whatever_it_returned])
+
+
+def adjacent(labels):
+    """Return a binary mask of all pixels which are adjacent to a pixel of
+    a different label.
+
+    """
+    high = labels.max() + 1
+    if high > np.iinfo(labels.dtype).max:
+        labels = labels.astype(np.int32)
+    image_with_high_background = labels.copy()
+    image_with_high_background[labels == 0] = high
+    min_label = minimum_filter(
+        image_with_high_background,
+        footprint=np.ones((3, 3), bool),
+        mode="constant",
+        cval=high,
     )
-    thresh_out_x_coords = np.linspace(0.5, int(nblocks[0] * increment[0]) - 0.5, thresh_out.shape[0])
-    thresh_out_y_coords = np.linspace(0.5, int(nblocks[1] * increment[1]) - 0.5, thresh_out.shape[1])
-
-    thresh_out = adaptive_interpolation(thresh_out_x_coords, thresh_out_y_coords)
-
-    return thresh_out
+    max_label = maximum_filter(labels, footprint=np.ones((3, 3), bool), mode="constant", cval=0)
+    return (min_label != max_label) & (labels > 0)
 
 
-def _correct_global_threshold(threshold, corr_value, threshold_range):
-    threshold *= corr_value
-    return min(max(threshold, threshold_range.min), threshold_range.max)
+# # from cellprofiler / centrosome / smooth.py
+# def smooth_with_function_and_mask(image, function, mask):
+#     """Smooth an image with a linear function, ignoring the contribution of masked pixels
 
+#     image - image to smooth
+#     function - a function that takes an image and returns a smoothed image
+#     mask  - mask with 1's for significant pixels, 0 for masked pixels
 
-def _correct_local_threshold(t_local_orig, t_guide, threshold_correction_factor, threshold_range):
-    t_local = t_local_orig.copy()
+#     This function calculates the fractional contribution of masked pixels
+#     by applying the function to the mask (which gets you the fraction of
+#     the pixel data that's due to significant points). We then mask the image
+#     and apply the function. The resulting values will be lower by the bleed-over
+#     fraction, so you can recalibrate by dividing by the function on the mask
+#     to recover the effect of smoothing from just the significant pixels.
+#     """
 
-    # Constrain the local threshold to be within [0.7, 1.5] * global_threshold. It's for the pretty common case
-    # where you have regions of the image with no cells whatsoever that are as large as whatever window you're
-    # using. Without a lower bound, you start having crazy threshold s that detect noise blobs. And same for
-    # very crowded areas where there is zero background in the window. You want the foreground to be all
-    # detected.
-    t_min = max(threshold_range.min, t_guide * 0.7)
-    t_max = min(threshold_range.max, t_guide * 1.5)
+#     not_mask = np.logical_not(mask)
+#     bleed_over = function(mask.astype(float))
+#     masked_image = np.zeros(image.shape, image.dtype)
+#     masked_image[mask] = image[mask]
+#     smoothed_image = function(masked_image)
+#     output_image = smoothed_image / (bleed_over + np.finfo(float).eps)
+#     return output_image
 
-    t_local[t_local < t_min] = t_min
-    t_local[t_local > t_max] = t_max
-
-    return t_local
-
-
-def cp_adaptive_threshold(
-    image_data, mask, th_method=TM_LI, volumetric=True, window_size=40, log_scale=False  # skimage.filters.threshold_li,
-):
-    """
-    wrapper for the functions from CellProfiler
-    NOTE: might work better to copy from CellProfiler/centrosome/threshold.py
-    https://github.com/CellProfiler/centrosome/blob/master/centrosome/threshold.py
-    """
-
-    th_guide = get_global_threshold(image_data, mask, threshold_operation=th_method)
-
-    th_original = get_local_threshold(
-        image_data, mask, volumetric=volumetric, adaptive_window_size=window_size, threshold_operation=th_method
-    )
-
-    final_threshold, orig_threshold, guide_threshold = get_threshold(
-        image_data,
-        mask,
-        th_guide,
-        th_original,
-        threshold_operation=th_method,
-        volumetric=volumetric,
-        log_scale=log_scale,
-        threshold_scope=TS_ADAPTIVE,
-    )
-
-    binary_image, _ = _apply_threshold(image_data, final_threshold)
-    return binary_image
-
-
-def _apply_threshold(image, threshold, mask=None, automatic=False):
-    if mask is not None:
-        return (image >= threshold) & mask
-    else:
-        return image >= threshold
-
-
-def get_threshold(
-    image,
-    mask,
-    th_guide,
-    th_original,
-    threshold_operation=TM_LI,
-    volumetric=True,
-    automatic=False,
-    log_scale=False,
-    threshold_scope=TS_GLOBAL,
-):
-
-    need_transform = threshold_operation in (TM_LI, TM_OTSU) and log_scale
-
-    if need_transform:
-        image_data, conversion_dict = log_transform(image)
-    else:
-        image_data = image
-
-    if threshold_scope == TS_GLOBAL or automatic:
-        th_guide = None
-        th_original = get_global_threshold(image_data, mask, automatic=automatic)
-
-    elif threshold_scope == TS_ADAPTIVE:
-        th_guide = get_global_threshold(image_data, mask)
-        th_original = get_local_threshold(image_data, mask, volumetric)
-    else:
-        raise ValueError("Invalid thresholding settings")
-
-    if need_transform:
-        th_original = inverse_log_transform(th_original, conversion_dict)
-        if th_guide is not None:
-            th_guide = inverse_log_transform(th_guide, conversion_dict)
-
-    # apply correction
-    if threshold_scope == TS_GLOBAL or automatic:
-        th_corrected = _correct_global_threshold(th_original)
-    else:
-        th_guide = _correct_global_threshold(th_guide)
-        th_corrected = _correct_local_threshold(th_original, th_guide)
-
-    return th_corrected, th_original, th_guide
-
-
-def get_threshold_robust_background(image_data, num_dev=3.0, lower_fraction=0.05, upper_fraction=0.05):
-    """
-    derived from cell-profiler... using for lipid body segmentation.
-    """
-
-    flat_image = image_data.flatten()
-    n_pixels = len(flat_image)
-    if n_pixels < 3:
-        return 0
-
-    flat_image.sort()
-    if flat_image[0] == flat_image[-1]:
-        return flat_image[0]
-    low_chop = int(round(n_pixels * lower_fraction))
-    hi_chop = n_pixels - int(round(n_pixels * upper_fraction))
-    im = flat_image if low_chop == 0 else flat_image[low_chop:hi_chop]
-    mean = np.mean(im)
-    sd = np.std(im)
-    return mean + sd * num_dev
-
-
-# from cellprofiler / centrosome / smooth.py
-def smooth_with_function_and_mask(image, function, mask):
-    """Smooth an image with a linear function, ignoring the contribution of masked pixels
-
-    image - image to smooth
-    function - a function that takes an image and returns a smoothed image
-    mask  - mask with 1's for significant pixels, 0 for masked pixels
-
-    This function calculates the fractional contribution of masked pixels
-    by applying the function to the mask (which gets you the fraction of
-    the pixel data that's due to significant points). We then mask the image
-    and apply the function. The resulting values will be lower by the bleed-over
-    fraction, so you can recalibrate by dividing by the function on the mask
-    to recover the effect of smoothing from just the significant pixels.
-    """
-
-    not_mask = np.logical_not(mask)
-    bleed_over = function(mask.astype(float))
-    masked_image = np.zeros(image.shape, image.dtype)
-    masked_image[mask] = image[mask]
-    smoothed_image = function(masked_image)
-    output_image = smoothed_image / (bleed_over + np.finfo(float).eps)
-    return output_image
-
-    # blurred_image = centrosome.smooth.smooth_with_function_and_mask(
-    #     data,
-    #     lambda x: scipy.ndimage.gaussian_filter(x, sigma, mode="constant", cval=0),
-    #     mask,
-    # )
+#     # blurred_image = centrosome.smooth.smooth_with_function_and_mask(
+#     #     data,
+#     #     lambda x: scipy.ndimage.gaussian_filter(x, sigma, mode="constant", cval=0),
+#     #     mask,
+#     # )

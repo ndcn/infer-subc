@@ -1,6 +1,6 @@
 from typing import Dict
 from pathlib import Path
-
+import time
 import numpy as np
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
@@ -278,11 +278,7 @@ def infer_and_export_soma(
     return soma
 
 
-
-
-def get_soma(
-    in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path
-) -> np.ndarray:
+def get_soma(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load soma if it exists, otherwise calculate and write inferred soma to ome.tif file
 
@@ -303,13 +299,14 @@ def get_soma(
 
     """
 
-    soma = import_inferred_organelle("soma", meta_dict, out_data_path)
-
-    if soma is None:
+    try:
+        soma = import_inferred_organelle("soma", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
         out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
-        print(f"calculated soma. wrote {out_file_n}")
-    else:
-        print(f"loaded soma from {out_data_path}")
-    return soma
+        end = time.time()
+        print(f"inferred (and exported) soma in ({(end - start):0.2f}) sec")
 
+    return soma

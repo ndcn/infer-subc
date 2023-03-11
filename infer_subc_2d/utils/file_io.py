@@ -43,9 +43,11 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
 
     if Path.exists(organelle_path):
         organelle_obj, _meta_dict = read_ome_image(organelle_path)
+        print(f"loaded `{name}`  from {out_data_path}")
         return organelle_obj
     else:
         print(f"`{name}` object not found: {organelle_path}")
+        raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
 
 
 def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, out_data_path: Path) -> str:

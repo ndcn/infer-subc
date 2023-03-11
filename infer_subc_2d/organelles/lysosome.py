@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict
 from pathlib import Path
+import time
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.vessel import filament_2d_wrapper
@@ -206,12 +207,13 @@ def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np
     exported file name
 
     """
-
-    lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
-
-    if lysosome is None:
+    try:
+        lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         lysosome = infer_and_export_lysosome(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded lysosome from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) lysosome in ({(end - start):0.2f}) sec")
 
     return lysosome

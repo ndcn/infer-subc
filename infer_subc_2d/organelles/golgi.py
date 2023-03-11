@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict, Optional
 from pathlib import Path
+import time
 
 from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.utils import topology_preserving_thinning
@@ -185,10 +186,14 @@ def get_golgi(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.nd
     exported file name
 
     """
-    golgi = import_inferred_organelle("golgi", meta_dict, out_data_path)
-    if golgi is None:
+
+    try:
+        golgi = import_inferred_organelle("golgi", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         golgi = infer_and_export_golgi(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded golgi from {out_data_path}")
+        end = time.time()
+        print(f"inferred (and exported) golgi in ({(end - start):0.2f}) sec")
 
     return golgi

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Union, Dict
 from pathlib import Path
+import time
 
 from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
@@ -156,11 +157,13 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
 
     """
 
-    nuclei = import_inferred_organelle("nuclei", meta_dict, out_data_path)
-
-    if nuclei is None:
+    try:
+        nuclei = import_inferred_organelle("nuclei", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
         nuclei = infer_and_export_nuclei(in_img, meta_dict, out_data_path)
-    else:
-        print(f"loaded nuclei from {out_data_path}")
+        end = time.time()
+        print(f"inferred nuclei in ({(end - start):0.2f}) sec")
 
     return nuclei
