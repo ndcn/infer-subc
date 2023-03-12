@@ -10,7 +10,8 @@ from infer_subc_2d.utils.img import (
     size_filter_linear_size,
     select_channel_from_raw,
     filament_filter,
-    normalized_edge_preserving_smoothing,
+    # normalized_edge_preserving_smoothing,
+    scale_and_smooth,
 )
 
 ##########################
@@ -18,6 +19,7 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_endoplasmic_reticulum(
     in_img: np.ndarray,
+    gauss_sig: float,
     filament_scale: float,
     filament_cut: float,
     small_obj_w: int,
@@ -29,6 +31,8 @@ def infer_endoplasmic_reticulum(
     ------------
     in_img:
         a 3d image containing all the channels
+    gauss_sig:
+        sigma for gaussian smoothing of  signal
     filament_scale:
         scale (log_sigma) for filament filter
     filament_cut:
@@ -49,7 +53,8 @@ def infer_endoplasmic_reticulum(
     ###################
     # PRE_PROCESSING
     ###################
-    er = normalized_edge_preserving_smoothing(er)
+    # er = normalized_edge_preserving_smoothing(er)
+    struct_img = scale_and_smooth(er, median_sz=0, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
@@ -78,18 +83,17 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray) -> np.ndarray:
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask - default=None
 
     Returns
     -------------
     peroxi_object
-        mask defined extent of er object
+        mask defined extent of peroxisome object
     """
+    gauss_sig = 3
     filament_scale = 1
     filament_cut = 0.15
     small_obj_w = 2
-    return infer_endoplasmic_reticulum(in_img, filament_scale, filament_cut, small_obj_w)
+    return infer_endoplasmic_reticulum(in_img, gauss_sig, filament_scale, filament_cut, small_obj_w)
 
 
 def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
@@ -114,6 +118,7 @@ def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, 
     out_file_n = export_inferred_organelle(er, "er", meta_dict, out_data_path)
     print(f"inferred endoplasmic reticulum. wrote {out_file_n}")
     return er
+
 
 def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """

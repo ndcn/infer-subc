@@ -146,7 +146,11 @@ def get_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> 
 
     """
     try:
+        start = time.time()
+        print("starting segmentation...")
         peroxisome = import_inferred_organelle("peroxisome", meta_dict, out_data_path)
+        end = time.time()
+        print(f"loaded peroxisome in ({(end - start):0.2f}) sec")
     except:
         start = time.time()
         print("starting segmentation...")

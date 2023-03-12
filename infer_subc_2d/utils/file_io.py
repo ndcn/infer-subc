@@ -11,7 +11,7 @@ from typing import Dict, Union, List, Any, Tuple
 
 # from aicsimageio.writers import OmeTiffWriter
 # from napari_aicsimageio.core import reader_function
-from ._aicsimage_reader import reader_function, export_ome_tiff
+from ._aicsimage_reader import reader_function, export_ome_tiff, export_tiff
 
 import ome_types
 from tifffile import imwrite, tiffcomment
@@ -38,7 +38,9 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
     """
     img_name = meta_dict["file_name"]
 
-    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
+    # HACK: skip OME
+    # organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
+    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.tiff"
     organelle_path = out_data_path / organelle_fname
 
     if Path.exists(organelle_path):
@@ -85,8 +87,9 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
         print(f"making {out_data_path}")
 
     img_name_out = name + "_" + img_name.split("/")[-1].split(".")[0]
-
-    out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
+    # HACK: skip the ome
+    # out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
+    out_file_n = export_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -178,8 +181,7 @@ def get_raw_meta_data(meta_dict):
     return (raw_meta_data, ome_types)
 
 
-# TODO:  refactor this and napari plugin so napari_aicsimageio is not a dependency
-# can then export to the organelle-segment-plugin
+# TODO:  remove reader_function overhead for writting "intermediate" .tif files
 
 
 def read_ome_image(image_name):

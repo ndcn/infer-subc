@@ -352,3 +352,58 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
         ome_xml=out_ome,
     )
     return out_name
+
+
+def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
+    """
+    wrapper for exporting ome tiff
+
+    #  data_in: types.ArrayLike,
+    #  meta_in: dict,
+    # img_name: types.PathLike,
+    # out_path: types.PathLike,
+    # curr_chan: int
+    # assumes a single image
+    """
+
+    out_name = out_path + img_name + ".tiff"
+
+    image_names = [img_name]
+    # chan_names = meta_in['metadata']['aicsimage'].channel_names
+
+    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+
+    dimension_order = ["CZYX"]
+    if channel_names is None:
+        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    else:
+        channel_names = [channel_names]
+
+    if len(data_in.shape) == 3:  # single channel zstack
+        data_in = data_in[np.newaxis, :, :, :]
+    elif len(data_in.shape) == 2:  # single channel , 1Z
+        data_in = data_in[np.newaxis, np.newaxis, :, :]
+
+    if data_in.dtype == "bool":
+        data_in = data_in.astype(np.uint8)
+        data_in[data_in > 0] = 255
+
+    # out_ome = OmeTiffWriter.build_ome(
+    #     [data_in.shape],
+    #     [data_in.dtype],
+    #     channel_names=channel_names,  # type: ignore
+    #     image_name=image_names,
+    #     physical_pixel_sizes=physical_pixel_sizes,
+    #     dimension_order=dimension_order,
+    # )
+
+    OmeTiffWriter.save(
+        data_in,
+        out_name,
+        dim_order=dimension_order,
+        channel_names=channel_names,
+        image_names=image_names,
+        physical_pixel_sizes=physical_pixel_sizes,
+        ome_xml=None,
+    )
+    return out_name

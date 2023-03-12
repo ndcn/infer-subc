@@ -4,7 +4,6 @@ from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, th
 # from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 from scipy.ndimage import median_filter, extrema, distance_transform_edt, sum, minimum_filter, maximum_filter
 
-# from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.utils import size_filter, hole_filling
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
@@ -12,7 +11,7 @@ from aicssegmentation.core.MO_threshold import MO
 from aicssegmentation.core.vessel import filament_2d_wrapper
 from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
-    edge_preserving_smoothing_3d,
+    # edge_preserving_smoothing_3d,
 )
 
 from typing import Tuple, List, Union, Any
@@ -308,23 +307,24 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
     return struct_img
 
 
-def normalized_edge_preserving_smoothing(img_in: np.ndarray) -> np.ndarray:
-    """wrapper to min-max normalize + aicssegmentaion. edge_preserving_smoothing_3d
+# # depriated. using media/gauss filtering for ER now
+# def normalized_edge_preserving_smoothing(img_in: np.ndarray) -> np.ndarray:
+#     """wrapper to min-max normalize + aicssegmentaion. edge_preserving_smoothing_3d
 
-    Parameters
-    ------------
-    img:
-        a 3d image
+#     Parameters
+#     ------------
+#     img:
+#         a 3d image
 
-    Returns
-    -------------
-        smoothed and normalized np.ndimage
-    """
-    struct_img = min_max_intensity_normalization(img_in)
-    # edge-preserving smoothing (Option 2, used for Sec61B)
-    struct_img = edge_preserving_smoothing_3d(struct_img)
-    # 10 seconds!!!!  tooooo slow... for maybe no good reason
-    return min_max_intensity_normalization(struct_img)
+#     Returns
+#     -------------
+#         smoothed and normalized np.ndimage
+#     """
+#     struct_img = min_max_intensity_normalization(img_in)
+#     # edge-preserving smoothing (Option 2, used for Sec61B)
+#     struct_img = edge_preserving_smoothing_3d(struct_img)
+#     # 10 seconds!!!!  tooooo slow... for maybe no good reason
+#     return min_max_intensity_normalization(struct_img)
 
 
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
@@ -697,11 +697,17 @@ def fill_and_filter_linear_size(
     """
     if not img.any():
         return img
-    img = hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
+
     if method == "3D":
+        if hole_max > 0:
+            img = hole_filling(img, hole_min=hole_min**3, hole_max=hole_max**3, fill_2d=False)
         return size_filter(img, min_size=min_size**3, method="3D", connectivity=connectivity)
     elif method == "slice_by_slice":
+        if hole_max > 0:
+            img = hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
         return size_filter(img, min_size=min_size**2, method="slice_by_slice", connectivity=connectivity)
+    else:
+        print(f"undefined method: {method}")
 
 
 def size_filter_linear_size(
@@ -735,7 +741,7 @@ def size_filter_linear_size(
         raise NotImplementedError(f"unsupported method {method}")
 
 
-def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int) -> np.ndarray:
+def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int, fill_2d=True) -> np.ndarray:
     """Fill holes  wraper to aiscsegmentation `hole_filling` with size argument in linear units.  always does slice-by-slice
 
     Parameters
@@ -751,7 +757,10 @@ def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int) -> n
     -----------
         a binary image after hole filling
     """
-    return hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
+    if fill_2d:
+        return hole_filling(img, hole_min=hole_min**2, hole_max=hole_max**2, fill_2d=True)
+    else:
+        return hole_filling(img, hole_min=hole_min**3, hole_max=hole_max**3, fill_2d=False)
 
 
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
