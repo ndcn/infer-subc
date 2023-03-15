@@ -3,7 +3,12 @@ from typing import Union, Dict
 from pathlib import Path
 import time
 
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.utils.file_io import (
+    export_inferred_organelle,
+    import_inferred_organelle,
+    export_inferred_organelle_AICS,
+    import_inferred_organelle_AICS,
+)
 from infer_subc_2d.utils.img import (
     fill_and_filter_linear_size,
     apply_log_li_threshold,
@@ -167,3 +172,36 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
         print(f"inferred nuclei in ({(end - start):0.2f}) sec")
 
     return nuclei
+
+
+# def get_nuclei_AICS(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     load nucleus if it exists, otherwise calculate and write to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+
+#     try:
+#         nuclei = import_inferred_organelle_AICS("nuclei", meta_dict, out_data_path)
+#     except:
+#         start = time.time()
+#         print("starting nuclei segmentation...")
+#         nuclei = fixed_infer_nuclei(in_img)
+#         out_file_n = export_inferred_organelle_AICS(nuclei, "nuclei", meta_dict, out_data_path)
+#         end = time.time()
+#         print(f"inferred and saved nuclei AICS in ({(end - start):0.2f}) sec")
+
+#     return nuclei

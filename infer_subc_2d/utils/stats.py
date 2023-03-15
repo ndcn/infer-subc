@@ -2,6 +2,7 @@ import numpy as np
 from skimage.measure import regionprops_table, regionprops, mesh_surface_area, marching_cubes, label
 from skimage.morphology import binary_erosion
 from skimage.measure._regionprops import _props_to_dict
+from typing import Tuple, Any
 
 from infer_subc_2d.utils.img import apply_mask
 
@@ -32,8 +33,25 @@ def _my_props_to_dict(
     return _props_to_dict(rp, properties=properties, separator="-")
 
 
-def get_summary_stats_3D(input_obj, intensity_img, mask):
-    """collect volumentric stats"""
+def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
+    """collect volumentric stats from skimage.measure.regionprops
+        properties = ["label","max_intensity", "mean_intensity", "min_intensity" ,"area"->"volume" , "equivalent_diameter",
+        "centroid", "bbox","euler_number", "extent"
+        +   extra_properties = [standard_deviation_intensity]
+
+    Parameters
+    ------------
+    input_obj:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    soma_mask:
+        a 3d image containing the soma object (mask)
+    mask:
+        a 3d image containing the soma object (mask)
+
+    Returns
+    -------------
+    pandas dataframe of stats and the regionprops object
+    """
 
     # mask
     # intensity_img = apply_mask(intensity_img,mask )  #not needed
@@ -75,6 +93,8 @@ def get_summary_stats_3D(input_obj, intensity_img, mask):
 
 
 def surface_area_from_props(labels, props):
+    """ helper function for getting surface area of volumetric segmentation"""
+
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
     # TODO: spacing = [1, 1, 1] # this is where we could deal with anisotropy in Z

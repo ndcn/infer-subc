@@ -9,7 +9,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Union, List, Any, Tuple
 
-# from aicsimageio.writers import OmeTiffWriter
+from aicsimageio.writers import OmeTiffWriter
+
 # from napari_aicsimageio.core import reader_function
 from ._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
 from aicsimageio import AICSImage, exceptions
@@ -219,6 +220,91 @@ def read_tiff_image(image_name):
     return image  # .get_image_data("CZYX")
 
 
+def import_inferred_organelle_AICS(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
+    """
+    read inferred organelle from ome.tif file with AICSIMAGEIO
+
+    Parameters
+    ------------
+    name: str
+        name of organelle.  i.e. nuclei, lysosome, etc.
+    meta_dict:
+        dictionary of meta-data (ome) from original file
+    out_data_path:
+        Path object of directory where tiffs are read from
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    img_name = meta_dict["file_name"]
+    # HACK: skip OME
+    # organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
+    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.tiff"
+    organelle_path = out_data_path / organelle_fname
+
+    if Path.exists(organelle_path):
+        # organelle_obj, _meta_dict = read_ome_image(organelle_path)
+        organelle_obj = read_tiff_image_AICS(organelle_path)  # .squeeze()
+        print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
+        return organelle_obj > 0
+    else:
+        print(f"`{name}` object not found: {organelle_path}")
+        raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
+
+
+def export_inferred_organelle_AICS(img_out: np.ndarray, name: str, meta_dict: Dict, out_data_path: Path) -> str:
+    """
+    write inferred organelle to ome.tif file with AICSIMAGEIO
+
+    Parameters
+    ------------
+    img_out:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    name: str
+        name of organelle.  i.e. nuclei, lysosome, etc.
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    img_name = meta_dict["file_name"]  #
+
+    if not Path.exists(out_data_path):
+        Path.mkdir(out_data_path)
+        print(f"making {out_data_path}")
+
+    img_name_out = name + "_" + img_name.split("/")[-1].split(".")[0]
+    out_file_n = export_tiff_AICS(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
+    print(f"saved file: {out_file_n}")
+    return out_file_n
+
+
+def read_tiff_image_AICS(image_name):
+    """aicssegmentation way to do it"""
+    start = time.time()
+    image = AICSImage(image_name)
+    if len(image.scenes) > 1:
+        raise ValueError("Multi-Scene images are unsupported")
+
+    if image.dims.T > 1:
+        raise ValueError("Timelapse images are unsupported.")
+
+    if image.dims.C > 1:
+        im_out = image.get_image_data("CZYX")
+
+    im_out = image.get_image_data("ZYX")
+    end = time.time()
+    print(f">>>>>>>>>>>> AICSImage read  (dtype={image.dtype}in ({(end - start):0.2f}) sec")
+    return im_out
+
+
 def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
     wrapper for exporting  tiff with tifffile.imwrite
@@ -256,15 +342,38 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     ret = imwrite(
         out_name,
         data_in,
-        metadata={
-            "axes": dimension_order,
-            "physical_pixel_sizes": physical_pixel_sizes,
-            "channel_names": channel_names,
-        },
+        # metadata={
+        #     "axes": dimension_order,
+        #     # "physical_pixel_sizes": physical_pixel_sizes,
+        #     # "channel_names": channel_names,
+        # },
     )
     end = time.time()
     print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
     return ret
+
+
+def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str:
+    """
+    aicssegmentation way to do it
+    """
+    start = time.time()
+    # img_name = meta_in["file_name"]  #
+    # add params to metadata
+    out_name = out_path + img_name + ".tiff"
+
+    if data_in.dtype == "bool":
+        data_in = data_in.astype(np.uint8)
+        data_in[data_in > 0] = 255
+
+    OmeTiffWriter.save(data=data_in, uri=out_name, dim_order="ZYX")
+    end = time.time()
+    print(f">>>>>>>>>>>> export_tiff_AICS ({(end - start):0.2f}) sec")
+    print(f"saved file AICS {out_name}")
+    return out_name
+
+    # OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
+
     # DEPRICATED OMETIFFWRITER CODE
     # dimension_order = ["CZYX"]
     # if len(data_in.shape) == 3:  # single channel zstack

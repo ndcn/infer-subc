@@ -32,9 +32,9 @@ def infer_cytosol(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei
     nucleus_obj = apply_mask(nuclei_object, soma_mask)
 
     if erode_nuclei:
-        cytosol_mask = np.logical_xor(soma_mask, binary_erosion(nuclei_object))
+        cytosol_mask = np.logical_xor(soma_mask, binary_erosion(nucleus_obj))
     else:
-        cytosol_mask = np.logical_xor(soma_mask, nuclei_object)
+        cytosol_mask = np.logical_xor(soma_mask, nucleus_obj)
 
     return cytosol_mask
 
