@@ -223,6 +223,7 @@ def reader_function(path: "PathLike", in_memory: Optional[bool] = None) -> Optio
         logger.info("AICSImageIO: Multi-file reading not yet supported.")
         return None
 
+    # TODO:  remove these imports?  is it slowing things down?
     if in_memory is None:
         from aicsimageio.utils.io_utils import pathlike_to_fs
         from psutil import virtual_memory
@@ -300,6 +301,8 @@ def reader_function(path: "PathLike", in_memory: Optional[bool] = None) -> Optio
 
 def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
+    wrapper for exporting ome tiff
+
     #  data_in: types.ArrayLike,
     #  meta_in: dict,
     # img_name: types.PathLike,
