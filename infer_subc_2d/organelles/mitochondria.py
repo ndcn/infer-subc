@@ -1,19 +1,15 @@
 import numpy as np
-from typing import Optional
-
-from aicssegmentation.core.pre_processing_utils import (
-    image_smoothing_gaussian_slice_by_slice,
-)
-
+from typing import Dict
+from pathlib import Path
+import time
 from infer_subc_2d.constants import MITO_CH
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    median_filter_slice_by_slice,
-    min_max_intensity_normalization,
-    size_filter_2D,
+    size_filter_linear_size,
+    size_filter_linear_size,
     vesselness_slice_by_slice,
     select_channel_from_raw,
+    scale_and_smooth,
 )
 
 ##########################
@@ -21,7 +17,6 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_mitochondria(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
     median_sz: int,
     gauss_sig: float,
     vesselness_scale: float,
@@ -35,8 +30,6 @@ def infer_mitochondria(
     ------------
     in_img:
         a 3d image containing all the channels
-    soma_mask:
-        mask default-None
     median_sz:
         width of median filter for signal
     gauss_sig:
@@ -54,17 +47,15 @@ def infer_mitochondria(
         mask defined extent of mitochondria
     """
     mito_ch = MITO_CH
+    ###################
+    # EXTRACT
+    ###################
+    mito = select_channel_from_raw(in_img, MITO_CH)
 
     ###################
     # PRE_PROCESSING
     ###################
-    mito = select_channel_from_raw(in_img, MITO_CH)
-
-    mito = min_max_intensity_normalization(mito)
-
-    mito = median_filter_slice_by_slice(mito, size=median_sz)
-
-    struct_img = image_smoothing_gaussian_slice_by_slice(mito, sigma=gauss_sig)
+    struct_img = scale_and_smooth(mito, median_sz=median_sz, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
@@ -74,9 +65,7 @@ def infer_mitochondria(
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = apply_mask(struct_img, cytosol_mask)
-
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_img, min_size=small_obj_w)
 
     return struct_obj
 
@@ -84,7 +73,7 @@ def infer_mitochondria(
 ##########################
 #  fixed_infer_mitochondria
 ##########################
-def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer mitochondria from linearly unmixed input
 
@@ -92,8 +81,6 @@ def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarr
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask
 
     Returns
     -------------
@@ -106,4 +93,59 @@ def fixed_infer_mitochondria(in_img: np.ndarray, cytosol_mask: Optional[np.ndarr
     vesselness_cut = 0.05
     small_obj_w = 3
 
-    return infer_mitochondria(in_img, cytosol_mask, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
+    return infer_mitochondria(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
+
+
+def infer_and_export_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer mitochondria and write inferred mitochondria to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    mitochondria = fixed_infer_mitochondria(in_img)
+    out_file_n = export_inferred_organelle(mitochondria, "mitochondria", meta_dict, out_data_path)
+    print(f"inferred mitochondria. wrote {out_file_n}")
+    return mitochondria
+
+
+def get_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load mitochondria if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+
+    try:
+        mitochondria = import_inferred_organelle("mitochondria", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
+        mitochondria = infer_and_export_mitochondria(in_img, meta_dict, out_data_path)
+        end = time.time()
+        print(f"inferred (and exported) mitochondria in ({(end - start):0.2f}) sec")
+
+    return mitochondria

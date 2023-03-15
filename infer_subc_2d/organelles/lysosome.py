@@ -1,20 +1,17 @@
 import numpy as np
-from typing import Optional
+from typing import Dict
+from pathlib import Path
+import time
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
-from aicssegmentation.core.utils import hole_filling
 from aicssegmentation.core.vessel import filament_2d_wrapper
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
 from infer_subc_2d.constants import LYSO_CH
-
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    median_filter_slice_by_slice,
-    min_max_intensity_normalization,
-    size_filter_2D,
+    scale_and_smooth,
+    fill_and_filter_linear_size,
     select_channel_from_raw,
-    filament_filter,
 )
 
 ##########################
@@ -22,7 +19,6 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_lysosome(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
     median_sz: int,
     gauss_sig: float,
     dot_scale_1: float,
@@ -44,8 +40,6 @@ def infer_lysosome(
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask
     median_sz:
         width of median filter for signal
     gauss_sig:
@@ -80,43 +74,31 @@ def infer_lysosome(
     ###################
     # PRE_PROCESSING
     ###################
-    lyso = min_max_intensity_normalization(lyso)
-
-    lyso = median_filter_slice_by_slice(lyso, size=median_sz)
-
-    lyso = image_smoothing_gaussian_slice_by_slice(lyso, sigma=gauss_sig)
+    lyso = scale_and_smooth(lyso, median_sz=median_sz, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
     ###################
-    # s2_param = [[5,0.09], [2.5,0.07], [1,0.01]]
     s2_param = [[dot_scale_1, dot_cut_1], [dot_scale_2, dot_cut_2], [dot_scale_3, dot_cut_3]]
     bw_spot = dot_2d_slice_by_slice_wrapper(lyso, s2_param)
 
-    # f2_param = [[filament_scale, filament_cut]]
-    # # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
-    # bw_filament = filament_2d_wrapper(lyso, f2_param)
-    bw_filament = filament_filter(lyso, filament_scale, filament_cut)
+    f2_param = [[filament_scale, filament_cut]]
+    bw_filament = filament_2d_wrapper(lyso, f2_param)
+    # TODO: consider 3D version to call: aicssegmentation::vesselness3D
 
     bw = np.logical_or(bw_spot, bw_filament)
 
     ###################
     # POST_PROCESSING
     ###################
-
-    struct_obj = hole_filling(bw, hole_min=min_hole_w**2, hole_max=max_hole_w**2, fill_2d=True)
-
-    struct_obj = apply_mask(struct_obj, cytosol_mask)
-
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
-
+    struct_obj = fill_and_filter_linear_size(bw, hole_min=min_hole_w, hole_max=max_hole_w, min_size=small_obj_w)
     return struct_obj
 
 
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer lysosome from linearly unmixed input
 
@@ -124,9 +106,6 @@ def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] 
     ------------
     in_img:
         a 3d image containing all the channels
-
-    cytosol_mask:
-        mask
 
     Returns
     -------------
@@ -149,7 +128,6 @@ def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] 
 
     return infer_lysosome(
         in_img,
-        cytosol_mask,
         median_sz,
         gauss_sig,
         dot_cut_1,
@@ -164,6 +142,30 @@ def fixed_infer_lysosome(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] 
         max_hole_w,
         small_obj_w,
     )
+
+
+def infer_and_export_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer lysosome and write inferred lysosome to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    lysosome = fixed_infer_lysosome(in_img)
+    out_file_n = export_inferred_organelle(lysosome, "lysosome", meta_dict, out_data_path)
+    print(f"inferred lysosome. wrote {out_file_n}")
+    return lysosome
 
 
 def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
@@ -185,3 +187,36 @@ def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
     f2_param = [[filament_scale, filament_cut]]
     # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     return filament_2d_wrapper(in_img, f2_param)
+
+
+def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load lysosome if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    try:
+        start = time.time()
+        lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
+        end = time.time()
+        print(f"loaded lysosome in ({(end - start):0.2f}) sec")
+    except:
+        start = time.time()
+        print("starting segmentation...")
+        lysosome = infer_and_export_lysosome(in_img, meta_dict, out_data_path)
+        end = time.time()
+        print(f"inferred (and exported) lysosome in ({(end - start):0.2f}) sec")
+
+    return lysosome
