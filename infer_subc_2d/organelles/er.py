@@ -1,17 +1,17 @@
 import numpy as np
-from typing import Optional
-
-from aicssegmentation.core.vessel import filament_2d_wrapper
-from aicssegmentation.core.pre_processing_utils import edge_preserving_smoothing_3d
+from typing import Dict
+from pathlib import Path
+import time
 
 from infer_subc_2d.constants import ER_CH
+from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
 
 from infer_subc_2d.utils.img import (
-    apply_mask,
-    min_max_intensity_normalization,
-    size_filter_2D,
+    size_filter_linear_size,
     select_channel_from_raw,
     filament_filter,
+    # normalized_edge_preserving_smoothing,
+    scale_and_smooth,
 )
 
 ##########################
@@ -19,7 +19,7 @@ from infer_subc_2d.utils.img import (
 ##########################
 def infer_endoplasmic_reticulum(
     in_img: np.ndarray,
-    cytosol_mask: np.ndarray,
+    gauss_sig: float,
     filament_scale: float,
     filament_cut: float,
     small_obj_w: int,
@@ -31,8 +31,8 @@ def infer_endoplasmic_reticulum(
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask of cytosol
+    gauss_sig:
+        sigma for gaussian smoothing of  signal
     filament_scale:
         scale (log_sigma) for filament filter
     filament_cut:
@@ -53,24 +53,21 @@ def infer_endoplasmic_reticulum(
     ###################
     # PRE_PROCESSING
     ###################
-    er = min_max_intensity_normalization(er)
-
-    # edge-preserving smoothing (Option 2, used for Sec61B)
-    er = edge_preserving_smoothing_3d(er)
+    # er = normalized_edge_preserving_smoothing(er)
+    struct_img = scale_and_smooth(er, median_sz=0, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
     ###################
     # f2_param = [[filament_scale, filament_cut]]
+    # # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     # struct_obj = filament_2d_wrapper(er, f2_param)
     struct_obj = filament_filter(er, filament_scale, filament_cut)
 
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = apply_mask(struct_obj, cytosol_mask)
-
-    struct_obj = size_filter_2D(struct_obj, min_size=small_obj_w**2, connectivity=1)
+    struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
 
     return struct_obj
 
@@ -78,7 +75,7 @@ def infer_endoplasmic_reticulum(
 ##########################
 #  fixed_infer_endoplasmic_reticulum
 ##########################
-def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
 
@@ -86,15 +83,69 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray, cytosol_mask: Optional
     ------------
     in_img:
         a 3d image containing all the channels
-    cytosol_mask:
-        mask - default=None
 
     Returns
     -------------
     peroxi_object
         mask defined extent of peroxisome object
     """
+    gauss_sig = 3
     filament_scale = 1
     filament_cut = 0.15
     small_obj_w = 2
-    return infer_endoplasmic_reticulum(in_img, cytosol_mask, filament_scale, filament_cut, small_obj_w)
+    return infer_endoplasmic_reticulum(in_img, gauss_sig, filament_scale, filament_cut, small_obj_w)
+
+
+def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    infer endoplasmic reticulum and write inferred endoplasmic reticulum to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+    er = fixed_infer_endoplasmic_reticulum(in_img)
+    out_file_n = export_inferred_organelle(er, "er", meta_dict, out_data_path)
+    print(f"inferred endoplasmic reticulum. wrote {out_file_n}")
+    return er
+
+
+def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+    """
+    load endoplasmic_reticulum if it exists, otherwise calculate and write to ome.tif file
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    meta_dict:
+        dictionary of meta-data (ome)
+    out_data_path:
+        Path object where tiffs are written to
+
+    Returns
+    -------------
+    exported file name
+
+    """
+
+    try:
+        er = import_inferred_organelle("er", meta_dict, out_data_path)
+    except:
+        start = time.time()
+        print("starting segmentation...")
+        er = infer_and_export_endoplasmic_reticulum(in_img, meta_dict, out_data_path)
+        end = time.time()
+        print(f"inferred (and exported) er in ({(end - start):0.2f}) sec")
+
+    return er
