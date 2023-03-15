@@ -208,7 +208,10 @@ def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np
 
     """
     try:
+        start = time.time()
         lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
+        end = time.time()
+        print(f"loaded lysosome in ({(end - start):0.2f}) sec")
     except:
         start = time.time()
         print("starting segmentation...")

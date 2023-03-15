@@ -1118,6 +1118,26 @@ def adjacent(labels):
     return (min_label != max_label) & (labels > 0)
 
 
+def img_to_uint8(data_in: np.ndarray) -> np.ndarray:
+    """
+    helper to convert bask to uint8 (true -> 255)
+    """
+    print(f"changing from {data_in.dtype} to np.uint8")
+    data_in = data_in.astype(np.uint8)
+    data_in[data_in > 0] = 255
+    return data_in
+
+
+def img_to_bool(data_in: np.ndarray) -> np.ndarray:
+    """
+    helper to make sure we are keeping track of things correctly
+    """
+    print(f"changing from {data_in.dtype} to bool")
+    data_out = data_in > 0
+    print(f"    -> {data_out.dtype}")
+    return data_out
+
+
 # # from cellprofiler / centrosome / smooth.py
 # def smooth_with_function_and_mask(image, function, mask):
 #     """Smooth an image with a linear function, ignoring the contribution of masked pixels

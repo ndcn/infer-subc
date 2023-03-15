@@ -272,7 +272,6 @@ def infer_and_export_soma(
 
     """
     soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
-
     out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
     print(f"inferred soma. wrote {out_file_n}")
     return soma

@@ -11,10 +11,13 @@ from typing import Dict, Union, List, Any, Tuple
 
 # from aicsimageio.writers import OmeTiffWriter
 # from napari_aicsimageio.core import reader_function
-from ._aicsimage_reader import reader_function, export_ome_tiff, export_tiff
+from ._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
+from aicsimageio import AICSImage, exceptions
 
 import ome_types
-from tifffile import imwrite, tiffcomment
+
+from tifffile import imwrite, tiffcomment, imread
+import time
 
 
 # TODO throw exception and call with try
@@ -37,16 +40,16 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
 
     """
     img_name = meta_dict["file_name"]
-
     # HACK: skip OME
     # organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
     organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.tiff"
     organelle_path = out_data_path / organelle_fname
 
     if Path.exists(organelle_path):
-        organelle_obj, _meta_dict = read_ome_image(organelle_path)
-        print(f"loaded `{name}`  from {out_data_path}")
-        return organelle_obj
+        # organelle_obj, _meta_dict = read_ome_image(organelle_path)
+        organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
+        print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
+        return organelle_obj > 0
     else:
         print(f"`{name}` object not found: {organelle_path}")
         raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
@@ -114,27 +117,28 @@ def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_p
     return out_file_n
 
 
-def append_ome_metadata(filename, meta_add):
-    filename = "test.ome.tif"
+# # DEPRICATE
+# def append_ome_metadata(filename, meta_add):
+#     filename = "test.ome.tif"
 
-    imwrite(
-        filename,
-        np.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
-        bigtiff=True,
-        photometric="RGB",
-        tile=(64, 64),
-        metadata={
-            "axes": "ZYXS",
-            "SignificantBits": 10,
-            "Plane": {"PositionZ": [0.0, 1.0, 2.0, 3.0]},
-        },
-    )
+#     imwrite(
+#         filename,
+#         np.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
+#         bigtiff=True,
+#         photometric="RGB",
+#         tile=(64, 64),
+#         metadata={
+#             "axes": "ZYXS",
+#             "SignificantBits": 10,
+#             "Plane": {"PositionZ": [0.0, 1.0, 2.0, 3.0]},
+#         },
+#     )
 
-    ome_xml = tiffcomment(filename)
-    ome = ome_types.from_xml(ome_xml)
-    ome.images[0].description = "Image 0 description"
-    ome_xml = ome.to_xml()
-    tiffcomment(filename, ome_xml)
+#     ome_xml = tiffcomment(filename)
+#     ome = ome_types.from_xml(ome_xml)
+#     ome.images[0].description = "Image 0 description"
+#     ome_xml = ome.to_xml()
+#     tiffcomment(filename, ome_xml)
 
 
 ### UTILS
@@ -199,6 +203,96 @@ def read_czi_image(image_name):
     return output from napari aiscioimage reader (alias for read_ome_image)
     """
     return read_ome_image(image_name)
+
+
+def read_tiff_image(image_name):
+    """
+    return tiff image with tifffile.imread.  Using the `reader_function` (vial read_ome_image) and AICSimage is too slow
+        prsumably handling the OME meta data is what is so slow.
+    """
+    start = time.time()
+    image = imread(
+        image_name,
+    )
+    end = time.time()
+    print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype}in ({(end - start):0.2f}) sec")
+    return image  # .get_image_data("CZYX")
+
+
+def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
+    """
+    wrapper for exporting  tiff with tifffile.imwrite
+     --> usiong AICSimage is too slow
+        prsumably handling the OME meta data is what is so slow.
+    """
+
+    start = time.time()
+
+    out_name = out_path + img_name + ".tiff"
+
+    image_names = [img_name]
+    # chan_names = meta_in['metadata']['aicsimage'].channel_names
+
+    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+
+    # dimension_order = ["CZYX"]
+    if channel_names is None:
+        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    else:
+        channel_names = [channel_names]
+
+    if len(data_in.shape) == 3:  # single channel zstack
+        dimension_order = ["ZYX"]
+        # data_in = data_in[np.newaxis, :, :, :]
+    elif len(data_in.shape) == 2:  # single channel , 1Z
+        dimension_order = ["YX"]
+        # data_in = data_in[np.newaxis, np.newaxis, :, :]
+        physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
+
+    if data_in.dtype == "bool":
+        data_in = data_in.astype(np.uint8)
+        data_in[data_in > 0] = 255
+
+    ret = imwrite(
+        out_name,
+        data_in,
+        metadata={
+            "axes": dimension_order,
+            "physical_pixel_sizes": physical_pixel_sizes,
+            "channel_names": channel_names,
+        },
+    )
+    end = time.time()
+    print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
+    return ret
+    # DEPRICATED OMETIFFWRITER CODE
+    # dimension_order = ["CZYX"]
+    # if len(data_in.shape) == 3:  # single channel zstack
+    #     data_in = data_in[np.newaxis, :, :, :]
+    # elif len(data_in.shape) == 2:  # single channel , 1Z
+    #     dimension_order = ["YX"]
+    #     data_in = data_in[np.newaxis, np.newaxis, :, :]
+    #     physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+
+    # out_ome = OmeTiffWriter.build_ome(
+    #     [data_in.shape],
+    #     [data_in.dtype],
+    #     channel_names=channel_names,  # type: ignore
+    #     image_name=image_names,
+    #     physical_pixel_sizes=physical_pixel_sizes,
+    #     dimension_order=dimension_order,
+    # )
+
+    # OmeTiffWriter.save(
+    #     data_in,
+    #     out_name,
+    #     dim_order=dimension_order,
+    #     channel_names=channel_names,
+    #     image_names=image_names,
+    #     physical_pixel_sizes=physical_pixel_sizes,
+    #     ome_xml=None,
+    # )
+    # return out_name
 
 
 # function to collect all the
