@@ -93,7 +93,7 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
 
 
 def surface_area_from_props(labels, props):
-    """ helper function for getting surface area of volumetric segmentation"""
+    """helper function for getting surface area of volumetric segmentation"""
 
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
@@ -143,7 +143,7 @@ def get_simple_stats_3D(A, mask):
     return stats_table, rp
 
 
-def get_AintB_stats_3D(A, B, mask, erode_A=False):
+def get_AintB_stats_3D(A, B, mask, shell_A=False):
     """collect volumentric stats of A intersect B"""
     properties = ["label"]  # our index to organelles
     # add area
@@ -156,7 +156,7 @@ def get_AintB_stats_3D(A, B, mask, erode_A=False):
     Alab = label(A).astype("int")
     Blab = label(B).astype("int")
 
-    if erode_A:
+    if shell_A:
         A = np.logical_xor(A, binary_erosion(A))
 
     A_int_B = np.logical_and(A, B)

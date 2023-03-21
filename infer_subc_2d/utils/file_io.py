@@ -6,7 +6,7 @@ import pickle
 
 from pathlib import Path
 from collections import defaultdict
-from dataclasses import dataclass
+
 from typing import Dict, Union, List, Any, Tuple
 
 from aicsimageio.writers import OmeTiffWriter
@@ -20,6 +20,8 @@ import ome_types
 from tifffile import imwrite, tiffcomment, imread
 import time
 
+# todo depricate wrapper
+from dataclasses import dataclass
 
 # TODO throw exception and call with try
 def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
@@ -220,6 +222,129 @@ def read_tiff_image(image_name):
     return image  # .get_image_data("CZYX")
 
 
+def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
+    """
+    wrapper for exporting  tiff with tifffile.imwrite
+     --> usiong AICSimage is too slow
+        prsumably handling the OME meta data is what is so slow.
+    """
+
+    start = time.time()
+
+    out_name = out_path + img_name + ".tiff"
+
+    image_names = [img_name]
+    # chan_names = meta_in['metadata']['aicsimage'].channel_names
+
+    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+
+    # dimension_order = ["CZYX"]
+    if channel_names is None:
+        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    else:
+        channel_names = [channel_names]
+
+    if len(data_in.shape) == 3:  # single channel zstack
+        dimension_order = ["ZYX"]
+        # data_in = data_in[np.newaxis, :, :, :]
+    elif len(data_in.shape) == 2:  # single channel , 1Z
+        dimension_order = ["YX"]
+        # data_in = data_in[np.newaxis, np.newaxis, :, :]
+        physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
+
+    if data_in.dtype == "bool":
+        data_in = data_in.astype(np.uint8)
+        data_in[data_in > 0] = 255
+
+    ret = imwrite(
+        out_name,
+        data_in,
+        # metadata={
+        #     "axes": dimension_order,
+        #     # "physical_pixel_sizes": physical_pixel_sizes,
+        #     # "channel_names": channel_names,
+        # },
+    )
+    end = time.time()
+    print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
+    return ret
+
+
+# function to collect all the
+def list_image_files(data_folder: Path, file_type: str) -> List:
+    """
+    get a list of all the filetypes
+    TODO: aics has cleaner functions than this "lambda"
+    """
+    return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
+
+
+## DEPRICATE BELOW?
+
+
+# TODO:  depricate AICSImageReaderWrap
+def read_input_image(image_name):
+    """
+    send output from napari aiscioimage reader wrapped in dataclass
+    """
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
+    return AICSImageReaderWrap(image_name, data_out, meta_out)
+
+
+@dataclass
+class AICSImageReaderWrap:
+    """
+    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
+    TODO: make a nice reppr
+    """
+
+    name: str
+    image: np.ndarray
+    meta: Dict[str, Any]
+    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
+
+    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
+        self.name = name
+        self.image = image
+        self.meta = meta
+        self.raw_meta = get_raw_meta_data(meta)
+
+
+def save_parameters(out_p, img_name, out_path) -> str:
+    """
+    #  out_p: defaultdict,
+    # img_name: str,
+    # out_path: types.PathLike,
+    """
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "wb") as f:
+        pickle.dump(out_p, f)
+    return out_name
+
+
+def load_parameters(img_name, out_path) -> defaultdict:
+    out_name = str(out_path) + "/" + img_name + "_params.pkl"
+    with open(out_name, "rb") as f:
+        x = pickle.load(f)
+    return x
+
+
+def export_ndarray(data_in, img_name, out_path) -> str:
+    """
+    #  data_in: types.ArrayLike,
+    #  meta_in: dict,
+    # img_name: types.PathLike,
+    # out_path: types.PathLike,
+    # curr_chan: int
+    # assumes a single image
+    """
+    out_name = out_path + img_name + ".npy"
+    data_in.tofile(out_name)
+    return out_name
+
+
+#  The methods below are sloooooow.  the overhead loading in image is ~5.8 seconds
+#  2 seconds to read the image, compared to .01 sec for directly reading...
 def import_inferred_organelle_AICS(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
     """
     read inferred organelle from ome.tif file with AICSIMAGEIO
@@ -305,54 +430,6 @@ def read_tiff_image_AICS(image_name):
     return im_out
 
 
-def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
-    """
-    wrapper for exporting  tiff with tifffile.imwrite
-     --> usiong AICSimage is too slow
-        prsumably handling the OME meta data is what is so slow.
-    """
-
-    start = time.time()
-
-    out_name = out_path + img_name + ".tiff"
-
-    image_names = [img_name]
-    # chan_names = meta_in['metadata']['aicsimage'].channel_names
-
-    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
-
-    # dimension_order = ["CZYX"]
-    if channel_names is None:
-        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
-    else:
-        channel_names = [channel_names]
-
-    if len(data_in.shape) == 3:  # single channel zstack
-        dimension_order = ["ZYX"]
-        # data_in = data_in[np.newaxis, :, :, :]
-    elif len(data_in.shape) == 2:  # single channel , 1Z
-        dimension_order = ["YX"]
-        # data_in = data_in[np.newaxis, np.newaxis, :, :]
-        physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
-
-    if data_in.dtype == "bool":
-        data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
-
-    ret = imwrite(
-        out_name,
-        data_in,
-        # metadata={
-        #     "axes": dimension_order,
-        #     # "physical_pixel_sizes": physical_pixel_sizes,
-        #     # "channel_names": channel_names,
-        # },
-    )
-    end = time.time()
-    print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
-    return ret
-
-
 def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str:
     """
     aicssegmentation way to do it
@@ -402,76 +479,3 @@ def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str
     #     ome_xml=None,
     # )
     # return out_name
-
-
-# function to collect all the
-def list_image_files(data_folder: Path, file_type: str) -> List:
-    """
-    get a list of all the filetypes
-    TODO: aics has cleaner functions than this "lambda"
-    """
-    return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
-
-
-## DEPRICATE BELOW?
-
-
-# TODO:  depricate AICSImageReaderWrap
-def read_input_image(image_name):
-    """
-    send output from napari aiscioimage reader wrapped in dataclass
-    """
-    data_out, meta_out, layer_type = reader_function(image_name)[0]
-    return AICSImageReaderWrap(image_name, data_out, meta_out)
-
-
-@dataclass
-class AICSImageReaderWrap:
-    """
-    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
-    TODO: make a nice reppr
-    """
-
-    name: str
-    image: np.ndarray
-    meta: Dict[str, Any]
-    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
-
-    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
-        self.name = name
-        self.image = image
-        self.meta = meta
-        self.raw_meta = get_raw_meta_data(meta)
-
-
-def save_parameters(out_p, img_name, out_path) -> str:
-    """
-    #  out_p: defaultdict,
-    # img_name: str,
-    # out_path: types.PathLike,
-    """
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "wb") as f:
-        pickle.dump(out_p, f)
-    return out_name
-
-
-def load_parameters(img_name, out_path) -> defaultdict:
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "rb") as f:
-        x = pickle.load(f)
-    return x
-
-
-def export_ndarray(data_in, img_name, out_path) -> str:
-    """
-    #  data_in: types.ArrayLike,
-    #  meta_in: dict,
-    # img_name: types.PathLike,
-    # out_path: types.PathLike,
-    # curr_chan: int
-    # assumes a single image
-    """
-    out_name = out_path + img_name + ".npy"
-    data_in.tofile(out_name)
-    return out_name

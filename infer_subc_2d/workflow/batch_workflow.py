@@ -180,6 +180,7 @@ class BatchWorkflow:
         Returns
             np.ndarray: segment-able image for aics-segmentation
         """
+        # TODO: make this reading more performant
         # if len(image.scenes) > 1:
         #     raise ValueError("Multi-Scene images are unsupported")
 
@@ -197,6 +198,9 @@ class BatchWorkflow:
         meta["channel_names"] = channel_names
         meta["file_name"] = name
         layer_attributes = {"name": name, "metadata": meta}
+
+        # TODO:  dump metadata dictionary. json or pickle?
+
         # return [(data, layer_attributes, layer_type)]  # (data,meta) is fine since 'image' is default
         # JAH: refactor to make channel_index be a zslice
         if self._channel_index < 0:

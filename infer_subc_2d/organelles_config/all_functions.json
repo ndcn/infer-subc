@@ -704,5 +704,451 @@
         "python::module": "infer_subc_2d.organelles",
         "python::function": "fixed_infer_nuclei",
         "parameters": null
+    },
+    "infer_nuclei": {
+        "name": "infer nuclei",
+        "python::module": "infer_subc_2d.organelles.nuclei",
+        "python::function": "infer_nuclei",
+        "parameters": {
+            "nuc_ch": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "median_filter_slice_by_slice": {
+        "name": "Median Smoothing Slice by Slice",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "median_filter_slice_by_slice",
+        "parameters": {
+            "size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 20,
+                "increment": 1
+            }
+        }
+    },
+    "apply_log_li_threshold": {
+        "name": "threshold log Li",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "apply_log_li_threshold",
+        "parameters": {
+            "thresh_factor": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.1,
+                "increment": 0.05
+            },
+            "thresh_min": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.0,
+                "max": 0.8,
+                "increment": 0.01
+            },
+            "thresh_max": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.0,
+                "increment": 0.05
+            }
+        }
+    },
+    "apply_mask": {
+        "name": "apply mask",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "apply_mask",
+        "parameters": null
+    },
+    "select_channel_from_raw": {
+        "name": "select a channel ",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "select_channel_from_raw",
+        "parameters": {
+            "chan": {
+                "data_type": "int",
+                "options": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "widget_type": "drop-down"
+            }
+        }
+    },
+    "scale_and_smooth": {
+        "name": "scale and smooth",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "scale_and_smooth",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fill_and_filter_linear_size": {
+        "name": "fill holes and filter small objects - linear space constant",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "fill_and_filter_linear_size",
+        "parameters": {
+            "hole_min": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 20,
+                "increment": 1
+            },
+            "hole_max": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 80,
+                "increment": 1
+            },
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 80,
+                "increment": 1
+            },
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            }
+        }
+    },
+    "image_smoothing_gaussian_slice_by_slice": {
+        "name": "Gaussian Smoothing Slice by Slice",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_slice_by_slice",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.8,
+                "max": 20,
+                "increment": 0.2
+            }
+        }
+    },
+    "size_filter_2D": {
+        "name": "Size Filter 2D",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "size_filter_2D",
+        "parameters": {
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            }
+        }
+    },
+    "fixed_infer_soma": {
+        "name": " infer soma mask (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "fixed_infer_soma",
+        "parameters": null
+    },
+    "infer_soma_MCZ": {
+        "name": " infer soma (MCZ)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_soma_MCZ",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "mo_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 2,
+                "max": 100,
+                "min": 20,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "raw_soma_MCZ": {
+        "name": "define weighted aggregate soma signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "raw_soma_MCZ",
+        "parameters": null
+    },
+    "non_linear_soma_transform_MCZ": {
+        "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "non_linear_soma_transform_MCZ",
+        "parameters": null
+    },
+    "get_max_label": {
+        "name": "get the label with the maximum raw signa",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "get_max_label",
+        "parameters": null
+    },
+    "choose_max_label_soma_union_nucleus": {
+        "name": "get soma UNION nuclei for largest signal label",
+        "python::module": "infer_subc_2d.utils.organelles.soma",
+        "python::function": "choose_max_label_soma_union_nucleus",
+        "parameters": null
+    },
+    "weighted_aggregate": {
+        "name": "weighted sum",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "weighted_aggregate",
+        "parameters": {
+            "waights0": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights1": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights2": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights3": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights4": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights5": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights6": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights7": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights8": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights9": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "waights10": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            }
+        }
+    },
+    "masked_inverted_watershed": {
+        "name": "watershed on inverted image and masked",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "masked_inverted_watershed",
+        "parameters": null
+    },
+    "min_max_intensity_normalization": {
+        "name": "Min Max Intesity Normalization",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "min_max_intensity_normalization",
+        "parameters": null
+    },
+    "masked_object_thresh": {
+        "name": "Masked Object Threshold wrapper for widgets",
+        "python::module": "infer_subc_2d.utils.img",
+        "python::function": "masked_object_thresh",
+        "parameters": {
+            "th_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "cutoff_size": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "th_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            }
+        }
+    },
+    "infer_cytosol": {
+        "name": "infer infer_cytosol",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "infer_cytosol",
+        "parameters": {
+            "erode_nuclei": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
     }
 }

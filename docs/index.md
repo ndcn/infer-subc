@@ -5,6 +5,10 @@
 This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
 
 ## Overview
+In general we ware interested in making segmentations which are the inferred organelles for each cell.   Procedurally we will need to define some masking ROIs which correspond to the soma, wholecell (soma + dendrites) and cytosol (soma minus nucleus.)  THerefore we need to first infer nuclei, soma, and cytosol as the first steps.  
+
+From there the organelle segmentations are largely independent, and we will employ the cytosol (or soma for the nucleus segmentation) as a mask when collecting statistics about the individual organelle objects. 
+
 
 Notebooks  found [here]( link ) provide the template
 
@@ -14,17 +18,21 @@ Notebooks  found [here]( link ) provide the template
 
 To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
+
 #### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
-  -  #### 2️⃣. [Infer SOMA](./notebooks/01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
-  -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
-  -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 
-  -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
-  -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
-  -  #### 6️⃣. [Infer GOLGI complex](./notebooks/06_golgi.ipynb)
-  -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/07_peroxisome.ipynb)
-  -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_endoplasmic_reticulum.ipynb)
-  -   #### 9️⃣. [Infer LB](./notebooks/09_lipid_bodies.ipynb) 
+  - Nescessary masks and nuclei
+    -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
+    -  #### 2️⃣. [Infer SOMA](./notebooks/01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
+    -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 
+
+  - individual organelles
+    -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
+    -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
+    -  #### 6️⃣. [Infer GOLGI complex](./notebooks/06_golgi.ipynb)
+    -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/07_peroxisome.ipynb)
+    -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_endoplasmic_reticulum.ipynb)
+    -   #### 9️⃣. [Infer LB](./notebooks/09_lipid_bodies.ipynb) 
 
 
 ----------------------------

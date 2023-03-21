@@ -13,6 +13,7 @@ class WorkflowStepCategory(Enum):
     CORE = "core"
     POST_PROCESSING = "postprocessing"
     POST_POST_PROCESSING = "postpostprocessing"
+    EXPORT = "export"
 
     @staticmethod
     def from_str(value: str):
@@ -28,6 +29,8 @@ class WorkflowStepCategory(Enum):
             return WorkflowStepCategory.POST_PROCESSING
         if value == WorkflowStepCategory.POST_POST_PROCESSING.value:
             return WorkflowStepCategory.POST_POST_PROCESSING
+        if value == WorkflowStepCategory.EXPORT.value:
+            return WorkflowStepCategory.EXPORT
         raise NotImplementedError()
 
 

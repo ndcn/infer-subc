@@ -24,6 +24,7 @@ from infer_subc_2d.utils.img import (
     log_transform,
     min_max_intensity_normalization,
     median_filter_slice_by_slice,
+    scale_and_smooth,
     weighted_aggregate,
     masked_inverted_watershed,
     fill_and_filter_linear_size,
@@ -95,7 +96,7 @@ def non_linear_soma_transform_MCZ(in_img):
 def choose_max_label_soma_union_nucleus(
     soma_img: np.ndarray, soma_obj: np.ndarray, nuclei_obj: np.ndarray
 ) -> np.ndarray:
-    """find the label with the maximum soma from watershed on the nuclei + plus the corresponding nuclei labels
+    """get soma UNION nuclei for largest signal label
 
         Parameters
     ------------
@@ -108,7 +109,7 @@ def choose_max_label_soma_union_nucleus(
 
     Returns
     -------------
-        np.ndarray of soma+nuc labels corresponding to the largest total soma signal
+        boolean np.ndarray of soma+nuc corresponding to the label of largest total soma signal
 
     """
     nuc_labels = label(nuclei_obj)
@@ -120,7 +121,7 @@ def choose_max_label_soma_union_nucleus(
     soma_out[soma_labels == keep_label] = 1
     soma_out[nuc_labels == keep_label] = 1
 
-    return soma_out
+    return soma_out > 0
 
 
 ##########################
@@ -170,12 +171,12 @@ def infer_soma_MCZ(
         a logical/labels object defining boundaries of soma
 
     """
-    nuc_ch = NUC_CH
+    # nuc_ch = NUC_CH
     ###################
     # EXTRACT
     ###################
     struct_img = raw_soma_MCZ(in_img)
-    scaled_signal = struct_img.copy()  # already scaled
+    # scaled_signal = struct_img.copy()  # already scaled
 
     ###################
     # PRE_PROCESSING
@@ -183,9 +184,7 @@ def infer_soma_MCZ(
     ################# part 1- soma
 
     # Linear-ish processing
-    struct_img = median_filter_slice_by_slice(struct_img, size=median_sz)
-
-    struct_img = image_smoothing_gaussian_slice_by_slice(struct_img, sigma=gauss_sig)
+    struct_img = scale_and_smooth(struct_img, median_sz=median_sz, gauss_sig=gauss_sig)
 
     struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
 
