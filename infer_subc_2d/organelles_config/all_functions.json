@@ -930,7 +930,7 @@
     },
     "infer_soma_MCZ": {
         "name": " infer soma (MCZ)",
-        "python::module": "infer_subc_2d.organelles",
+        "python::module": "infer_subc_2d.organelles.soma",
         "python::function": "infer_soma_MCZ",
         "parameters": {
             "median_sz": {
@@ -1138,7 +1138,7 @@
     },
     "infer_cytosol": {
         "name": "infer infer_cytosol",
-        "python::module": "infer_subc_2d.organelles",
+        "python::module": "infer_subc_2d.organelles.cytosol",
         "python::function": "infer_cytosol",
         "parameters": {
             "erode_nuclei": {

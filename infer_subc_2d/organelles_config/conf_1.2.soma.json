@@ -65,6 +65,7 @@
         "function": "choose_max_label_soma_union_nucleus",
         "parent": [
             6,
+            3,
             1
         ],
         "annotation": "basic soma segmentation: 7"

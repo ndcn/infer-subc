@@ -329,7 +329,7 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
 
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """
-    helper to
+    helper to find weighted sum images
     Parameters
     ------------
     img_in:
@@ -344,6 +344,7 @@ def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """
 
     img_out = np.zeros_like(img_in[0]).astype(np.double)
+    print(f"weighted_aggregate: shape in- {img_in.shape} , shape_out- {img_out.shape}")
     for ch, w in enumerate(weights):
         if w > 0:
             img_out += (w * 1.0) * img_in[ch]

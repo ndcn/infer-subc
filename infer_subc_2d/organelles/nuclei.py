@@ -6,7 +6,6 @@ import time
 from infer_subc_2d.utils.file_io import (
     export_inferred_organelle,
     import_inferred_organelle,
-    export_inferred_organelle_AICS,
     import_inferred_organelle_AICS,
 )
 from infer_subc_2d.utils.img import (
@@ -66,8 +65,11 @@ def infer_nuclei(
     ###################
     if nuc_ch is None:
         nuc_ch = NUC_CH
+    print(f" in_img = {in_img.shape}")
 
     nuclei = select_channel_from_raw(in_img, nuc_ch)
+
+    print(f"nuclei size = {nuclei.shape}")
 
     nuclei = scale_and_smooth(nuclei, median_sz=median_sz, gauss_sig=gauss_sig)
 

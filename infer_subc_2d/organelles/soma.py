@@ -175,6 +175,9 @@ def infer_soma_MCZ(
     ###################
     # EXTRACT
     ###################
+    print(f"shape in_img {in_img.shape}")
+    print(f"shape nuclei_obj {nuclei_obj.shape}")
+
     struct_img = raw_soma_MCZ(in_img)
     # scaled_signal = struct_img.copy()  # already scaled
 
@@ -182,6 +185,7 @@ def infer_soma_MCZ(
     # PRE_PROCESSING
     ###################
     ################# part 1- soma
+    print(f"shape struct_img {struct_img.shape}")
 
     # Linear-ish processing
     struct_img = scale_and_smooth(struct_img, median_sz=median_sz, gauss_sig=gauss_sig)
