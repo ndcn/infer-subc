@@ -1006,93 +1006,9 @@
     },
     "choose_max_label_soma_union_nucleus": {
         "name": "get soma UNION nuclei for largest signal label",
-        "python::module": "infer_subc_2d.utils.organelles.soma",
+        "python::module": "infer_subc_2d.organelles.soma",
         "python::function": "choose_max_label_soma_union_nucleus",
         "parameters": null
-    },
-    "weighted_aggregate": {
-        "name": "weighted sum",
-        "python::module": "infer_subc_2d.utils.img",
-        "python::function": "weighted_aggregate",
-        "parameters": {
-            "waights0": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights1": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights2": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights3": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights4": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights5": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights6": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights7": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights8": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights9": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            },
-            "waights10": {
-                "widget_type": "slider",
-                "data_type": "int",
-                "min": 0,
-                "max": 10,
-                "increment": 1
-            }
-        }
     },
     "masked_inverted_watershed": {
         "name": "watershed on inverted image and masked",
@@ -1142,6 +1058,91 @@
         "python::function": "infer_cytosol",
         "parameters": {
             "erode_nuclei": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "soma_aggregate": {
+        "name": "weighted sum",
+        "python::module": "infer_subc_2d.organelles.soma",
+        "python::function": "soma_aggregate",
+        "parameters": {
+            "w0": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w1": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w2": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w3": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w4": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w5": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w6": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w7": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w8": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w9": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "scale_min_max": {
                 "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [

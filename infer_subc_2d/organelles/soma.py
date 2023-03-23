@@ -74,6 +74,42 @@ def raw_soma_MCZ(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
         return weighted_aggregate(img_in, *weights)
 
 
+def soma_aggregate(
+    img_in: np.ndarray,
+    w0: int = 0,
+    w1: int = 0,
+    w2: int = 0,
+    w3: int = 0,
+    w4: int = 0,
+    w5: int = 0,
+    w6: int = 0,
+    w7: int = 0,
+    w8: int = 0,
+    w9: int = 0,
+    scale_min_max: bool = True,
+) -> np.ndarray:
+    """define soma aggregate
+
+    Parameters
+    ------------
+    w0,w1,w2,w3,w4,w5,w6,w7,w8,w9
+        channel weights
+    scale_min_max:
+        scale to [0,1] if True. default True
+
+    Returns
+    -------------
+        np.ndarray scaled aggregate
+
+    """
+    weights = (w0, w1, w2, w3, w4, w5, w6, w7, w8, w9)
+    if scale_min_max:
+        # TODO: might NOT overflow here... maybe NOT do the normaization first?
+        return min_max_intensity_normalization(weighted_aggregate(min_max_intensity_normalization(img_in), *weights))
+    else:
+        return weighted_aggregate(img_in, *weights)
+
+
 def non_linear_soma_transform_MCZ(in_img):
     """non-linear distortion to fill out soma
     log + edge of smoothed composite
