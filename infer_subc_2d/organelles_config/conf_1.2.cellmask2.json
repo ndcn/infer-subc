@@ -17,7 +17,20 @@
     },
     "2": {
         "category": "extraction",
-        "function": "raw_soma_MCZ",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "w0": 0,
+            "w1": 6,
+            "w2": 0,
+            "w3": 2,
+            "w4": 0,
+            "w5": 1,
+            "w6": 0,
+            "w7": 0,
+            "w8": 0,
+            "w9": 0,
+            "scale_min_max": true
+        },
         "parent": 0,
         "annotation": " this creates an aggregate signal for the cellmask"
     },
@@ -33,7 +46,7 @@
     },
     "4": {
         "category": "preprocessing",
-        "function": "non_linear_soma_transform_MCZ",
+        "function": "non_linear_cellmask_transform_MCZ",
         "parent": 3,
         "annotation": "basic nuclei segmentation: 4"
     },
@@ -62,10 +75,10 @@
     },
     "7": {
         "category": "postpostprocessing",
-        "function": "choose_max_label_soma_union_nucleus",
+        "function": "choose_max_label_cellmask_union_nucleus",
         "parent": [
-            6,
             3,
+            6,
             1
         ],
         "annotation": "basic cellmask segmentation: 7"
@@ -80,6 +93,6 @@
             1,
             7
         ],
-        "annotation": "basic cellmask segmentation: 8"
+        "annotation": "infer cytoplasm: 8"
     }
 }

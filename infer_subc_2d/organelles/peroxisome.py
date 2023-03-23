@@ -12,6 +12,7 @@ from infer_subc_2d.core.img import (
     size_filter_linear_size,
     scale_and_smooth,
     select_channel_from_raw,
+    fill_and_filter_linear_size,
 )
 
 
@@ -20,6 +21,7 @@ from infer_subc_2d.core.img import (
 ##########################
 def infer_perox(
     in_img: np.ndarray,
+    median_sz: int,
     gauss_sig: float,
     dot_scale: float,
     dot_cut: float,
@@ -32,8 +34,8 @@ def infer_perox(
      ------------
      in_img:
          a 3d image containing all the channels
-     cytoplasm_mask:
-         mask
+    median_sz:
+        width of median filter for signal
      gauss_sig:
          sigma for gaussian smoothing of  signal
      dot_scale:
@@ -57,7 +59,7 @@ def infer_perox(
     ###################
     # PRE_PROCESSING
     ###################
-    peroxi = scale_and_smooth(peroxi, median_sz=0, gauss_sig=gauss_sig)  # skips for median_sz < 2
+    peroxi = scale_and_smooth(peroxi, median_sz=median_sz, gauss_sig=gauss_sig)  # skips for median_sz < 2
 
     ###################
     # CORE_PROCESSING
@@ -68,9 +70,13 @@ def infer_perox(
     ###################
     # POST_PROCESSING
     ###################
-    struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
+    # struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
+    struct_obj = fill_and_filter_linear_size(bw, hole_min=0, hole_max=0, min_size=small_obj_w)
 
     return struct_obj
+
+
+### CONVENIENCE / TESTING PROCEDURES
 
 
 ##########################
@@ -90,6 +96,7 @@ def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
      peroxi_object
          mask defined extent of peroxisome object
     """
+    median_sz = 0
     gauss_sig = 3.0
     dot_scale = 1.0
     dot_cut = 0.01
@@ -97,6 +104,7 @@ def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
 
     return infer_perox(
         in_img,
+        median_sz,
         gauss_sig,
         dot_scale,
         dot_cut,

@@ -62,16 +62,16 @@ def infer_and_export_cytoplasm(
     exported file name
 
     """
-    cytosol = infer_cytoplasm(nuclei_object, soma_mask)
+    cytoplasm = infer_cytoplasm(nuclei_object, soma_mask)
 
-    out_file_n = export_inferred_organelle(cytosol, "cytosol", meta_dict, out_data_path)
-    print(f"inferred cytosol. wrote {out_file_n}")
-    return cytosol
+    out_file_n = export_inferred_organelle(cytoplasm, "cytoplasm", meta_dict, out_data_path)
+    print(f"inferred cytoplasm. wrote {out_file_n}")
+    return cytoplasm
 
 
 def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
-    load cytosol if it exists, otherwise calculate and write to ome.tif file
+    load cytoplasm if it exists, otherwise calculate and write to ome.tif file
 
     Parameters
     ------------
@@ -90,12 +90,12 @@ def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict
 
     """
     try:
-        cytosol = import_inferred_organelle("cytosol", meta_dict, out_data_path)
+        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")
-        cytosol = infer_and_export_cytoplasm(nuclei_obj, soma_mask, meta_dict, out_data_path)
+        cytoplasm = infer_and_export_cytoplasm(nuclei_obj, soma_mask, meta_dict, out_data_path)
         end = time.time()
-        print(f"inferred cytosol in ({(end - start):0.2f}) sec")
+        print(f"inferred cytoplasm in ({(end - start):0.2f}) sec")
 
-    return cytosol
+    return cytoplasm

@@ -17,20 +17,7 @@
     },
     "2": {
         "category": "extraction",
-        "function": "soma_aggregate",
-        "parameter_values": {
-            "w0": 0,
-            "w1": 6,
-            "w2": 0,
-            "w3": 2,
-            "w4": 0,
-            "w5": 1,
-            "w6": 0,
-            "w7": 0,
-            "w8": 0,
-            "w9": 0,
-            "scale_min_max": true
-        },
+        "function": "raw_cellmask_fromaggr",
         "parent": 0,
         "annotation": " this creates an aggregate signal for the cellmask"
     },
@@ -42,13 +29,13 @@
             "gauss_sig": 1.4
         },
         "parent": 2,
-        "annotation": "basic nuclei segmentation: 3"
+        "annotation": "cellmask segmentation: 3"
     },
     "4": {
         "category": "preprocessing",
-        "function": "non_linear_soma_transform_MCZ",
+        "function": "non_linear_cellmask_transform_MCZ",
         "parent": 3,
-        "annotation": "basic nuclei segmentation: 4"
+        "annotation": "cellmask segmentation: 4"
     },
     "5": {
         "category": "core",
@@ -59,7 +46,7 @@
             "th_adjust": 0.5
         },
         "parent": 4,
-        "annotation": "basic nuclei segmentation: 5"
+        "annotation": "cellmask segmentation: 5"
     },
     "6": {
         "category": "postprocessing",
@@ -71,17 +58,17 @@
             "method": "slice_by_slice"
         },
         "parent": 5,
-        "annotation": "basic nuclei segmentation: 6"
+        "annotation": "cellmask segmentation: 6"
     },
     "7": {
         "category": "postpostprocessing",
-        "function": "choose_max_label_soma_union_nucleus",
+        "function": "choose_max_label_cellmask_union_nucleus",
         "parent": [
-            6,
             3,
-            1
+            6,
+            2
         ],
-        "annotation": "basic cellmask segmentation: 7"
+        "annotation": "cellmask segmentation: 7"
     },
     "8": {
         "category": "postpostprocessing",
@@ -90,9 +77,9 @@
             "erode_nuclei": true
         },
         "parent": [
-            1,
+            2,
             7
         ],
-        "annotation": "basic cellmask segmentation: 8"
+        "annotation": "infer cytoplasm: 8"
     }
 }

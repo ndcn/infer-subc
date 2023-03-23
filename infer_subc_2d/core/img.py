@@ -13,6 +13,7 @@ from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
     # edge_preserving_smoothing_3d,
 )
+from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
 from typing import Tuple, List, Union, Any
 
@@ -351,6 +352,42 @@ def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
             img_out += (w * 1.0) * img_in[ch]
 
     return img_out
+
+
+def make_aggregate(
+    img_in: np.ndarray,
+    w0: int = 0,
+    w1: int = 0,
+    w2: int = 0,
+    w3: int = 0,
+    w4: int = 0,
+    w5: int = 0,
+    w6: int = 0,
+    w7: int = 0,
+    w8: int = 0,
+    w9: int = 0,
+    scale_min_max: bool = True,
+) -> np.ndarray:
+    """define multi_channel aggregate.  weighted sum wrapper (plugin)
+
+    Parameters
+    ------------
+    w0,w1,w2,w3,w4,w5,w6,w7,w8,w9
+        channel weights
+    scale_min_max:
+        scale to [0,1] if True. default True
+
+    Returns
+    -------------
+        np.ndarray scaled aggregate
+
+    """
+    weights = (w0, w1, w2, w3, w4, w5, w6, w7, w8, w9)
+    if scale_min_max:
+        # TODO: might NOT overflow here... maybe NOT do the normaization first?
+        return min_max_intensity_normalization(weighted_aggregate(min_max_intensity_normalization(img_in), *weights))
+    else:
+        return weighted_aggregate(img_in, *weights)
 
 
 def apply_threshold(
@@ -869,12 +906,51 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
     result:
         filtered boolean np.ndarray
 
-
-
     """
     f2_param = [[filament_scale, filament_cut]]
     # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     return filament_2d_wrapper(in_img, f2_param)
+
+
+def spot_filter_3(
+    in_img: np.ndarray,
+    dot_scale_1: float,
+    dot_cut_1: float,
+    dot_scale_2: float,
+    dot_cut_2: float,
+    dot_scale_3: float,
+    dot_cut_3: float,
+) -> np.ndarray:
+    """spot filter helper function for 3 levels (scale+cut).  if scale_i is < 1. its skipped
+
+    Parameters
+    ------------
+    in_img:
+        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+    dot_scale_1:
+        scale or size of the "filter" float
+    dot_cut_1:
+        cutoff for thresholding float
+    dot_scale_2:
+        scale or size of the "filter" float
+    dot_cut_2:
+        cutoff for thresholding float
+    dot_scale_3:
+        scale or size of the "filter" float
+    dot_cut_3:
+        cutoff for thresholding float
+
+    Returns
+    -------------
+    segmented dots over 3 scales
+
+    """
+    scales = [dot_scale_1, dot_scale_2, dot_scale_3]
+    cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
+
+    s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc >= 1.0]
+    # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
+    return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
 
 
 # centrosome routines

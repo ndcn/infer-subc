@@ -99,8 +99,8 @@ def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
         mask defined extent of liipid body
 
     """
-    median_sz = 2
-    gauss_sig = 1.34
+    median_sz = 0
+    gauss_sig = 2.34
     method = "otsu"
     threshold_factor = 0.99  # from cellProfiler
     thresh_min = 0.5

@@ -20,6 +20,7 @@ from infer_subc_2d.core.img import (
 ##########################
 def infer_ER(
     in_img: np.ndarray,
+    median_sz: int,
     gauss_sig: float,
     filament_scale: float,
     filament_cut: float,
@@ -32,6 +33,8 @@ def infer_ER(
     ------------
     in_img:
         a 3d image containing all the channels
+    median_sz:
+        width of median filter for signal
     gauss_sig:
         sigma for gaussian smoothing of  signal
     filament_scale:
@@ -55,7 +58,7 @@ def infer_ER(
     # PRE_PROCESSING
     ###################
     # er = normalized_edge_preserving_smoothing(er)
-    struct_img = scale_and_smooth(er, median_sz=0, gauss_sig=gauss_sig)
+    struct_img = scale_and_smooth(er, median_sz=median_sz, gauss_sig=gauss_sig)
 
     ###################
     # CORE_PROCESSING
@@ -63,7 +66,7 @@ def infer_ER(
     # f2_param = [[filament_scale, filament_cut]]
     # # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
     # struct_obj = filament_2d_wrapper(er, f2_param)
-    struct_obj = filament_filter(er, filament_scale, filament_cut)
+    struct_obj = filament_filter(struct_img, filament_scale, filament_cut)
 
     ###################
     # POST_PROCESSING
@@ -90,11 +93,12 @@ def fixed_infer_ER(in_img: np.ndarray) -> np.ndarray:
     peroxi_object
         mask defined extent of peroxisome object
     """
-    gauss_sig = 3
+    median_sz = 3
+    gauss_sig = 2.0
     filament_scale = 1
-    filament_cut = 0.15
+    filament_cut = 0.015
     small_obj_w = 2
-    return infer_ER(in_img, gauss_sig, filament_scale, filament_cut, small_obj_w)
+    return infer_ER(in_img, median_sz, gauss_sig, filament_scale, filament_cut, small_obj_w)
 
 
 def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
