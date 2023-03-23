@@ -5,6 +5,7 @@ import numpy as np
 from infer_subc_2d.core.file_io import export_infer_organelles, read_czi_image, list_image_files
 from infer_subc_2d.core.img import select_z_from_raw
 
+
 from infer_subc_2d.constants import (
     TEST_IMG_N,
     NUC_CH,
@@ -21,9 +22,6 @@ from infer_subc_2d.organelles import (
     fixed_infer_cellmask_fromaggr,
     fixed_infer_nuclei,
     infer_cytoplasm,
-    find_optimal_Z,
-    fixed_get_optimal_Z_image,
-    fixed_find_optimal_Z,
     fixed_infer_lyso,
     fixed_infer_mito,
     fixed_infer_golgi,
