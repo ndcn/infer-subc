@@ -23,7 +23,7 @@
         "function": "apply_threshold",
         "parameter_values": {
             "method": "otsu",
-            "thresh_factor": 0.99,
+            "thresh_factor": 0.8,
             "thresh_min": 0.5,
             "thresh_max": 1.0
         },

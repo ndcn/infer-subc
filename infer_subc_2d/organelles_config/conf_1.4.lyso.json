@@ -39,7 +39,7 @@
             "filament_scale": 1.0,
             "filament_cut": 0.15
         },
-        "parent": 3,
+        "parent": 2,
         "annotation": "basic lyso - filament filter: 4"
     },
     "5": {
