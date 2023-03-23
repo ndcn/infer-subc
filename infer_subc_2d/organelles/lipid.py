@@ -3,20 +3,20 @@ from typing import Dict
 from pathlib import Path
 import time
 
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.img import (
     apply_threshold,
     scale_and_smooth,
     fill_and_filter_linear_size,
     select_channel_from_raw,
 )
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.constants import LIPID_CH
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.constants import LD_CH
 
 
 ##########################
-#  infer_lipid
+#  infer_LD
 ##########################
-def infer_lipid(
+def infer_LD(
     in_img: np.ndarray,
     median_sz: int,
     gauss_sig: float,
@@ -55,11 +55,11 @@ def infer_lipid(
     peroxi_object
         mask defined extent of peroxisome object
     """
-    lipid_ch = LIPID_CH
+    LD_ch = LD_CH
     ###################
     # EXTRACT
     ###################
-    lipid = select_channel_from_raw(in_img, lipid_ch)
+    lipid = select_channel_from_raw(in_img, LD_ch)
     ###################
     # PRE_PROCESSING
     ###################
@@ -82,11 +82,11 @@ def infer_lipid(
 
 
 ##########################
-#  fixed_infer_lipid
+#  fixed_infer_LD
 ##########################
-def fixed_infer_lipid(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters
     ------------
@@ -95,7 +95,7 @@ def fixed_infer_lipid(in_img: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-    lipid_body_object
+    LD_body_object
         mask defined extent of liipid body
 
     """
@@ -108,12 +108,12 @@ def fixed_infer_lipid(in_img: np.ndarray) -> np.ndarray:
     max_hole_w = 2.5
     small_obj_w = 4
 
-    return infer_lipid(
+    return infer_LD(
         in_img, median_sz, gauss_sig, method, threshold_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
     )
 
 
-def infer_and_export_lipid(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def infer_and_export_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     infer lipid bodies and write inferred lipid to ome.tif file
 
@@ -131,13 +131,13 @@ def infer_and_export_lipid(in_img: np.ndarray, meta_dict: Dict, out_data_path: P
     exported file name
 
     """
-    lipid = fixed_infer_lipid(in_img)
+    lipid = fixed_infer_LD(in_img)
     out_file_n = export_inferred_organelle(lipid, "lipid", meta_dict, out_data_path)
     print(f"inferred lipid. wrote {out_file_n}")
     return lipid
 
 
-def get_lipid(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load lipid if it exists, otherwise calculate and write to ome.tif file
 
@@ -161,7 +161,7 @@ def get_lipid(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.nd
     except:
         start = time.time()
         print("starting segmentation...")
-        lipid = infer_and_export_lipid(in_img, meta_dict, out_data_path)
+        lipid = infer_and_export_LD(in_img, meta_dict, out_data_path)
         end = time.time()
         print(f"inferred (and exported) lipid in ({(end - start):0.2f}) sec")
 

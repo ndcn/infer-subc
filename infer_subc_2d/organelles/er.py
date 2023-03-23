@@ -4,9 +4,9 @@ from pathlib import Path
 import time
 
 from infer_subc_2d.constants import ER_CH
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
 
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.img import (
     size_filter_linear_size,
     select_channel_from_raw,
     filament_filter,
@@ -14,10 +14,11 @@ from infer_subc_2d.utils.img import (
     scale_and_smooth,
 )
 
+
 ##########################
-#  infer_endoplasmic_reticulum
+#  infer_ER
 ##########################
-def infer_endoplasmic_reticulum(
+def infer_ER(
     in_img: np.ndarray,
     gauss_sig: float,
     filament_scale: float,
@@ -73,9 +74,9 @@ def infer_endoplasmic_reticulum(
 
 
 ##########################
-#  fixed_infer_endoplasmic_reticulum
+#  fixed_infer_ER
 ##########################
-def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_ER(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
 
@@ -93,12 +94,12 @@ def fixed_infer_endoplasmic_reticulum(in_img: np.ndarray) -> np.ndarray:
     filament_scale = 1
     filament_cut = 0.15
     small_obj_w = 2
-    return infer_endoplasmic_reticulum(in_img, gauss_sig, filament_scale, filament_cut, small_obj_w)
+    return infer_ER(in_img, gauss_sig, filament_scale, filament_cut, small_obj_w)
 
 
-def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
-    infer endoplasmic reticulum and write inferred endoplasmic reticulum to ome.tif file
+    infer ER and write inferred ER to ome.tif file
 
     Parameters
     ------------
@@ -114,13 +115,13 @@ def infer_and_export_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, 
     exported file name
 
     """
-    er = fixed_infer_endoplasmic_reticulum(in_img)
+    er = fixed_infer_ER(in_img)
     out_file_n = export_inferred_organelle(er, "er", meta_dict, out_data_path)
-    print(f"inferred endoplasmic reticulum. wrote {out_file_n}")
+    print(f"inferred ER. wrote {out_file_n}")
     return er
 
 
-def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load endoplasmic_reticulum if it exists, otherwise calculate and write to ome.tif file
 
@@ -144,7 +145,7 @@ def get_endoplasmic_reticulum(in_img: np.ndarray, meta_dict: Dict, out_data_path
     except:
         start = time.time()
         print("starting segmentation...")
-        er = infer_and_export_endoplasmic_reticulum(in_img, meta_dict, out_data_path)
+        er = infer_and_export_ER(in_img, meta_dict, out_data_path)
         end = time.time()
         print(f"inferred (and exported) er in ({(end - start):0.2f}) sec")
 

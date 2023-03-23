@@ -12,7 +12,7 @@ from typing import Dict, Union, List, Any, Tuple
 from aicsimageio.writers import OmeTiffWriter
 
 # from napari_aicsimageio.core import reader_function
-from ._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
+from ..utils._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
 from aicsimageio import AICSImage, exceptions
 
 import ome_types
@@ -23,6 +23,7 @@ import time
 # todo depricate wrapper
 from dataclasses import dataclass
 
+
 # TODO throw exception and call with try
 def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
     """
@@ -31,7 +32,7 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
     Parameters
     ------------
     name: str
-        name of organelle.  i.e. nuclei, lysosome, etc.
+        name of organelle.  i.e. nuclei, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome) from original file
     out_data_path:
@@ -67,7 +68,7 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     img_out:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     name: str
-        name of organelle.  i.e. nuclei, lysosome, etc.
+        name of organelle.  i.e. nuclei, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome)
     out_data_path:
@@ -352,7 +353,7 @@ def import_inferred_organelle_AICS(name: str, meta_dict: Dict, out_data_path: Pa
     Parameters
     ------------
     name: str
-        name of organelle.  i.e. nuclei, lysosome, etc.
+        name of organelle.  i.e. nuclei, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome) from original file
     out_data_path:
@@ -388,7 +389,7 @@ def export_inferred_organelle_AICS(img_out: np.ndarray, name: str, meta_dict: Di
     img_out:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     name: str
-        name of organelle.  i.e. nuclei, lysosome, etc.
+        name of organelle.  i.e. nuclei, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome)
     out_data_path:

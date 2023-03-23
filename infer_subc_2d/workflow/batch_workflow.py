@@ -12,12 +12,13 @@ from .workflow_definition import WorkflowDefinition
 
 SUPPORTED_FILE_EXTENSIONS = ["tiff", "tif", "czi"]
 
-# from infer_subc_2d.utils.file_io import reader_function
-from ..utils.file_io import reader_function
+# from infer_subc_2d.core.file_io import reader_function
+from ..core.file_io import reader_function
 from typing import Union
 from pathlib import Path
 
 PathLike = Union[str, Path]
+
 
 # TODO: fix channel index.
 class BatchWorkflow:
@@ -161,7 +162,6 @@ class BatchWorkflow:
                 f"Using the Workflow: {self._workflow_definition.name}"
             )
         else:
-
             files_processed = self._processed_files - self._failed_files
             report = (
                 f"{files_processed}/{self._processed_files} files were successfully processed \n "

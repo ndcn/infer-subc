@@ -6,7 +6,7 @@
     },
     "2": {
         "category": "extraction",
-        "function": "fixed_infer_soma",
+        "function": "fixed_infer_cellmask_fromaggr",
         "parent": 1
     },
     "3": {

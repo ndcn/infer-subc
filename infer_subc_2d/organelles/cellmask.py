@@ -13,13 +13,13 @@ from infer_subc_2d.constants import (
     LYSO_CH,
     MITO_CH,
     GOLGI_CH,
-    PEROXI_CH,
+    PEROX_CH,
     ER_CH,
-    LIPID_CH,
+    LD_CH,
     RESIDUAL_CH,
 )
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.core.img import (
     masked_object_thresh,
     log_transform,
     min_max_intensity_normalization,
@@ -32,26 +32,8 @@ from infer_subc_2d.utils.img import (
 )
 
 
-def _raw_soma_MCZ(img_in):
-    """define soma image (DEPRICATED to leverage `weighted_aggregate`)
-    uses pre-defined weights and channels
-
-    Parameters
-    ------------
-    in_img:
-        a 3d image containing all the channels
-
-    """
-    SOMA_W = (4.0, 1.0, 1.0)
-    SOMA_CH = (LYSO_CH, ER_CH, RESIDUAL_CH)  # LYSO, ER, RESIDUAL
-    img_out = np.zeros_like(img_in[0]).astype(np.double)
-    for w, ch in zip(SOMA_W, SOMA_CH):
-        img_out += w * img_in[ch]
-    return img_out
-
-
-def raw_soma_MCZ(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
-    """define soma image
+def raw_cellmask_fromaggr(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
+    """define cellmask image
     SOMA_W = (6.,1.,2.)
     SOMA_CH = (LYSO_CH,ER_CH,GOLGI_CH)
 
@@ -74,7 +56,7 @@ def raw_soma_MCZ(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
         return weighted_aggregate(img_in, *weights)
 
 
-def soma_aggregate(
+def cellmask_aggregate(
     img_in: np.ndarray,
     w0: int = 0,
     w1: int = 0,
@@ -88,7 +70,7 @@ def soma_aggregate(
     w9: int = 0,
     scale_min_max: bool = True,
 ) -> np.ndarray:
-    """define soma aggregate
+    """define cellmask aggregate
 
     Parameters
     ------------
@@ -110,8 +92,8 @@ def soma_aggregate(
         return weighted_aggregate(img_in, *weights)
 
 
-def non_linear_soma_transform_MCZ(in_img):
-    """non-linear distortion to fill out soma
+def non_linear_cellmask_transform_MCZ(in_img):
+    """non-linear distortion to fill out cellmask
     log + edge of smoothed composite
 
     Parameters
@@ -129,42 +111,42 @@ def non_linear_soma_transform_MCZ(in_img):
     return min_max_intensity_normalization(scharr(log_img)) + log_img
 
 
-def choose_max_label_soma_union_nucleus(
-    soma_img: np.ndarray, soma_obj: np.ndarray, nuclei_obj: np.ndarray
+def choose_max_label_cellmask_union_nucleus(
+    cellmask_img: np.ndarray, cellmask_obj: np.ndarray, nuclei_obj: np.ndarray
 ) -> np.ndarray:
-    """get soma UNION nuclei for largest signal label
+    """get cellmask UNION nuclei for largest signal label
 
         Parameters
     ------------
-    soma_img:
-        the soma image intensities
-    soma_obj:
-        thresholded soma mask
+    cellmask_img:
+        the cellmask image intensities
+    cellmask_obj:
+        thresholded cellmask mask
     nuclei_obj:
         inferred nuclei
 
     Returns
     -------------
-        boolean np.ndarray of soma+nuc corresponding to the label of largest total soma signal
+        boolean np.ndarray of cellmask+nuc corresponding to the label of largest total cellmask signal
 
     """
     nuc_labels = label(nuclei_obj)
-    soma_labels = masked_inverted_watershed(soma_img, nuc_labels, soma_obj)
+    cellmask_labels = masked_inverted_watershed(cellmask_img, nuc_labels, cellmask_obj)
 
-    keep_label = get_max_label(soma_img, soma_labels)
+    keep_label = get_max_label(cellmask_img, cellmask_labels)
 
-    soma_out = np.zeros_like(soma_labels)
-    soma_out[soma_labels == keep_label] = 1
-    soma_out[nuc_labels == keep_label] = 1
+    cellmask_out = np.zeros_like(cellmask_labels)
+    cellmask_out[cellmask_labels == keep_label] = 1
+    cellmask_out[nuc_labels == keep_label] = 1
 
-    return soma_out > 0
+    return cellmask_out > 0
 
 
 ##########################
-# 1. infer_soma
+# 1. infer_cellmask
 ##########################
 # TODO:  break up the logic so the EXTRACT / PRE-PROCESS functions are more flexible? i.e. not nescessarily MCZ
-def infer_soma_MCZ(
+def infer_cellmask_fromaggr(
     in_img: np.ndarray,
     nuclei_obj: np.ndarray,
     median_sz: int,
@@ -176,7 +158,7 @@ def infer_soma_MCZ(
     small_obj_w: int,
 ) -> np.ndarray:
     """
-    Procedure to infer soma from linearly unmixed input.
+    Procedure to infer cellmask from linearly unmixed input.
 
     Parameters
     ------------
@@ -185,9 +167,9 @@ def infer_soma_MCZ(
     nuclei_obj:
         a 3d image containing the inferred nuclei
     median_sz:
-        width of median filter for _soma_ signal
+        width of median filter for _cellmask_ signal
     gauss_sig:
-        sigma for gaussian smoothing of _soma_ signal
+        sigma for gaussian smoothing of _cellmask_ signal
     mo_method:
          which method to use for calculating global threshold. Options include:
          "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
@@ -197,14 +179,14 @@ def infer_soma_MCZ(
     mo_cutoff_size:
         Masked Object threshold `size_min`
     max_hole_w:
-        hole filling cutoff for soma signal post-processing
+        hole filling cutoff for cellmask signal post-processing
     small_obj_w:
-        minimu object size cutoff for soma signal post-processing
+        minimu object size cutoff for cellmask signal post-processing
 
     Returns
     -------------
-    soma_mask:
-        a logical/labels object defining boundaries of soma
+    cellmask_mask:
+        a logical/labels object defining boundaries of cellmask
 
     """
     # nuc_ch = NUC_CH
@@ -214,19 +196,19 @@ def infer_soma_MCZ(
     print(f"shape in_img {in_img.shape}")
     print(f"shape nuclei_obj {nuclei_obj.shape}")
 
-    struct_img = raw_soma_MCZ(in_img)
+    struct_img = raw_cellmask_fromaggr(in_img)
     # scaled_signal = struct_img.copy()  # already scaled
 
     ###################
     # PRE_PROCESSING
     ###################
-    ################# part 1- soma
+    ################# part 1- cellmask
     print(f"shape struct_img {struct_img.shape}")
 
     # Linear-ish processing
     struct_img = scale_and_smooth(struct_img, median_sz=median_sz, gauss_sig=gauss_sig)
 
-    struct_img_non_lin = non_linear_soma_transform_MCZ(struct_img)
+    struct_img_non_lin = non_linear_cellmask_transform_MCZ(struct_img)
 
     ###################
     # CORE_PROCESSING
@@ -248,14 +230,14 @@ def infer_soma_MCZ(
     ###################
     # POST- POST_PROCESSING
     ###################
-    soma_out = choose_max_label_soma_union_nucleus(struct_img, struct_obj, nuclei_obj)
+    cellmask_out = choose_max_label_cellmask_union_nucleus(struct_img, struct_obj, nuclei_obj)
 
-    return soma_out
+    return cellmask_out
 
 
-def fixed_infer_soma_MCZ(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarray:
+def fixed_infer_cellmask_fromaggr(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters
     ------------
@@ -266,8 +248,8 @@ def fixed_infer_soma_MCZ(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarr
 
     Returns
     -------------
-    soma_mask:
-        a logical/labels object defining boundaries of soma
+    cellmask_mask:
+        a logical/labels object defining boundaries of cellmask
     """
 
     ###################
@@ -281,18 +263,18 @@ def fixed_infer_soma_MCZ(in_img: np.ndarray, nuclei_obj: np.ndarray) -> np.ndarr
     max_hole_w = 50
     small_obj_w = 45
 
-    soma_out = infer_soma_MCZ(
+    cellmask_out = infer_cellmask_fromaggr(
         in_img, nuclei_obj, median_sz, gauss_sig, mo_method, mo_adjust, mo_cutoff_size, max_hole_w, small_obj_w
     )
 
-    return soma_out
+    return cellmask_out
 
 
-def infer_and_export_soma(
+def infer_and_export_cellmask(
     in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path
 ) -> np.ndarray:
     """
-    infer soma and write inferred soma to ome.tif file
+    infer cellmask and write inferred cellmask to ome.tif file
 
     Parameters
     ------------
@@ -310,15 +292,15 @@ def infer_and_export_soma(
     exported file name
 
     """
-    soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
-    out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
-    print(f"inferred soma. wrote {out_file_n}")
-    return soma
+    cellmask = fixed_infer_cellmask_fromaggr(in_img, nuclei_obj)
+    out_file_n = export_inferred_organelle(cellmask, "cellmask", meta_dict, out_data_path)
+    print(f"inferred cellmask. wrote {out_file_n}")
+    return cellmask
 
 
-def get_soma(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
-    load soma if it exists, otherwise calculate and write inferred soma to ome.tif file
+    load cellmask if it exists, otherwise calculate and write inferred cellmask to ome.tif file
 
     Parameters
     ------------
@@ -338,13 +320,13 @@ def get_soma(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_da
     """
 
     try:
-        soma = import_inferred_organelle("soma", meta_dict, out_data_path)
+        cellmask = import_inferred_organelle("cellmask", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")
-        soma = fixed_infer_soma_MCZ(in_img, nuclei_obj)
-        out_file_n = export_inferred_organelle(soma, "soma", meta_dict, out_data_path)
+        cellmask = fixed_infer_cellmask_fromaggr(in_img, nuclei_obj)
+        out_file_n = export_inferred_organelle(cellmask, "cellmask", meta_dict, out_data_path)
         end = time.time()
-        print(f"inferred (and exported) soma in ({(end - start):0.2f}) sec")
+        print(f"inferred (and exported) cellmask in ({(end - start):0.2f}) sec")
 
-    return soma
+    return cellmask

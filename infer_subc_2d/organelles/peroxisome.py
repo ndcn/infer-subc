@@ -5,19 +5,20 @@ import time
 
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 
-from infer_subc_2d.constants import PEROXI_CH
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.constants import PEROX_CH
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
 
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.img import (
     size_filter_linear_size,
     scale_and_smooth,
     select_channel_from_raw,
 )
 
+
 ##########################
-#  infer_peroxisome
+#  infer_perox
 ##########################
-def infer_peroxisome(
+def infer_perox(
     in_img: np.ndarray,
     gauss_sig: float,
     dot_scale: float,
@@ -31,7 +32,7 @@ def infer_peroxisome(
      ------------
      in_img:
          a 3d image containing all the channels
-     cytosol_mask:
+     cytoplasm_mask:
          mask
      gauss_sig:
          sigma for gaussian smoothing of  signal
@@ -47,7 +48,7 @@ def infer_peroxisome(
      peroxi_object
          mask defined extent of peroxisome object
     """
-    peroxi_ch = PEROXI_CH
+    peroxi_ch = PEROX_CH
     ###################
     # EXTRACT
     ###################
@@ -73,9 +74,9 @@ def infer_peroxisome(
 
 
 ##########################
-#  fixed_infer_peroxisome
+#  fixed_infer_perox
 ##########################
-def fixed_infer_peroxisome(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
     """
       Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
 
@@ -94,7 +95,7 @@ def fixed_infer_peroxisome(in_img: np.ndarray) -> np.ndarray:
     dot_cut = 0.01
     small_obj_w = 2
 
-    return infer_peroxisome(
+    return infer_perox(
         in_img,
         gauss_sig,
         dot_scale,
@@ -103,7 +104,7 @@ def fixed_infer_peroxisome(in_img: np.ndarray) -> np.ndarray:
     )
 
 
-def infer_and_export_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def infer_and_export_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     infer peroxisome and write inferred peroxisome to ome.tif file
 
@@ -121,13 +122,13 @@ def infer_and_export_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_pa
     exported file name
 
     """
-    peroxisome = fixed_infer_peroxisome(in_img)
+    peroxisome = fixed_infer_perox(in_img)
     out_file_n = export_inferred_organelle(peroxisome, "peroxisome", meta_dict, out_data_path)
     print(f"inferred peroxisome. wrote {out_file_n}")
     return peroxisome
 
 
-def get_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load peroxisome if it exists, otherwise calculate and write to ome.tif file
 
@@ -154,7 +155,7 @@ def get_peroxisome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> 
     except:
         start = time.time()
         print("starting segmentation...")
-        peroxisome = infer_and_export_peroxisome(in_img, meta_dict, out_data_path)
+        peroxisome = infer_and_export_perox(in_img, meta_dict, out_data_path)
         end = time.time()
         print(f"inferred (and exported) peroxisome in ({(end - start):0.2f}) sec")
 

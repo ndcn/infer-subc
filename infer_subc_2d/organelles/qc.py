@@ -41,8 +41,8 @@ class ObjectCheck(ABC):
 
 
 
-soma = ObjectCheck
-soma
+cellmask = ObjectCheck
+cellmask
 
 Expected Number of Recognized Objects at 63x/2.2x in iPSCs
 Soma=1 (only 1 for analysis)

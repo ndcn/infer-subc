@@ -7,13 +7,14 @@ from aicssegmentation.core.seg_dot import dot_3d_wrapper, dot_2d_slice_by_slice_
 from aicssegmentation.core.utils import topology_preserving_thinning
 
 from infer_subc_2d.constants import GOLGI_CH
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.core.img import (
     size_filter_linear_size,
     select_channel_from_raw,
     masked_object_thresh,
     scale_and_smooth,
 )
+
 
 ##########################
 #  infer_golgi
@@ -31,7 +32,6 @@ def infer_golgi(
     dot_cut: float,
     small_obj_w: int,
 ) -> np.ndarray:
-
     """
      Procedure to infer golgi from linearly unmixed input.
 
@@ -104,7 +104,7 @@ def infer_golgi(
 ##########################
 #  fixed_infer_golgi
 ##########################
-def fixed_infer_golgi(in_img: np.ndarray, cytosol_mask: Optional[np.ndarray] = None) -> np.ndarray:
+def fixed_infer_golgi(in_img: np.ndarray, cytoplasm_mask: Optional[np.ndarray] = None) -> np.ndarray:
     """
      Procedure to infer golgi from linearly unmixed input.
 

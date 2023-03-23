@@ -10,13 +10,13 @@ from infer_subc_2d.constants import (
     LYSO_CH,
     MITO_CH,
     GOLGI_CH,
-    PEROXI_CH,
+    PEROX_CH,
     ER_CH,
-    LIPID_CH,
+    LD_CH,
     RESIDUAL_CH,
 )
 
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.img import (
     median_filter_slice_by_slice,
     min_max_intensity_normalization,
     apply_log_li_threshold,
@@ -60,7 +60,7 @@ def fixed_find_optimal_Z(img_data: np.ndarray) -> int:
     Procedure to infer _best_ Zslice from linearly unmixed input with fixed parameters
     """
     nuc_ch = NUC_CH
-    ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH)
+    ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROX_CH, ER_CH, LD_CH)
     return find_optimal_Z(img_data, nuc_ch, ch_to_agg)
 
 

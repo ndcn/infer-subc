@@ -25,11 +25,12 @@ from infer_subc_2d.constants import (
     LYSO_CH,
     MITO_CH,
     GOLGI_CH,
-    PEROXI_CH,
+    PEROX_CH,
     ER_CH,
-    LIPID_CH,
+    LD_CH,
     RESIDUAL_CH,
 )
+
 
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
 def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:

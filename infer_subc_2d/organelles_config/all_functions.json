@@ -577,16 +577,16 @@
         "python::function": "label",
         "parameters": null
     },
-    "fixed_infer_lysosome": {
+    "fixed_infer_lyso": {
         "name": "infer lysosome  (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "fixed_infer_lysosome",
+        "python::function": "fixed_infer_lyso",
         "parameters": null
     },
-    "infer_lysosome": {
+    "infer_lyso": {
         "name": "infer lysosome",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "infer_lysosome",
+        "python::function": "infer_lyso",
         "parameters": {
             "median_sz": {
                 "widget_type": "slider",
@@ -681,16 +681,16 @@
             }
         }
     },
-    "lysosome_spot_filter": {
+    "lyso_spot_filter": {
         "name": "lysosome spot filter",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "lysosome_spot_filter",
+        "python::function": "lyso_spot_filter",
         "parameters": null
     },
-    "lysosome_filiment_filter": {
+    "lyso_filiment_filter": {
         "name": "lysosome filiment filter",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "lysosome_filiment_filter",
+        "python::function": "lyso_filiment_filter",
         "parameters": null
     },
     "logical_or": {
@@ -705,10 +705,10 @@
         "python::function": "fixed_infer_nuclei",
         "parameters": null
     },
-    "infer_nuclei": {
+    "infer_nuclei_fromlabel": {
         "name": "infer nuclei",
         "python::module": "infer_subc_2d.organelles.nuclei",
-        "python::function": "infer_nuclei",
+        "python::function": "infer_nuclei_fromlabel",
         "parameters": {
             "nuc_ch": {
                 "widget_type": "slider",
@@ -770,7 +770,7 @@
     },
     "median_filter_slice_by_slice": {
         "name": "Median Smoothing Slice by Slice",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "median_filter_slice_by_slice",
         "parameters": {
             "size": {
@@ -784,7 +784,7 @@
     },
     "apply_log_li_threshold": {
         "name": "threshold log Li",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "apply_log_li_threshold",
         "parameters": {
             "thresh_factor": {
@@ -812,13 +812,13 @@
     },
     "apply_mask": {
         "name": "apply mask",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "apply_mask",
         "parameters": null
     },
     "select_channel_from_raw": {
         "name": "select a channel ",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "select_channel_from_raw",
         "parameters": {
             "chan": {
@@ -839,7 +839,7 @@
     },
     "scale_and_smooth": {
         "name": "scale and smooth",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "scale_and_smooth",
         "parameters": {
             "median_sz": {
@@ -860,7 +860,7 @@
     },
     "fill_and_filter_linear_size": {
         "name": "fill holes and filter small objects - linear space constant",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "fill_and_filter_linear_size",
         "parameters": {
             "hole_min": {
@@ -910,7 +910,7 @@
     },
     "size_filter_2D": {
         "name": "Size Filter 2D",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "size_filter_2D",
         "parameters": {
             "min_size": {
@@ -922,16 +922,16 @@
             }
         }
     },
-    "fixed_infer_soma": {
-        "name": " infer soma mask (fixed parameters)",
+    "fixed_infer_cellmask_fromaggr": {
+        "name": " infer cellmask mask (fixed parameters)",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "fixed_infer_soma",
+        "python::function": "fixed_infer_cellmask_fromaggr",
         "parameters": null
     },
-    "infer_soma_MCZ": {
-        "name": " infer soma (MCZ)",
-        "python::module": "infer_subc_2d.organelles.soma",
-        "python::function": "infer_soma_MCZ",
+    "infer_cellmask_fromaggr_MCZ": {
+        "name": " infer cellmask (MCZ)",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "infer_cellmask_fromaggr_MCZ",
         "parameters": {
             "median_sz": {
                 "widget_type": "slider",
@@ -987,26 +987,26 @@
         }
     },
     "raw_soma_MCZ": {
-        "name": "define weighted aggregate soma signal (MCZ-cellprofiler)",
+        "name": "define weighted aggregate cellmask signal (MCZ-cellprofiler)",
         "python::module": "infer_subc_2d.organelles",
         "python::function": "raw_soma_MCZ",
         "parameters": null
     },
     "non_linear_soma_transform_MCZ": {
-        "name": "non-linear filter of soma signal (MCZ-cellprofiler)",
+        "name": "non-linear filter of cellmask signal (MCZ-cellprofiler)",
         "python::module": "infer_subc_2d.organelles",
         "python::function": "non_linear_soma_transform_MCZ",
         "parameters": null
     },
     "get_max_label": {
         "name": "get the label with the maximum raw signa",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "get_max_label",
         "parameters": null
     },
     "choose_max_label_soma_union_nucleus": {
-        "name": "get soma UNION nuclei for largest signal label",
-        "python::module": "infer_subc_2d.organelles.soma",
+        "name": "get cellmask UNION nuclei for largest signal label",
+        "python::module": "infer_subc_2d.organelles.cellmask",
         "python::function": "choose_max_label_soma_union_nucleus",
         "parameters": null
     },
@@ -1018,13 +1018,13 @@
     },
     "min_max_intensity_normalization": {
         "name": "Min Max Intesity Normalization",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "min_max_intensity_normalization",
         "parameters": null
     },
     "masked_object_thresh": {
         "name": "Masked Object Threshold wrapper for widgets",
-        "python::module": "infer_subc_2d.utils.img",
+        "python::module": "infer_subc_2d.core.img",
         "python::function": "masked_object_thresh",
         "parameters": {
             "th_method": {
@@ -1052,10 +1052,10 @@
             }
         }
     },
-    "infer_cytosol": {
-        "name": "infer infer_cytosol",
+    "infer_cytoplasm": {
+        "name": "infer infer_cytoplasm",
         "python::module": "infer_subc_2d.organelles.cytosol",
-        "python::function": "infer_cytosol",
+        "python::function": "infer_cytoplasm",
         "parameters": {
             "erode_nuclei": {
                 "widget_type": "drop-down",
@@ -1069,7 +1069,7 @@
     },
     "soma_aggregate": {
         "name": "weighted sum",
-        "python::module": "infer_subc_2d.organelles.soma",
+        "python::module": "infer_subc_2d.organelles.cellmask",
         "python::function": "soma_aggregate",
         "parameters": {
             "w0": {

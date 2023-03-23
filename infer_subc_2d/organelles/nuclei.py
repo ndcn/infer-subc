@@ -3,12 +3,12 @@ from typing import Union, Dict
 from pathlib import Path
 import time
 
-from infer_subc_2d.utils.file_io import (
+from infer_subc_2d.core.file_io import (
     export_inferred_organelle,
     import_inferred_organelle,
     import_inferred_organelle_AICS,
 )
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.img import (
     fill_and_filter_linear_size,
     apply_log_li_threshold,
     select_channel_from_raw,
@@ -17,10 +17,11 @@ from infer_subc_2d.utils.img import (
 )
 from infer_subc_2d.constants import NUC_CH
 
+
 ##########################
-#  infer_nuclei
+#  infer_nuclei_fromlabel
 ##########################
-def infer_nuclei(
+def infer_nuclei_fromlabel(
     in_img: np.ndarray,
     nuc_ch: Union[int, None],
     median_sz: int,
@@ -49,7 +50,7 @@ def infer_nuclei(
     thresh_max:
         abs max threhold for log Li threholding
     max_hole_w:
-        hole filling cutoff for nuclei post-processing
+        hole filling cutoff for nuclei post-processing0
     small_obj_w:
         minimu object size cutoff for nuclei post-processing
 
@@ -92,7 +93,7 @@ def infer_nuclei(
 ##########################
 def fixed_infer_nuclei(in_img: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters
     ------------
@@ -114,7 +115,7 @@ def fixed_infer_nuclei(in_img: np.ndarray) -> np.ndarray:
     max_hole_w = 25
     small_obj_w = 15
 
-    return infer_nuclei(
+    return infer_nuclei_fromlabel(
         in_img, nuc_ch, median_sz, gauss_sig, thresh_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
     )
 
@@ -176,7 +177,7 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
     return nuclei
 
 
-# def get_nuclei_AICS(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+# def infer_nuclei_fromlabel_AICS(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
 #     """
 #     load nucleus if it exists, otherwise calculate and write to ome.tif file
 

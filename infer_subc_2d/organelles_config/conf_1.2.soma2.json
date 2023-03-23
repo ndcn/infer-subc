@@ -1,7 +1,7 @@
 {
     "1": {
         "category": "extraction",
-        "function": "infer_nuclei",
+        "function": "infer_nuclei_fromlabel",
         "parameter_values": {
             "nuc_ch": 0,
             "median_sz": 4,
@@ -32,7 +32,7 @@
             "scale_min_max": true
         },
         "parent": 0,
-        "annotation": " this creates an aggregate signal for the soma"
+        "annotation": " this creates an aggregate signal for the cellmask"
     },
     "3": {
         "category": "preprocessing",
@@ -81,11 +81,11 @@
             3,
             1
         ],
-        "annotation": "basic soma segmentation: 7"
+        "annotation": "basic cellmask segmentation: 7"
     },
     "8": {
         "category": "postpostprocessing",
-        "function": "infer_cytosol",
+        "function": "infer_cytoplasm",
         "parameter_values": {
             "erode_nuclei": true
         },
@@ -93,6 +93,6 @@
             1,
             7
         ],
-        "annotation": "basic soma segmentation: 8"
+        "annotation": "basic cellmask segmentation: 8"
     }
 }

@@ -33,7 +33,7 @@
         "name": "label objects",
         "parameters": null,
         "python::function": "apply_mask",
-        "python::module": "infer_subc_2d.utils.img"
+        "python::module": "infer_subc_2d.core.img"
     },
     "compute_3d_hessian_matrix": {
         "name": "Compute 3D Hessian Matrix",
@@ -445,7 +445,7 @@
         "name": "min_max_intensity_normalization",
         "parameters": null,
         "python::function": "min_max_intensity_normalization",
-        "python::module": "infer_subc_2d.utils.img"
+        "python::module": "infer_subc_2d.core.img"
     },
     "prune_z_slices": {
         "name": "Prune Z-Slices",
@@ -505,7 +505,7 @@
             }
         },
         "python::function": "size_filter_2D",
-        "python::module": "infer_subc_2d.utils.img"
+        "python::module": "infer_subc_2d.core.img"
     },
     "spot_filter_3D": {
         "name": "Spot Filter 3D",
