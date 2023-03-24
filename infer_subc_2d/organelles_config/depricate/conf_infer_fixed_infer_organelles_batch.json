@@ -1,0 +1,94 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "fixed_get_optimal_Z_img",
+        "parent": 0
+    },
+    "2": {
+        "category": "core",
+        "function": "fixed_infer_cellmask_fromaggr",
+        "parent": 1
+    },
+    "3": {
+        "category": "core",
+        "function": "fixed_infer_nuclei",
+        "parent": [
+            1,
+            2
+        ]
+    },
+    "4": {
+        "category": "core",
+        "function": "infer_cytoplasm",
+        "parameter_values": {
+            "erode_nuclei": true
+        },
+        "parent": [
+            2,
+            3
+        ]
+    },
+    "5": {
+        "category": "core",
+        "function": "fixed_infer_lyso",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "6": {
+        "category": "core",
+        "function": "fixed_infer_mito",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "7": {
+        "category": "core",
+        "function": "fixed_infer_golgi",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "8": {
+        "category": "core",
+        "function": "fixed_infer_perox",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "9": {
+        "category": "core",
+        "function": "fixed_infer_ER",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "10": {
+        "category": "core",
+        "function": "fixed_infer_LD",
+        "parent": [
+            1,
+            4
+        ]
+    },
+    "11": {
+        "category": "postprocessing",
+        "function": "stack_organelle_objects",
+        "parent": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    }
+}

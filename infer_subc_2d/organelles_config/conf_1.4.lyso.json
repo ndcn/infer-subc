@@ -1,0 +1,66 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 1
+        },
+        "parent": 0,
+        "annotation": "basic lyso segmentation: 1"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "median_sz": 4,
+            "gauss_sig": 1.4
+        },
+        "parent": 1,
+        "annotation": "basic lyso segmentation: 2"
+    },
+    "3": {
+        "category": "core",
+        "function": "spot_filter_3",
+        "parameter_values": {
+            "dot_scale_1": 5,
+            "dot_cut_1": 0.09,
+            "dot_scale_2": 2.5,
+            "dot_cut_2": 0.07,
+            "dot_scale_3": 1,
+            "dot_cut_3": 0.01
+        },
+        "parent": 2,
+        "annotation": "basic lyso - spot filter: 3"
+    },
+    "4": {
+        "category": "core",
+        "function": "filament_filter",
+        "parameter_values": {
+            "filament_scale": 1.0,
+            "filament_cut": 0.15
+        },
+        "parent": 2,
+        "annotation": "basic lyso - filament filter: 4"
+    },
+    "5": {
+        "category": "core",
+        "function": "logical_or",
+        "parent": [
+            3,
+            4
+        ],
+        "annotation": "basic lyso - combine spot+filament: 5"
+    },
+    "6": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 25,
+            "min_size": 15,
+            "method": "slice_by_slice"
+        },
+        "parent": 5,
+        "annotation": "basic lyso - fill/filter: 6"
+    }
+}

@@ -311,6 +311,7 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     # assumes a single image
     """
 
+    # TODO:  figure out if the meta_in["metadata"]['aicsimage] is passed on?  .ome.tiffs are x2 size
     out_name = out_path + img_name + ".ome.tiff"
 
     image_names = [img_name]

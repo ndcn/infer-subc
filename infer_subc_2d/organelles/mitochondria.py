@@ -3,8 +3,8 @@ from typing import Dict
 from pathlib import Path
 import time
 from infer_subc_2d.constants import MITO_CH
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.core.img import (
     size_filter_linear_size,
     size_filter_linear_size,
     vesselness_slice_by_slice,
@@ -12,10 +12,11 @@ from infer_subc_2d.utils.img import (
     scale_and_smooth,
 )
 
+
 ##########################
-#  infer_mitochondria
+#  infer_mito
 ##########################
-def infer_mitochondria(
+def infer_mito(
     in_img: np.ndarray,
     median_sz: int,
     gauss_sig: float,
@@ -43,7 +44,7 @@ def infer_mitochondria(
 
     Returns
     -------------
-    mitochondria_object
+    mito_object
         mask defined extent of mitochondria
     """
     mito_ch = MITO_CH
@@ -71,9 +72,9 @@ def infer_mitochondria(
 
 
 ##########################
-#  fixed_infer_mitochondria
+#  fixed_infer_mito
 ##########################
-def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_mito(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer mitochondria from linearly unmixed input
 
@@ -84,7 +85,7 @@ def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-    mitochondria_object
+    mito_object
         mask defined extent of mitochondria
     """
     median_sz = 3
@@ -93,10 +94,10 @@ def fixed_infer_mitochondria(in_img: np.ndarray) -> np.ndarray:
     vesselness_cut = 0.05
     small_obj_w = 3
 
-    return infer_mitochondria(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
+    return infer_mito(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
 
 
-def infer_and_export_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def infer_and_export_mito(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     infer mitochondria and write inferred mitochondria to ome.tif file
 
@@ -114,13 +115,13 @@ def infer_and_export_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_
     exported file name
 
     """
-    mitochondria = fixed_infer_mitochondria(in_img)
+    mitochondria = fixed_infer_mito(in_img)
     out_file_n = export_inferred_organelle(mitochondria, "mitochondria", meta_dict, out_data_path)
     print(f"inferred mitochondria. wrote {out_file_n}")
     return mitochondria
 
 
-def get_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_mito(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load mitochondria if it exists, otherwise calculate and write to ome.tif file
 
@@ -144,7 +145,7 @@ def get_mitochondria(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -
     except:
         start = time.time()
         print("starting segmentation...")
-        mitochondria = infer_and_export_mitochondria(in_img, meta_dict, out_data_path)
+        mitochondria = infer_and_export_mito(in_img, meta_dict, out_data_path)
         end = time.time()
         print(f"inferred (and exported) mitochondria in ({(end - start):0.2f}) sec")
 

@@ -1,0 +1,112 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "fixed_get_optimal_Z_img",
+        "parent": 0
+    },
+    "2": {
+        "category": "extraction",
+        "function": "fixed_infer_cellmask_fromaggr",
+        "parent": 1
+    },
+    "3": {
+        "category": "extraction",
+        "function": "fixed_infer_nuclei",
+        "parent": [
+            1,
+            2
+        ]
+    },
+    "4": {
+        "category": "extraction",
+        "function": "infer_cytoplasm",
+        "parameter_values": {
+            "erode_nuclei": true
+        },
+        "parent": [
+            2,
+            3
+        ]
+    },
+    "5": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 3
+        },
+        "parent": 1
+    },
+    "6": {
+        "category": "preprocessing",
+        "function": "min_max_intensity_normalization",
+        "parent": 5
+    },
+    "7": {
+        "category": "preprocessing",
+        "function": "median_filter_slice_by_slice",
+        "parameter_values": {
+            "size": 3
+        },
+        "parent": 6
+    },
+    "8": {
+        "category": "preprocessing",
+        "function": "image_smoothing_gaussian_slice_by_slice",
+        "parameter_values": {
+            "sigma": 1.34
+        },
+        "parent": 7
+    },
+    "9": {
+        "category": "core",
+        "function": "masked_object_thresh",
+        "parameter_values": {
+            "th_method": "triangle",
+            "cutoff_size": 1200,
+            "th_adjust": 0.5
+        },
+        "parent": 8
+    },
+    "10": {
+        "category": "core",
+        "function": "topology_preserving_thinning",
+        "parameter_values": {
+            "min_thickness": 1.6,
+            "thin": 1
+        },
+        "parent": 9
+    },
+    "11": {
+        "category": "core",
+        "function": "spot_filter_slice_by_slice",
+        "parameter_values": {
+            "log_sigma": 1.6,
+            "cutoff": 0.02
+        },
+        "parent": 9
+    },
+    "12": {
+        "category": "core",
+        "function": "logical_or",
+        "parent": [
+            10,
+            11
+        ]
+    },
+    "13": {
+        "category": "postprocessing",
+        "function": "apply_mask",
+        "parent": [
+            12,
+            4
+        ]
+    },
+    "14": {
+        "category": "postprocessing",
+        "function": "size_filter_2D",
+        "parameter_values": {
+            "min_size": 9
+        },
+        "parent": 13
+    }
+}

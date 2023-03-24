@@ -4,7 +4,7 @@ from skimage.morphology import binary_erosion
 from skimage.measure._regionprops import _props_to_dict
 from typing import Tuple, Any
 
-from infer_subc_2d.utils.img import apply_mask
+from infer_subc_2d.core.img import apply_mask
 
 import pandas as pd
 
@@ -44,9 +44,9 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
     input_obj:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     soma_mask:
-        a 3d image containing the soma object (mask)
+        a 3d image containing the cellmask object (mask)
     mask:
-        a 3d image containing the soma object (mask)
+        a 3d image containing the cellmask object (mask)
 
     Returns
     -------------
@@ -60,6 +60,7 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
     properties = ["label"]
     # add intensity:
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
+
     # arguments must be in the specified order, matching regionprops
     def standard_deviation_intensity(region, intensities):
         return np.std(intensities[region])
@@ -93,7 +94,7 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
 
 
 def surface_area_from_props(labels, props):
-    """ helper function for getting surface area of volumetric segmentation"""
+    """helper function for getting surface area of volumetric segmentation"""
 
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
@@ -143,7 +144,7 @@ def get_simple_stats_3D(A, mask):
     return stats_table, rp
 
 
-def get_AintB_stats_3D(A, B, mask, erode_A=False):
+def get_AintB_stats_3D(A, B, mask, shell_A=False):
     """collect volumentric stats of A intersect B"""
     properties = ["label"]  # our index to organelles
     # add area
@@ -156,7 +157,7 @@ def get_AintB_stats_3D(A, B, mask, erode_A=False):
     Alab = label(A).astype("int")
     Blab = label(B).astype("int")
 
-    if erode_A:
+    if shell_A:
         A = np.logical_xor(A, binary_erosion(A))
 
     A_int_B = np.logical_and(A, B)
@@ -186,6 +187,7 @@ def get_summary_stats_2D(input_obj, intensity_img, mask):
     properties = ["label"]
     # add intensity:
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
+
     # arguments must be in the specified order, matching regionprops
     def standard_deviation_intensity(region, intensities):
         return np.std(intensities[region])

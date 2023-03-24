@@ -1,0 +1,82 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "fixed_get_optimal_Z_img",
+        "parent": 0
+    },
+    "2": {
+        "category": "extraction",
+        "function": "fixed_infer_cellmask_fromaggr",
+        "parent": 1
+    },
+    "3": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 0
+        },
+        "parent": 1
+    },
+    "4": {
+        "category": "preprocessing",
+        "function": "min_max_intensity_normalization",
+        "parent": 3
+    },
+    "5": {
+        "category": "preprocessing",
+        "function": "median_filter_slice_by_slice",
+        "parameter_values": {
+            "size": 4
+        },
+        "parent": 4
+    },
+    "6": {
+        "category": "preprocessing",
+        "function": "image_smoothing_gaussian_slice_by_slice",
+        "parameter_values": {
+            "sigma": 1.34
+        },
+        "parent": 5
+    },
+    "7": {
+        "category": "core",
+        "function": "apply_log_li_threshold",
+        "parameter_values": {
+            "thresh_factor": 0.9,
+            "thresh_min": 0.1,
+            "thresh_max": 1.0
+        },
+        "parent": 6
+    },
+    "8": {
+        "category": "core",
+        "function": "label",
+        "parent": 7
+    },
+    "9": {
+        "category": "postprocessing",
+        "function": "hole_filling",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 25,
+            "fill_2d": true
+        },
+        "parent": 8
+    },
+    "10": {
+        "category": "postprocessing",
+        "function": "apply_mask",
+        "parent": [
+            9,
+            2
+        ]
+    },
+    "11": {
+        "category": "postprocessing",
+        "function": "size_filter_2D",
+        "parameter_values": {
+            "min_size": 225
+        },
+        "parent": 10
+    }
+}

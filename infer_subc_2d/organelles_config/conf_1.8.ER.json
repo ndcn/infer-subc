@@ -1,0 +1,43 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 5
+        },
+        "parent": 0,
+        "annotation": "basic ER segmentation: 1"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "median_sz": 0,
+            "gauss_sig": 3.0
+        },
+        "parent": 1,
+        "annotation": "basic ER segmentation: 2"
+    },
+    "3": {
+        "category": "core",
+        "function": "filament_filter",
+        "parameter_values": {
+            "filament_scale": 1.0,
+            "filament_cut": 0.015
+        },
+        "parent": 2,
+        "annotation": "basic ER - filament filter: 3"
+    },
+    "4": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 0,
+            "min_size": 2,
+            "method": "slice_by_slice"
+        },
+        "parent": 3,
+        "annotation": "basic ER - fill/filter: 4"
+    }
+}

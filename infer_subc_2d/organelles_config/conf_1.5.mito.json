@@ -1,0 +1,43 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 2
+        },
+        "parent": 0,
+        "annotation": "basic mito segmentation: 1"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "median_sz": 4,
+            "gauss_sig": 1.4
+        },
+        "parent": 1,
+        "annotation": "basic mito segmentation: 2"
+    },
+    "3": {
+        "category": "core",
+        "function": "vesselness_slice_by_slice",
+        "parameter_values": {
+            "sigma": 1.5,
+            "cutoff": 0.05
+        },
+        "parent": 2,
+        "annotation": "basic mito - vesselness filter: 3"
+    },
+    "4": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 25,
+            "min_size": 15,
+            "method": "slice_by_slice"
+        },
+        "parent": 3,
+        "annotation": "basic mito - fill/filter: 4"
+    }
+}

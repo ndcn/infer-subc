@@ -7,17 +7,18 @@ from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
 from aicssegmentation.core.vessel import filament_2d_wrapper
 
 from infer_subc_2d.constants import LYSO_CH
-from infer_subc_2d.utils.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.utils.img import (
+from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
+from infer_subc_2d.core.img import (
     scale_and_smooth,
     fill_and_filter_linear_size,
     select_channel_from_raw,
 )
 
+
 ##########################
 #  infer_LYSOSOMES
 ##########################
-def infer_lysosome(
+def infer_lyso(
     in_img: np.ndarray,
     median_sz: int,
     gauss_sig: float,
@@ -34,7 +35,7 @@ def infer_lysosome(
     small_obj_w: int,
 ) -> np.ndarray:
     """
-    Procedure to infer lysosome from linearly unmixed input
+    Procedure to infer lyso from linearly unmixed input
 
     Parameters
     ------------
@@ -61,8 +62,8 @@ def infer_lysosome(
 
     Returns
     -------------
-    lysosome_object:
-        mask defined extent of lysosome object
+    lyso_object:
+        mask defined extent of lyso object
 
     """
     lyso_ch = LYSO_CH
@@ -98,9 +99,9 @@ def infer_lysosome(
 ##########################
 #  fixed_infer_nuclei
 ##########################
-def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_lyso(in_img: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer lysosome from linearly unmixed input
+    Procedure to infer lyso from linearly unmixed input
 
     Parameters
     ------------
@@ -126,7 +127,7 @@ def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
     max_hole_w = 25
     small_obj_w = 3
 
-    return infer_lysosome(
+    return infer_lyso(
         in_img,
         median_sz,
         gauss_sig,
@@ -144,9 +145,9 @@ def fixed_infer_lysosome(in_img: np.ndarray) -> np.ndarray:
     )
 
 
-def infer_and_export_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def infer_and_export_lyso(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
-    infer lysosome and write inferred lysosome to ome.tif file
+    infer lyso and write inferred lyso to ome.tif file
 
     Parameters
     ------------
@@ -162,14 +163,14 @@ def infer_and_export_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path
     exported file name
 
     """
-    lysosome = fixed_infer_lysosome(in_img)
-    out_file_n = export_inferred_organelle(lysosome, "lysosome", meta_dict, out_data_path)
-    print(f"inferred lysosome. wrote {out_file_n}")
-    return lysosome
+    lyso = fixed_infer_lyso(in_img)
+    out_file_n = export_inferred_organelle(lyso, "lyso", meta_dict, out_data_path)
+    print(f"inferred lyso. wrote {out_file_n}")
+    return lyso
 
 
-def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosome"""
+def lyso_spot_filter(in_img: np.ndarray) -> np.ndarray:
+    """spot filter helper function for lyso"""
     dot_scale_1 = 5
     dot_cut_1 = 0.09
     dot_scale_2 = 2.5
@@ -180,8 +181,8 @@ def lysosome_spot_filter(in_img: np.ndarray) -> np.ndarray:
     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
 
 
-def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
-    """spot filter helper function for lysosome (DEPRICATED)"""
+def lyso_filiment_filter(in_img: np.ndarray) -> np.ndarray:
+    """spot filter helper function for lyso (DEPRICATED)"""
     filament_scale = 1
     filament_cut = 0.15
     f2_param = [[filament_scale, filament_cut]]
@@ -189,9 +190,9 @@ def lysosome_filiment_filter(in_img: np.ndarray) -> np.ndarray:
     return filament_2d_wrapper(in_img, f2_param)
 
 
-def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_lyso(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
-    load lysosome if it exists, otherwise calculate and write to ome.tif file
+    load lyso if it exists, otherwise calculate and write to ome.tif file
 
     Parameters
     ------------
@@ -209,14 +210,14 @@ def get_lysosome(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np
     """
     try:
         start = time.time()
-        lysosome = import_inferred_organelle("lysosome", meta_dict, out_data_path)
+        lyso = import_inferred_organelle("lyso", meta_dict, out_data_path)
         end = time.time()
-        print(f"loaded lysosome in ({(end - start):0.2f}) sec")
+        print(f"loaded lyso in ({(end - start):0.2f}) sec")
     except:
         start = time.time()
         print("starting segmentation...")
-        lysosome = infer_and_export_lysosome(in_img, meta_dict, out_data_path)
+        lyso = infer_and_export_lyso(in_img, meta_dict, out_data_path)
         end = time.time()
-        print(f"inferred (and exported) lysosome in ({(end - start):0.2f}) sec")
+        print(f"inferred (and exported) lyso in ({(end - start):0.2f}) sec")
 
-    return lysosome
+    return lyso

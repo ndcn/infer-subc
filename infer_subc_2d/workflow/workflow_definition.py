@@ -1,11 +1,48 @@
 import numpy as np
 
 from aicsimageio import imread
-from typing import List
+from typing import Dict, Tuple, Any, Union, List
 from dataclasses import dataclass
 from ..utils.lazy import lazy_property  # infer_subc_2d.utils.lazy
 from ..utils.directories import Directories  # infer_subc_2d.utils.directories
 from .workflow_step import WorkflowStep
+
+
+# TODO: create an WorkflowImage class
+# TODO: make a separate python file for this
+
+
+@dataclass
+class SegmentationWrap:
+    """
+    Simple dataclass wrapper for segmentations of organelles  + masks
+    TODO: make a nice reppr
+    """
+
+    name: str
+    image: np.ndarray
+    meta: Dict[str, Any]
+    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
+    channel_names: List[str]
+    channels: List[int]
+    segmentations: List[np.ndarray]
+    masks: List[np.ndarray]
+    mask_names: List[int]
+
+    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
+        self.name = name
+        self.image = image
+        self.meta = meta
+        # self.raw_meta = get_raw_meta_data(meta)
+        
+    def add_mask(self, name: str, mask:np.ndarray):
+        self.mask_names.append(name)
+        self.masks.append(mask)
+
+    def add_segmentation(self, name: str, segmentation:np.ndarray, channel: int):
+        self.channel_names.append(name)
+        self.channels.append(channel)
+        self.segmentations.append(segmentation)
 
 
 @dataclass

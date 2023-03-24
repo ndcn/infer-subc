@@ -1,0 +1,31 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "fixed_get_optimal_Z_img",
+        "parent": 0
+    },
+    "2": {
+        "category": "extraction",
+        "function": "fixed_infer_cellmask_fromaggr",
+        "parent": 1
+    },
+    "3": {
+        "category": "extraction",
+        "function": "fixed_infer_nuclei",
+        "parent": [
+            1,
+            2
+        ]
+    },
+    "4": {
+        "category": "postprocessing",
+        "function": "infer_cytoplasm",
+        "parameter_values": {
+            "erode_nuclei": true
+        },
+        "parent": [
+            2,
+            3
+        ]
+    }
+}

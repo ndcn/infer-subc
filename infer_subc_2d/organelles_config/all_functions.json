@@ -577,21 +577,21 @@
         "python::function": "label",
         "parameters": null
     },
-    "fixed_infer_lysosome": {
-        "name": "infer lysosome  (fixed parameters)",
-        "python::module": "infer_subc_2d.organelles",
-        "python::function": "fixed_infer_lysosome",
+    "fixed_infer_lyso": {
+        "name": "infer lyso  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.lysosome",
+        "python::function": "fixed_infer_lyso",
         "parameters": null
     },
-    "infer_lysosome": {
-        "name": "infer lysosome",
-        "python::module": "infer_subc_2d.organelles",
-        "python::function": "infer_lysosome",
+    "infer_lyso": {
+        "name": "infer lyso",
+        "python::module": "infer_subc_2d.organelles.lysosome",
+        "python::function": "infer_lyso",
         "parameters": {
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 3,
+                "min": 0,
                 "max": 15,
                 "increment": 1
             },
@@ -681,16 +681,16 @@
             }
         }
     },
-    "lysosome_spot_filter": {
-        "name": "lysosome spot filter",
-        "python::module": "infer_subc_2d.organelles",
-        "python::function": "lysosome_spot_filter",
+    "lyso_spot_filter": {
+        "name": "lyso spot filter (fixed)",
+        "python::module": "infer_subc_2d.organelles.lysosome",
+        "python::function": "lyso_spot_filter",
         "parameters": null
     },
-    "lysosome_filiment_filter": {
+    "lyso_filiment_filter": {
         "name": "lysosome filiment filter",
         "python::module": "infer_subc_2d.organelles",
-        "python::function": "lysosome_filiment_filter",
+        "python::function": "lyso_filiment_filter",
         "parameters": null
     },
     "logical_or": {
@@ -700,9 +700,1041 @@
         "parameters": null
     },
     "fixed_infer_nuclei": {
-        "name": "infer nuclei  (fixed parameters)",
-        "python::module": "infer_subc_2d.organelles",
+        "name": "infer nuclei  (fixed)",
+        "python::module": "infer_subc_2d.organelles.nuclei",
         "python::function": "fixed_infer_nuclei",
         "parameters": null
+    },
+    "infer_nuclei_fromlabel": {
+        "name": "infer nuclei",
+        "python::module": "infer_subc_2d.organelles.nuclei",
+        "python::function": "infer_nuclei_fromlabel",
+        "parameters": {
+            "nuc_ch": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "median_filter_slice_by_slice": {
+        "name": "Median Smoothing Slice by Slice",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "median_filter_slice_by_slice",
+        "parameters": {
+            "size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 20,
+                "increment": 1
+            }
+        }
+    },
+    "apply_log_li_threshold": {
+        "name": "threshold log Li",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "apply_log_li_threshold",
+        "parameters": {
+            "thresh_factor": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.1,
+                "increment": 0.05
+            },
+            "thresh_min": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.0,
+                "max": 0.8,
+                "increment": 0.01
+            },
+            "thresh_max": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.3,
+                "max": 1.0,
+                "increment": 0.05
+            }
+        }
+    },
+    "apply_mask": {
+        "name": "apply mask",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "apply_mask",
+        "parameters": null
+    },
+    "select_channel_from_raw": {
+        "name": "select a channel ",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "select_channel_from_raw",
+        "parameters": {
+            "chan": {
+                "data_type": "int",
+                "options": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "widget_type": "drop-down"
+            }
+        }
+    },
+    "scale_and_smooth": {
+        "name": "scale and smooth",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "scale_and_smooth",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fill_and_filter_linear_size": {
+        "name": "`hole_filling` and `size_filter` with size argument in linear units ",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "fill_and_filter_linear_size",
+        "parameters": {
+            "hole_min": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 25,
+                "increment": 1
+            },
+            "hole_max": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 150,
+                "increment": 1
+            },
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
+            }
+        }
+    },
+    "image_smoothing_gaussian_slice_by_slice": {
+        "name": "Gaussian Smoothing Slice by Slice",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_slice_by_slice",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.8,
+                "max": 20,
+                "increment": 0.2
+            }
+        }
+    },
+    "size_filter_2D": {
+        "name": "Size Filter 2D",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "size_filter_2D",
+        "parameters": {
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            }
+        }
+    },
+    "fixed_infer_cellmask_fromaggr": {
+        "name": " infer cellmask mask (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "fixed_infer_cellmask_fromaggr",
+        "parameters": null
+    },
+    "infer_cellmask_fromaggr_MCZ": {
+        "name": " infer cellmask (MCZ)",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "infer_cellmask_fromaggr_MCZ",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "mo_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 2,
+                "max": 100,
+                "min": 20,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "raw_soma_MCZ": {
+        "name": "define weighted aggregate cellmask signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "raw_soma_MCZ",
+        "parameters": null
+    },
+    "non_linear_soma_transform_MCZ": {
+        "name": "non-linear filter of cellmask signal (MCZ-cellprofiler)",
+        "python::module": "infer_subc_2d.organelles",
+        "python::function": "non_linear_soma_transform_MCZ",
+        "parameters": null
+    },
+    "get_max_label": {
+        "name": "get the label with the maximum raw signa",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "get_max_label",
+        "parameters": null
+    },
+    "choose_max_label_soma_union_nucleus": {
+        "name": "get cellmask UNION nuclei for largest signal label",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "choose_max_label_soma_union_nucleus",
+        "parameters": null
+    },
+    "masked_inverted_watershed": {
+        "name": "watershed on inverted image and masked",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "masked_inverted_watershed",
+        "parameters": null
+    },
+    "min_max_intensity_normalization": {
+        "name": "Min Max Intesity Normalization",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "min_max_intensity_normalization",
+        "parameters": null
+    },
+    "masked_object_thresh": {
+        "name": "Masked Object Threshold wrapper for widgets",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "masked_object_thresh",
+        "parameters": {
+            "th_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "cutoff_size": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "th_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            }
+        }
+    },
+    "infer_cytoplasm": {
+        "name": "infer infer_cytoplasm",
+        "python::module": "infer_subc_2d.organelles.cytoplasm",
+        "python::function": "infer_cytoplasm",
+        "parameters": {
+            "erode_nuclei": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "soma_aggregate": {
+        "name": "weighted sum",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "soma_aggregate",
+        "parameters": {
+            "w0": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w1": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w2": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w3": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w4": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w5": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w6": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w7": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w8": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w9": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "scale_min_max": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "raw_cellmask_fromaggr": {
+        "name": "define weighted aggregate cellmask signal",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "raw_cellmask_fromaggr",
+        "parameters": {
+            "scale_min_max": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "non_linear_cellmask_transform_MCZ": {
+        "name": "non-linear distortion to fill out cellmask",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "non_linear_soma_transform_MCZ",
+        "parameters": null
+    },
+    "choose_max_label_cellmask_union_nucleus": {
+        "name": "get cellmask + nuclei for largest signal label",
+        "python::module": "infer_subc_2d.organelles.cellmask",
+        "python::function": "choose_max_label_cellmask_union_nucleus",
+        "parameters": null
+    },
+    "make_aggregate": {
+        "name": "weighted sum wrapper (plugin)",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "make_aggregate",
+        "parameters": {
+            "w0": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w1": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w2": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w3": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w4": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w5": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w6": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w7": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w8": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "w9": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "scale_min_max": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "fixed_infer_mito": {
+        "name": "infer mitochondria  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.mitochondria",
+        "python::function": "fixed_infer_mito",
+        "parameters": null
+    },
+    "infer_mito": {
+        "name": "infer mitochondria",
+        "python::module": "infer_subc_2d.organelles.mitochondria",
+        "python::function": "infer_mito",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "vesselness_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "vesselness_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "vesselness_slice_by_slice": {
+        "name": "vesselness filter (e.g. mitochondria)",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "vesselness_slice_by_slice",
+        "parameters": {
+            "sigma": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": 0.5,
+                    "max": 5,
+                    "increment": 0.5
+                }
+            ],
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "size_filter_linear_size": {
+        "name": "`size_filter` w/ linear size arg",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "size_filter_linear_size",
+        "parameters": {
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
+            },
+            "connectivity": {
+                "data_type": "int",
+                "options": [
+                    1,
+                    2,
+                    3
+                ],
+                "widget_type": "drop-down"
+            }
+        }
+    },
+    "hole_filling_linear_size": {
+        "name": "`hole_filling` w/ linear size arg",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "hole_filling_linear_size",
+        "parameters": {
+            "hole_min": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 25,
+                "increment": 1
+            },
+            "hole_max": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 150,
+                "increment": 1
+            },
+            "fill_2d": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "fixed_infer_golgi": {
+        "name": "infer golgi  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.golgi",
+        "python::function": "fixed_infer_golgi",
+        "parameters": null
+    },
+    "infer_golgi": {
+        "name": "infer golgi",
+        "python::module": "infer_subc_2d.organelles.golgi",
+        "python::function": "infer_golgi",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "mo_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "mo_adjust": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "mo_cutoff_size": {
+                "data_type": "int",
+                "increment": 10,
+                "max": 250,
+                "min": 10,
+                "widget_type": "slider"
+            },
+            "min_thickness": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 10,
+                "increment": 1
+            },
+            "thin": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 1,
+                "max": 200,
+                "increment": 1
+            },
+            "dot_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_perox": {
+        "name": "infer peroxisome (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.peroxisome",
+        "python::function": "fixed_infer_perox",
+        "parameters": null
+    },
+    "infer_perox": {
+        "name": "infer peroxisome",
+        "python::module": "infer_subc_2d.organelles.peroxisome",
+        "python::function": "infer_perox",
+        "parameters": {
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "dot_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut": {
+                "data_type": "float",
+                "increment": 0.005,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_er": {
+        "name": "infer ER  (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.er",
+        "python::function": "fixed_infer_ER",
+        "parameters": null
+    },
+    "infer_er": {
+        "name": "Infer Endoplasmic Reticulum",
+        "python::module": "infer_subc_2d.organelles.er",
+        "python::function": "infer_ER",
+        "parameters": {
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "filament_filter": {
+        "name": "filament filter thresholding",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "filament_filter",
+        "parameters": {
+            "filament_scale": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cut": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "fixed_infer_LD": {
+        "name": "infer lipid bodies (fixed parameters)",
+        "python::module": "infer_subc_2d.organelles.lipid",
+        "python::function": "fixed_infer_LD",
+        "parameters": null
+    },
+    "infer_LD": {
+        "name": "infer lipid",
+        "python::module": "infer_subc_2d.organelles.lipid",
+        "python::function": "infer_LD",
+        "parameters": {
+            "median_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 3,
+                "max": 15,
+                "increment": 1
+            },
+            "gauss_sig": {
+                "data_type": "float",
+                "increment": 0.25,
+                "max": 15.0,
+                "min": 1.25,
+                "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "otsu",
+                    "li",
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            },
+            "max_hole_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "small_obj_w": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "apply_threshold": {
+        "name": "Apply Threshold",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "apply_threshold",
+        "parameters": {
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "otsu",
+                    "li",
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "thresh_factor": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.2,
+                "min": 0.6,
+                "widget_type": "slider"
+            },
+            "thresh_min": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 0.9,
+                "min": 0.0,
+                "widget_type": "slider"
+            },
+            "thresh_max": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 1.0,
+                "min": 0.1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "spot_filter_3": {
+        "name": "spot filter thresholding (3 scales)",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "spot_filter_3",
+        "parameters": {
+            "dot_scale_1": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_1": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_scale_2": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_2": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_scale_3": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "dot_cut_3": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            }
+        }
     }
 }

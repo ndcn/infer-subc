@@ -2,8 +2,9 @@ from typing import Union
 from pathlib import Path
 import numpy as np
 
-from infer_subc_2d.utils.file_io import export_infer_organelles, read_czi_image, list_image_files
-from infer_subc_2d.utils.img import select_z_from_raw
+from infer_subc_2d.core.file_io import export_infer_organelles, read_czi_image, list_image_files
+from infer_subc_2d.core.img import select_z_from_raw
+
 
 from infer_subc_2d.constants import (
     TEST_IMG_N,
@@ -11,26 +12,24 @@ from infer_subc_2d.constants import (
     LYSO_CH,
     MITO_CH,
     GOLGI_CH,
-    PEROXI_CH,
+    PEROX_CH,
     ER_CH,
-    LIPID_CH,
+    LD_CH,
     RESIDUAL_CH,
 )
 
 from infer_subc_2d.organelles import (
-    fixed_infer_soma,
+    fixed_infer_cellmask_fromaggr,
     fixed_infer_nuclei,
-    infer_cytosol,
-    find_optimal_Z,
-    fixed_get_optimal_Z_image,
-    fixed_find_optimal_Z,
-    fixed_infer_lysosome,
-    fixed_infer_mitochondria,
+    infer_cytoplasm,
+    fixed_infer_lyso,
+    fixed_infer_mito,
     fixed_infer_golgi,
-    fixed_infer_endoplasmic_reticulum,
-    fixed_infer_peroxisome,
-    fixed_infer_lipid,
+    fixed_infer_ER,
+    fixed_infer_perox,
+    fixed_infer_LD,
 )
+
 
 ###########
 # infer organelles
@@ -39,55 +38,54 @@ def fixed_infer_organelles(img_data):
     """
     wrapper to infer all organelles from a single multi-channel image
     """
-    # ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROXI_CH, ER_CH, LIPID_CH)
+    # ch_to_agg = (LYSO_CH, MITO_CH, GOLGI_CH, PEROX_CH, ER_CH, LD_CH)
 
     # nuc_ch = NUC_CH
     # optimal_Z = find_optimal_Z(img_data, nuc_ch, ch_to_agg)
-    optimal_Z = fixed_find_optimal_Z(img_data)
-    # # Stage 1:  nuclei, soma, cytosol
-    img_2D = select_z_from_raw(img_data, optimal_Z)
+    # optimal_Z = fixed_find_optimal_Z(img_data)
+    # # Stage 1:  nuclei, cellmask, cytoplasm
     # img_2D = fixed_get_optimal_Z_image(img_data)
 
-    soma_mask = fixed_infer_soma(img_2D)
+    soma_mask = fixed_infer_cellmask_fromaggr(img_data)
 
-    nuclei_object = fixed_infer_nuclei(img_2D, soma_mask)
+    nuclei_object = fixed_infer_nuclei(img_data, soma_mask)
 
-    cytosol_mask = infer_cytosol(nuclei_object, soma_mask)
+    cytoplasm_mask = infer_cytoplasm(nuclei_object, soma_mask)
 
     # cyto masked objects.
-    lysosome_object = fixed_infer_lysosome(img_2D, cytosol_mask)
-    mito_object = fixed_infer_mitochondria(img_2D, cytosol_mask)
-    golgi_object = fixed_infer_golgi(img_2D, cytosol_mask)
-    peroxi_object = fixed_infer_peroxisome(img_2D, cytosol_mask)
-    er_object = fixed_infer_endoplasmic_reticulum(img_2D, cytosol_mask)
-    lipid_object = fixed_infer_lipid(img_2D, cytosol_mask)
+    lyso_object = fixed_infer_lyso(img_data, cytoplasm_mask)
+    mito_object = fixed_infer_mito(img_data, cytoplasm_mask)
+    golgi_object = fixed_infer_golgi(img_data, cytoplasm_mask)
+    peroxi_object = fixed_infer_perox(img_data, cytoplasm_mask)
+    er_object = fixed_infer_ER(img_data, cytoplasm_mask)
+    LD_object = fixed_infer_LD(img_data, cytoplasm_mask)
 
     img_layers = [
         nuclei_object,
-        lysosome_object,
+        lyso_object,
         mito_object,
         golgi_object,
         peroxi_object,
         er_object,
-        lipid_object,
+        LD_object,
         soma_mask,
-        cytosol_mask,
+        cytoplasm_mask,
     ]
 
     layer_names = [
         "nuclei",
-        "lysosome",
+        "lyso",
         "mitochondria",
         "golgi",
         "peroxisome",
         "er",
-        "lipid_body",
+        "LD_body",
         "soma_mask",
-        "cytosol_mask",
+        "cytoplasm_mask",
     ]
     # TODO: pack outputs into something napari readable
     img_out = np.stack(img_layers, axis=0)
-    return (img_out, layer_names, optimal_Z)
+    return (img_out, layer_names)
 
 
 def batch_process_all_czi(data_root_path, source_dir: Union[Path, str] = "raw"):
@@ -106,7 +104,7 @@ def batch_process_all_czi(data_root_path, source_dir: Union[Path, str] = "raw"):
     return files_generated
 
 
-def process_czi_image(czi_file_name):
+def process_czi_image(czi_file_name, data_root_path):
     """wrapper for processing"""
 
     img_data, meta_dict = read_czi_image(czi_file_name)
@@ -117,7 +115,6 @@ def process_czi_image(czi_file_name):
     # channel_axis = meta_dict['channel_axis']
 
     inferred_organelles, layer_names, optimal_Z = fixed_infer_organelles(img_data)
-    meta_dict["z_slice"] = optimal_Z
     out_file_n = export_infer_organelles(inferred_organelles, layer_names, meta_dict, data_root_path)
 
     ## TODO:  collect stats...
@@ -128,25 +125,25 @@ def process_czi_image(czi_file_name):
 def stack_organelle_objects(
     soma_mask,
     nuclei_object,
-    cytosol_mask,
-    lysosome_object,
+    cytoplasm_mask,
+    lyso_object,
     mito_object,
     golgi_object,
     peroxi_object,
     er_object,
-    lipid_object,
+    LD_object,
 ) -> np.ndarray:
     """wrapper to stack the inferred objects into a single numpy.ndimage"""
     img_layers = [
         soma_mask,
         nuclei_object,
-        cytosol_mask,
-        lysosome_object,
+        cytoplasm_mask,
+        lyso_object,
         mito_object,
         golgi_object,
         peroxi_object,
         er_object,
-        lipid_object,
+        LD_object,
     ]
     return np.stack(img_layers, axis=0)
 

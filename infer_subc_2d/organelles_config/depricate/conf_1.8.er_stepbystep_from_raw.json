@@ -1,0 +1,74 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "fixed_get_optimal_Z_img",
+        "parent": 0
+    },
+    "2": {
+        "category": "extraction",
+        "function": "fixed_infer_cellmask_fromaggr",
+        "parent": 1
+    },
+    "3": {
+        "category": "extraction",
+        "function": "fixed_infer_nuclei",
+        "parent": [
+            1,
+            2
+        ]
+    },
+    "4": {
+        "category": "extraction",
+        "function": "infer_cytoplasm",
+        "parameter_values": {
+            "erode_nuclei": true
+        },
+        "parent": [
+            2,
+            3
+        ]
+    },
+    "5": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 5
+        },
+        "parent": 1
+    },
+    "6": {
+        "category": "preprocessing",
+        "function": "min_max_intensity_normalization",
+        "parent": 5
+    },
+    "7": {
+        "category": "preprocessing",
+        "function": "edge_preserving_smoothing",
+        "parent": 6
+    },
+    "8": {
+        "category": "core",
+        "function": "filament_filter",
+        "parameter_values": {
+            "filament_scale": 1.0,
+            "filament_cut": 0.15
+        },
+        "parent": 7
+    },
+    "9": {
+        "category": "postprocessing",
+        "function": "apply_mask",
+        "parent": [
+            8,
+            4
+        ]
+    },
+    "10": {
+        "category": "postprocessing",
+        "function": "size_filter_2D",
+        "parameter_values": {
+            "min_size": 4
+        },
+        "parent": 9
+    }
+}
