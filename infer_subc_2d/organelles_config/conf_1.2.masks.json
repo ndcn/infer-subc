@@ -18,6 +18,9 @@
     "2": {
         "category": "extraction",
         "function": "raw_cellmask_fromaggr",
+        "parameter_values": {
+            "scale_min_max": true
+        },
         "parent": 0,
         "annotation": " this creates an aggregate signal for the cellmask"
     },
@@ -84,12 +87,12 @@
     },
     "9": {
         "category": "export",
-        "function": "stack_layers",
+        "function": "stack_masks",
         "parent": [
             2,
             7,
             8
         ],
-        "annotation": "export nuclei ,cellmask, cytoplasm: 9"
+        "annotation": "export  canonical masks (nuc,cellmask, cyto) 9"
     }
 }

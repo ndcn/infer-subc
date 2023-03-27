@@ -33,6 +33,18 @@ from infer_subc_2d.constants import (
 )
 
 
+def stack_layers(*layers) -> np.ndarray:
+    """wrapper to stack the inferred objects into a single numpy.ndimage"""
+
+    return np.stack(layers, axis=0)
+
+
+def stack_masks(nuc_mask: np.ndarray, cellmask: np.ndarray, cyto_mask: np.ndarray) -> np.ndarray:
+    """stack canonical masks:  cellmask, nuclei, cytoplasm"""
+    layers = [nuc_mask, cellmask, cyto_mask]
+    return np.stack(layers, axis=0)
+
+
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
 def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:
     """Renormalize image intensities to log space

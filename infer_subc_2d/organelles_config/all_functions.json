@@ -1170,7 +1170,7 @@
     "non_linear_cellmask_transform_MCZ": {
         "name": "non-linear distortion to fill out cellmask",
         "python::module": "infer_subc_2d.organelles.cellmask",
-        "python::function": "non_linear_soma_transform_MCZ",
+        "python::function": "non_linear_cellmask_transform_MCZ",
         "parameters": null
     },
     "choose_max_label_cellmask_union_nucleus": {
@@ -1736,5 +1736,17 @@
                 "widget_type": "slider"
             }
         }
+    },
+    "stack_layers": {
+        "name": "stack layers",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "stack_layers",
+        "parameters": null
+    },
+    "stack_masks": {
+        "name": "stack masks",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "stack_masks",
+        "parameters": null
     }
 }

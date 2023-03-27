@@ -22,3 +22,21 @@ pip install napari-infer-subc
 # # pip install opencv-contrib-python
 # pip install opencv-python-headless  # seems to already be installed
 
+###### TEST FOR CENTROSOME
+conda create -n cento python=3.9 -c conda-forge pip notebook napari scipy scikit-learn 
+
+conda activate cento
+
+# pip install 'napari[all]'
+# pip install scipy scikit-learn matplotlib #jupyter
+# python3 -m pip install centrosome "matplotlib >=3.1.3"
+# conda install -c bioconda centrosome
+
+pip install centrosome
+pip install aicsimageio 
+pip install aicspylibczi
+pip install aicssegmentation #downgrades napari and scikitlearn
+
+pip install napari-aicsimageio  
+
+
