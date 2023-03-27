@@ -3,34 +3,30 @@
         "category": "extraction",
         "function": "select_channel_from_raw",
         "parameter_values": {
-            "chan": 4
+            "chan": 5
         },
         "parent": 0,
-        "annotation": "basic perox segmentation: 1"
+        "annotation": "basic ER segmentation: 1"
     },
     "2": {
         "category": "preprocessing",
         "function": "scale_and_smooth",
         "parameter_values": {
-            "median_sz": 0,
+            "median_sz": 1,
             "gauss_sig": 3.0
         },
         "parent": 1,
-        "annotation": "basic perox segmentation: 2"
+        "annotation": "basic ER segmentation: 2"
     },
     "3": {
         "category": "core",
-        "function": "spot_filter_3",
+        "function": "filament_filter",
         "parameter_values": {
-            "dot_scale_1": 1.0,
-            "dot_cut_1": 0.01,
-            "dot_scale_2": 0,
-            "dot_cut_2": 0.1,
-            "dot_scale_3": 0,
-            "dot_cut_3": 0.1
+            "filament_scale": 1.0,
+            "filament_cut": 0.015
         },
         "parent": 2,
-        "annotation": "basic perox - spot filter (1 scale): 3"
+        "annotation": "basic ER - filament filter: 3"
     },
     "4": {
         "category": "postprocessing",
@@ -42,6 +38,6 @@
             "method": "slice_by_slice"
         },
         "parent": 3,
-        "annotation": "basic perox - fill/filter: 4"
+        "annotation": "basic ER - fill/filter: 4"
     }
 }

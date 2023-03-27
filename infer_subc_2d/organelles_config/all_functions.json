@@ -591,7 +591,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 0,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },
@@ -845,7 +845,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 0,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },
@@ -859,7 +859,7 @@
         }
     },
     "fill_and_filter_linear_size": {
-        "name": "`hole_filling` and `size_filter` with size argument in linear units ",
+        "name": "fill holes and filter small objects - linear space constant",
         "python::module": "infer_subc_2d.core.img",
         "python::function": "fill_and_filter_linear_size",
         "parameters": {
@@ -867,30 +867,30 @@
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
-                "max": 25,
+                "max": 20,
                 "increment": 1
             },
             "hole_max": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
-                "max": 150,
+                "max": 80,
                 "increment": 1
             },
             "min_size": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
-                "max": 500,
+                "max": 80,
                 "increment": 1
             },
             "method": {
                 "data_type": "str",
+                "widget_type": "drop-down",
                 "options": [
                     "3D",
                     "slice_by_slice"
-                ],
-                "widget_type": "drop-down"
+                ]
             }
         }
     },
@@ -936,7 +936,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 0,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },
@@ -1278,7 +1278,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 3,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },
@@ -1409,7 +1409,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 3,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },
@@ -1590,7 +1590,7 @@
             "median_sz": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 3,
+                "min": 1,
                 "max": 15,
                 "increment": 1
             },

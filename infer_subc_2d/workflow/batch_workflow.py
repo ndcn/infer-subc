@@ -1,5 +1,8 @@
 import numpy as np
 
+from tifffile import imwrite, tiffcomment, imread
+
+
 from datetime import datetime
 from typing import List, Union
 from aicsimageio import AICSImage
@@ -33,10 +36,13 @@ class BatchWorkflow:
         workflow_definition: WorkflowDefinition,
         input_dir: Union[str, Path],
         output_dir: Union[str, Path],
+        segmentation_name: str,  # JAH: add segmentation name for export
         channel_index: int = -1,  # JAH: change so all negative indices return ALL the channels/zslices
     ):
         if workflow_definition is None:
             raise ArgumentNullError("workflow_definition")
+        if segmentation_name is None:
+            raise ArgumentNullError("segmentation_name")
         if input_dir is None:
             raise ArgumentNullError("input_dir")
         if output_dir is None:
@@ -44,6 +50,7 @@ class BatchWorkflow:
 
         self._workflow_definition = workflow_definition
         self._input_dir = Path(input_dir)
+        self._segmentation_name = segmentation_name
 
         if not self._input_dir.exists():
             raise ValueError("The input directory does not exist")
@@ -80,6 +87,10 @@ class BatchWorkflow:
     @property
     def output_dir(self) -> Path:
         return self._output_dir
+
+    @property
+    def segmentation_name(self) -> str:
+        return self._segmentation_name
 
     def is_done(self) -> bool:
         """
@@ -133,10 +144,25 @@ class BatchWorkflow:
                     yield
 
                 # Save output
-                output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
+                # output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
+                output_path = self._output_dir / f"{self._segmentation_name}_{f.stem}.tiff"
+
                 result = workflow.get_most_recent_result()
-                # TODO:  replace with ome.tiff.writer ...
-                OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
+
+                ret = imwrite(
+                    output_path,
+                    self._format_output(result),
+                    # metadata={
+                    #     "axes": dimension_order,
+                    #     # "physical_pixel_sizes": physical_pixel_sizes,
+                    #     # "channel_names": channel_names,
+                    # },
+                )
+                # if len(result.shape) == 3:
+                #     # TODO:  replace with. tifffile writer ...
+                #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
+                # else:
+                #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="CZYX")
 
                 msg = f"SUCCESS: {f}. Output saved at {output_path}"
                 print(msg)
@@ -203,6 +229,8 @@ class BatchWorkflow:
 
         # return [(data, layer_attributes, layer_type)]  # (data,meta) is fine since 'image' is default
         # JAH: refactor to make channel_index be a zslice
+
+        print(f"loaded {name} size: {data.shape}")
         if self._channel_index < 0:
             return data
         else:

@@ -44,7 +44,12 @@ class WorkflowEngine:
         return Workflow(definition, input_image)
 
     def get_executable_batch_workflow(
-        self, workflow_name: str, input_dir: str, output_dir: str, channel_index: int = 0
+        self,
+        workflow_name: str,
+        input_dir: str,
+        output_dir: str,
+        segmentation_name: str,
+        channel_index: int = -1,
     ):
         """
         Get an executable BatchWorkflow object
@@ -57,6 +62,8 @@ class WorkflowEngine:
         """
         if workflow_name is None:
             raise ArgumentNullError("workflow_name")
+        if segmentation_name is None:
+            raise ArgumentNullError("segmentation_name")
         if input_dir is None:
             raise ArgumentNullError("input_dir")
         if output_dir is None:
@@ -64,7 +71,7 @@ class WorkflowEngine:
 
         definition = self._get_workflow_definition(workflow_name)
 
-        return BatchWorkflow(definition, input_dir, output_dir, channel_index)
+        return BatchWorkflow(definition, input_dir, output_dir, segmentation_name, channel_index)
 
     def get_executable_workflow_from_config_file(
         self, file_path: Union[str, Path], input_image: np.ndarray
@@ -84,12 +91,14 @@ class WorkflowEngine:
         definition = self._workflow_config.get_workflow_definition_from_config_file(Path(file_path))
         return Workflow(definition, input_image)
 
+    # JAH: add segmentation_name ... do i need it?
     def get_executable_batch_workflow_from_config_file(
         self,
         file_path: Union[str, Path],
         input_dir: Union[str, Path],
         output_dir: Union[str, Path],
-        channel_index: int = 0,
+        segmentation_name: str,
+        channel_index: int = -1,
     ):
         """
         Get an executable batch workflow object from a configuration file
@@ -102,13 +111,15 @@ class WorkflowEngine:
         """
         if file_path is None:
             raise ArgumentNullError("file_path")
+        if segmentation_name is None:
+            raise ArgumentNullError("segmentation_name")
         if input_dir is None:
             raise ArgumentNullError("input_dir")
         if output_dir is None:
             raise ArgumentNullError("output_dir")
 
         definition = self._workflow_config.get_workflow_definition_from_config_file(Path(file_path))
-        return BatchWorkflow(definition, input_dir, output_dir, channel_index)
+        return BatchWorkflow(definition, input_dir, output_dir, segmentation_name, channel_index)
 
     def save_workflow_definition(self, workflow_definition: WorkflowDefinition, output_file_path: Union[str, Path]):
         if workflow_definition is None:
