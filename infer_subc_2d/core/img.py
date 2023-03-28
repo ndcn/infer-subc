@@ -328,6 +328,17 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
 #     # 10 seconds!!!!  tooooo slow... for maybe no good reason
 #     return min_max_intensity_normalization(struct_img)
 
+def log_rescale_wrapper(img_in: np.ndarray) -> np.ndarray:
+    """
+    function to min-max normalize a gray-scale image, log transform it, then min-max normalize the log-scaled image
+    """
+    img = min_max_intensity_normalization(img_in)
+    img, d = log_transform(img)
+    img = min_max_intensity_normalization(img)
+
+    log_norm_img = img
+
+    return log_norm_img
 
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """

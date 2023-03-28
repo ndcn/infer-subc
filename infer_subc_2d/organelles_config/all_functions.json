@@ -1736,5 +1736,11 @@
                 "widget_type": "slider"
             }
         }
+    },
+    "log_rescale_wrapper": {
+        "name": "log and rescale",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "log_rescale_wrapper",
+        "paramters": null
     }
 }

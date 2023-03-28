@@ -1,0 +1,50 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "w0": 0,
+            "w1": 4,
+            "w2": 1,
+            "w3": 1,
+            "w4": 2,
+            "w5": 2,
+            "w6": 0,
+            "w7": 0,
+            "w8": 0,
+            "w9": 0,
+            "scale_min_max": false
+        },
+        "parent": 0,
+        "annotation": "this creates an aggregate signal for the cytoplasm mask: 1"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "log_rescale_wrapper",
+        "parent": 1,
+        "annotation": "rescale, log transform, and rescale: 2"
+    },
+    "3": {
+        "category": "core",
+        "function": "masked_object_thresh",
+        "parameter_values": {
+            "th_method": "ave_tri_med",
+            "cutoff_size": 50,
+            "th_adjust": 0.05
+        },
+        "parent": 2,
+        "annotation": "basic cytoplasm mask segmentation: 3"
+    },
+    "4": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 30,
+            "min_size": 10,
+            "method": "3D"
+        },
+        "parent": 3,
+        "annotation": "fill holes and filter out small objects: 4"
+    }
+}

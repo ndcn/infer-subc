@@ -2,6 +2,7 @@ import numpy as np
 from typing import Union, Dict
 from pathlib import Path
 import time
+import skimage
 
 from infer_subc_2d.core.file_io import (
     export_inferred_organelle,
@@ -175,6 +176,132 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
         print(f"inferred nuclei in ({(end - start):0.2f}) sec")
 
     return nuclei
+
+
+##########################
+#  infer_nucleus_cellmask_from_cytoplasm()
+##########################
+def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
+                                            cell_holefill_min: int,
+                                            cell_holefill_max: int,
+                                            cell_small_object_width: int,
+                                            cell_method: str,
+                                            cell_connectivity: int,
+                                            nuc_holefill_min: int,
+                                            nuc_holefill_max: int,
+                                            nuc_small_object_width: int,
+                                            nuc_method: str,
+                                            nuc_connectivity: int
+                                                            ) -> np.ndarray:
+    """
+    Procedure to infer the nucleus and cell masks from the cytoplasm mask (cell area without nuclei). 
+    This could be used in the case where the nuclei are not stained and other organelle markers fill the cytoplasm, but not the nuclear space.
+
+    Parameters
+    ------------
+    cytoplasm_mask: np.ndarray
+        3D (XYZ) binary mask of cytoplasm (whole cell area without the nucleus)
+    cell_holefill_min: int
+        minimum size of holes to fill (in 1D length) for cell mask
+    cell_holefill_max: int
+        maximum size of holes to fill (in 1D length) for cell mask
+    cell_small_object_width: int
+        maximum size of small object to remove (in 1D length) for cell mask
+    cell_method: str
+        '3D' or 'slice-by-slice' for size filtering and hole filling for cell mask
+    cell_connectivity: int
+        connectivity to use when computing size filter for cell mask
+    nuc_holefill_min: int
+        minimum size of holes to fill (in 1D length) for nucleus mask
+    nuc_holefill_max: int
+        maximum size of holes to fill (in 1D length) for nucleus mask
+    nuc_small_object_width: int
+        maximum size of small object to remove (in 1D length) for nucleus mask
+    nuc_method: str
+        '3D' or 'slice-by-slice' for size filtering and hole filling for cell mask
+    nuc_connectivity: int
+        connectivity to use when computing size filter for nucleus mask
+
+    Returns
+    -------------
+    cell_mask
+        mask defining extent of the entire cell
+    nucleus_mask
+        mask defining extent of the nucleus
+    """
+
+    ###################
+    # PRE_PROCESSING
+    ###################                
+    cytoplasm_dilated = skimage.morphology.binary_dilation(cytoplasm_mask)
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    # Cell mask
+    cytoplasm_filled = fill_and_filter_linear_size(cytoplasm_dilated, hole_min=cell_holefill_min, hole_max=cell_holefill_max, min_size=cell_small_object_width, method=cell_method, connectivity=cell_connectivity)
+    cytoplasm_eroded = skimage.morphology.binary_erosion(cytoplasm_filled)
+    cell_bw = cytoplasm_eroded
+    # Nucleus
+    nuclei_xor = np.logical_xor(cytoplasm_mask, cell_bw)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    # Nucleus
+    nuc_cleaned_img = fill_and_filter_linear_size(nuclei_xor, hole_min=nuc_holefill_min, hole_max=nuc_holefill_max, min_size=nuc_small_object_width, method=nuc_method, connectivity=nuc_connectivity)
+    # Cell mask
+    extra_from_dilate = np.logical_xor(nuc_cleaned_img, nuclei_xor)
+    cell_mask_cleaned_img = np.logical_xor(cell_bw, extra_from_dilate)
+
+    ###################
+    # RENAMING
+    ###################
+    cell_mask = cell_mask_cleaned_img.astype(dtype=int)
+    nucleus_mask = nuc_cleaned_img.astype(dtype=int)
+
+    return cell_mask, nucleus_mask
+
+##########################
+#  fixed_infer_nucleus_cellmask_from_cytoplasm
+##########################
+def fixed_infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+ 
+    Returns
+    -------------
+    nuclei_object
+        inferred nuclei
+    
+    """
+    cell_holefill_min = 0
+    cell_holefill_max = 500
+    cell_small_object_width = 0
+    cell_method = '3D'
+    cell_connectivity = 3
+    nuc_holefill_min = 0
+    nuc_holefill_max = 0
+    nuc_small_object_width = 20
+    nuc_method = '3D'
+    nuc_connectivity = 3
+
+    return infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask,
+                                    cell_holefill_min,
+                                    cell_holefill_max,
+                                    cell_small_object_width,
+                                    cell_method,
+                                    cell_connectivity,
+                                    nuc_holefill_min,
+                                    nuc_holefill_max,
+                                    nuc_small_object_width,
+                                    nuc_method,
+                                    nuc_connectivity)
 
 
 # def infer_nuclei_fromlabel_AICS(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

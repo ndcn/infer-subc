@@ -5,7 +5,7 @@ import time
 
 from skimage.morphology import binary_erosion
 from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.core.img import apply_mask
+from infer_subc_2d.core.img import *
 
 
 ##########################
@@ -99,3 +99,122 @@ def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict
         print(f"inferred cytoplasm in ({(end - start):0.2f}) sec")
 
     return cytoplasm
+
+##########################
+#  infer_cytoplasm_from_composite
+##########################
+def infer_cytoplasm_from_composite(in_img: np.ndarray,
+                                    weights: list,
+                                    low_level_min_size: int,
+                                    thresh_method: str,
+                                    local_adjust: float,
+                                    holefill_min: int,
+                                    holefill_max: int,
+                                    small_object_width: int,
+                                    method: str,
+                                    connectivity: int
+                                                            ) -> np.ndarray:
+    """
+    Procedure to infer 3D cytoplasm (cell area without the nucleus) segmentation from multichannel z-stack input.
+    This can be used when segmenting the cytoplasm from a stain that fills the cytoplasm, but not the nuclear area.
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+    weights: list
+        a list of weights for each channel in the image to create a merged image; 
+        set to 0 if the channel should not be used
+    low_level_min_size: int
+        global threshold size restriction
+    thresh_method: str
+        global threshold method, 'ave', 'tri', or 'med'
+    local_adjust: float
+        local threshold factor
+    holefill_min: int
+        minimum hole size to fill
+    holefill_max: int
+        maximum hole size to fill
+    small_object_width: int
+        diameter of largest object to remove; all smaller object will be removed
+    method: str
+        '3D' or 'slice-by-slice'
+    connectivity: int
+        connectivity to determine indepedent object for size filtering
+
+    Returns
+    -------------
+    cytoplasm_mask
+        mask defined extent of cytoplasm (cell without the nuclear area)
+    
+    """
+
+    ###################
+    # INPUT
+    ###################
+    struct_img_raw = make_aggregate(in_img, weights[0], weights[1], weights[2], weights[3], weights[4], weights[5], scale_min_max=False)
+
+    ###################
+    # PRE_PROCESSING
+    ###################           
+    composite = log_rescale_wrapper(struct_img_raw)
+
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    bw = masked_object_thresh(composite, th_method=thresh_method, cutoff_size=low_level_min_size, th_adjust=local_adjust)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    cleaned_img = fill_and_filter_linear_size(bw, hole_min=holefill_min, hole_max=holefill_max, min_size=small_object_width, method=method, connectivity=connectivity)
+
+    ###################
+    # RENAMING
+    ###################
+    cytoplasm_mask = cleaned_img.astype(dtype=int)
+
+    return cytoplasm_mask
+
+##########################
+#  fixed_infer_cytoplasm_from_composite
+##########################
+def fixed_infer_cytoplasm_from_composite(in_img: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+    soma_mask: np.ndarray
+        mask
+ 
+    Returns
+    -------------
+    nuclei_object
+        mask defined extent of NU
+    
+    """
+    weights = [0,4,1,1,2,2]
+    low_level_min_size = 50
+    thresh_method = 'ave'
+    local_adjust = 0.05
+    holefill_min = 0
+    holefill_max = 30
+    small_object_width = 10
+    method = '3D'
+    connectivity = 1
+    
+
+    return infer_cytoplasm_from_composite(in_img,
+                                            weights,
+                                            low_level_min_size,
+                                            thresh_method,
+                                            local_adjust,
+                                            holefill_min,
+                                            holefill_max,
+                                            small_object_width,
+                                            method,
+                                            connectivity)
