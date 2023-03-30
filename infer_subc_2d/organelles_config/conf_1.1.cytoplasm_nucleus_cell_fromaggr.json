@@ -26,23 +26,32 @@
     },
     "3": {
         "category": "core",
-        "function": "masked_object_thresh",
+        "function": "infer_cytoplasm_fromaggr",
         "parameter_values": {
             "th_method": "ave_tri_med",
-            "cutoff_size": 50,
-            "th_adjust": 0.05
+            "th_cutoff_sz": 50,
+            "th_adjust": 0.05,
+            "smallhole_min_sz": 0,
+            "smallhole_max_sz": 30,
+            "smallobj_max_sz": 10,
+            "slice_or_3D": "3D",
+            "filter_connectivity": 1
         },
         "parent": 2,
         "annotation": "basic cytoplasm mask segmentation: 3"
     },
     "4": {
         "category": "postprocessing",
-        "function": "fill_and_filter_linear_size",
+        "function": "infer_nucleus_cellmask_from_cytoplasm",
         "parameter_values": {
-            "hole_min": 0,
-            "hole_max": 30,
-            "min_size": 10,
-            "method": "3D"
+            "nucleus_min_sz": 0,
+            "nucleus_max_sz": 500,
+            "nucleus_fill_2D": false,
+            "nucmask_holefill_min": 0,
+            "nucmask_holefill_max": 0,
+            "nucmask_small_object_width": 20,
+            "nucmask_slice_or_3D": "3D",
+            "nucmask_connectivity": 3
         },
         "parent": 3,
         "annotation": "fill holes and filter out small objects: 4"

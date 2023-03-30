@@ -1048,7 +1048,7 @@
                 "widget_type": "slider",
                 "min": 0,
                 "max": 2,
-                "increment": 0.02
+                "increment": 0.01
             }
         }
     },
@@ -1742,5 +1742,136 @@
         "python::module": "infer_subc_2d.core.img",
         "python::function": "log_rescale_wrapper",
         "paramters": null
+    },
+    "infer_cytoplasm_fromaggr": {
+        "name": "infer cytoplasm from weighted aggregate",
+        "python::module": "infer_subc_2d.organelles.cytoplasm",
+        "python::function": "infer_cytoplasm_fromaggr",
+        "parameters": {
+            "th_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "th_cutoff_sz": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "th_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.01
+            },
+            "smallhole_min_sz": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 100,
+                "increment": 1
+            },
+            "smallhole_max_sz": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 500,
+                "increment": 5
+            },
+            "smallobj_max_sz": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 250,
+                "increment": 1
+            },
+            "slice_or_3D": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "slice_by_slice",
+                    "3D"
+                ]
+            },
+            "filter_connectivity": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 1,
+                "max": 3,
+                "increment": 1
+            }
+        }
+    },
+    "infer_nucleus_cellmask_from_cytoplasm": {
+        "name": "infer nucleus and cellmask from cytoplasm",
+        "python::module": "infer_subc_2d.organelles.nuclei",
+        "python::function": "infer_nucleus_cellmask_from_cytoplasm",
+        "parameters": {
+            "nucleus_min_sz": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 1000,
+                "increment": 10
+            },
+            "nucleus_max_sz": {
+                "data_type": "float",
+                "increment": 10,
+                "max": 1000,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "nucleus_fill_2D": {
+                "data_type": "bool",
+                "widget_type": "drop-down",
+                "options": [
+                    false,
+                    true
+                ]
+            },
+            "nucmask_holefill_min": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 200,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "nucmask_holefill_max": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 200,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "nucmask_small_object_width": {
+                "data_type": "int",
+                "increment": 2,
+                "max": 200,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "nucmask_slice_or_3D": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "slice_by_slice",
+                    "3D"
+                ]
+            },
+            "nucmask_connectivity": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 3,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
     }
 }

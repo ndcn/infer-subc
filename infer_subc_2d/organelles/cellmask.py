@@ -29,7 +29,10 @@ from infer_subc_2d.core.img import (
     masked_inverted_watershed,
     fill_and_filter_linear_size,
     get_max_label,
-)
+    make_aggregate,
+    log_rescale_wrapper)
+from infer_subc_2d.organelles.nuclei import infer_nucleus_cellmask_from_cytoplasm
+from infer_subc_2d.organelles.cytoplasm import infer_cytoplasm_fromaggr
 
 
 def raw_cellmask_fromaggr(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
@@ -294,3 +297,157 @@ def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, ou
         print(f"inferred (and exported) cellmask in ({(end - start):0.2f}) sec")
 
     return cellmask
+
+
+##########################
+#  infer_cytoplasm_from_composite
+##########################
+def infer_cyto_nuc_cellmask_fromaggr(in_img: np.ndarray,
+                                        weights: list,
+                                        cyto_thresh_method: str,
+                                        cyto_th_cutoff_sz: int,
+                                        cyto_th_adjust: int,
+                                        cyto_hole_min: int,
+                                        cyto_hole_max: int,
+                                        cyto_smallobj_max: int,
+                                        cyto_slice_or_3D: str,
+                                        cyto_connectivity: int,
+                                        nucleus_min_sz: int, 
+                                        nucleus_max_sz: int, 
+                                        nucleus_fill_2D: bool,
+                                        nucmask_holefill_min: int,
+                                        nucmask_holefill_max: int,
+                                        nucmask_small_object_width: int,
+                                        nucmask_method: str,
+                                        nucmask_connectivity: int
+                                        ) -> np.ndarray:
+    """
+    Procedure to infer 3D cytoplasm (cell area without the nucleus) segmentation from multichannel z-stack input.
+    This can be used when segmenting the cytoplasm from a stain that fills the cytoplasm, but not the nuclear area.
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+    weights: list
+        a list of weights for each channel in the image to create a merged image; 
+        set to 0 if the channel should not be used
+
+        
+        
+    Returns
+    -------------
+    cytoplasm_mask
+        mask defined extent of cytoplasm (cell without the nuclear area)
+    
+    """
+
+    ###################
+    # INPUT
+    ###################
+    composite = make_aggregate(in_img, w0=weights[0], w1=weights[1], w2=weights[2], w3=weights[3], w4=weights[4], w5=weights[5], scale_min_max=False)
+
+    ###################
+    # PRE_PROCESSING
+    ###################           
+    struct_img = log_rescale_wrapper(composite)
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    cyto_cleaned_img = infer_cytoplasm_fromaggr(struct_img,
+                                                th_method=cyto_thresh_method,
+                                                th_cutoff_sz=cyto_th_cutoff_sz,
+                                                th_adjust=cyto_th_adjust,
+                                                smallhole_min_sz=cyto_hole_min,
+                                                smallhole_max_sz=cyto_hole_max,
+                                                smallobj_max_sz=cyto_smallobj_max,
+                                                slices_or_3D=cyto_slice_or_3D,
+                                                filter_connectivity=cyto_connectivity)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    cell_cleaned_img, nuc_cleaned_img = infer_nucleus_cellmask_from_cytoplasm(cyto_cleaned_img,
+                                                                            nucleus_min_sz= nucleus_min_sz,
+                                                                            nucleus_max_sz= nucleus_max_sz,
+                                                                            nucleus_fill_2D= nucleus_fill_2D,
+                                                                            nucmask_holefill_min= nucmask_holefill_min,
+                                                                            nucmask_holefill_max= nucmask_holefill_max, 
+                                                                            nucmask_small_object_width= nucmask_small_object_width,
+                                                                            nucmask_method= nucmask_method,
+                                                                            nucmask_connectivity= nucmask_connectivity)
+
+    ###################
+    # RENAMING
+    ###################
+    cytoplasm_mask = cyto_cleaned_img.astype(dtype=int)
+    cell_mask = cell_cleaned_img.astype(dtype=int)
+    nucleus_mask = nuc_cleaned_img.astype(dtype=int)
+
+    return cytoplasm_mask, cell_mask, nucleus_mask
+
+
+
+
+##########################
+#  fixed_infer_cytoplasm_from_composite
+##########################
+def fixed_infer_cyto_nuc_cellmask_fromaggr(in_img: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer cytoplasm, nucleus, and cell masks from multichannel input, 
+    with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing all the channels
+    soma_mask: np.ndarray
+        mask
+ 
+    Returns
+    -------------
+    nuclei_object
+        mask defined extent of NU
+    
+    """
+    weights = [0,4,1,1,2,2]
+
+    cyto_thresh_method = 'ave'
+    cyto_th_cutoff_sz = 50
+    cyto_th_adjust = 0.05
+    cyto_hole_min = 0
+    cyto_hole_max = 30
+    cyto_smallobj_max = 10
+    cyto_slice_or_3D = '3D'
+    cyto_connectivity = 1
+
+    nucleus_min_sz = 0
+    nucleus_max_sz = 500
+    nucleus_fill_2D = False
+
+    nucmask_holefill_min = 0
+    nucmask_holefill_max = 0
+    nucmask_small_object_width = 20
+    nucmask_method = '3D'
+    nucmask_connectivity = 3
+
+
+    return infer_cyto_nuc_cellmask_fromaggr(in_img,
+                                        weights,
+                                        cyto_thresh_method,
+                                        cyto_th_cutoff_sz,
+                                        cyto_th_adjust,
+                                        cyto_hole_min,
+                                        cyto_hole_max,
+                                        cyto_smallobj_max,
+                                        cyto_slice_or_3D,
+                                        cyto_connectivity,
+                                        nucleus_min_sz, 
+                                        nucleus_max_sz, 
+                                        nucleus_fill_2D,
+                                        nucmask_holefill_min,
+                                        nucmask_holefill_max,
+                                        nucmask_small_object_width,
+                                        nucmask_method,
+                                        nucmask_connectivity)

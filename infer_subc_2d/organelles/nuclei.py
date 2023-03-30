@@ -15,6 +15,7 @@ from infer_subc_2d.core.img import (
     select_channel_from_raw,
     scale_and_smooth,
     apply_mask,
+    hole_filling_linear_size
 )
 from infer_subc_2d.constants import NUC_CH
 
@@ -182,16 +183,14 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
 #  infer_nucleus_cellmask_from_cytoplasm()
 ##########################
 def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
-                                            cell_holefill_min: int,
-                                            cell_holefill_max: int,
-                                            cell_small_object_width: int,
-                                            cell_method: str,
-                                            cell_connectivity: int,
-                                            nuc_holefill_min: int,
-                                            nuc_holefill_max: int,
-                                            nuc_small_object_width: int,
-                                            nuc_method: str,
-                                            nuc_connectivity: int
+                                            nucleus_min_sz: int,
+                                            nucleus_max_sz: int,
+                                            nucleus_fill_2D: bool,
+                                            nucmask_holefill_min: int,
+                                            nucmask_holefill_max: int,
+                                            nucmask_small_object_width: int,
+                                            nucmask_slice_or_3D: str,
+                                            nucmask_connectivity: int
                                                             ) -> np.ndarray:
     """
     Procedure to infer the nucleus and cell masks from the cytoplasm mask (cell area without nuclei). 
@@ -200,27 +199,25 @@ def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
     Parameters
     ------------
     cytoplasm_mask: np.ndarray
-        3D (XYZ) binary mask of cytoplasm (whole cell area without the nucleus)
-    cell_holefill_min: int
-        minimum size of holes to fill (in 1D length) for cell mask
-    cell_holefill_max: int
-        maximum size of holes to fill (in 1D length) for cell mask
-    cell_small_object_width: int
-        maximum size of small object to remove (in 1D length) for cell mask
-    cell_method: str
-        '3D' or 'slice-by-slice' for size filtering and hole filling for cell mask
-    cell_connectivity: int
-        connectivity to use when computing size filter for cell mask
-    nuc_holefill_min: int
-        minimum size of holes to fill (in 1D length) for nucleus mask
-    nuc_holefill_max: int
-        maximum size of holes to fill (in 1D length) for nucleus mask
-    nuc_small_object_width: int
-        maximum size of small object to remove (in 1D length) for nucleus mask
-    nuc_method: str
-        '3D' or 'slice-by-slice' for size filtering and hole filling for cell mask
-    nuc_connectivity: int
-        connectivity to use when computing size filter for nucleus mask
+        3D (XYZ) binary mask of the cytoplasm (whole cell area without the nucleus)
+    nucleus_min_sz: int
+        minimum size of the nucleus that will be filled to created the cell mask
+    nucleus_max_sz: int
+        maximum size of the nucleus that will be filled to created the cell mask
+    nucleus_fill_2D: bool
+        Should the hole filling occur slice-by-slice or in 3D?
+        Options: 'slice-by-slice' or '3D'
+    nucmask_holefill_min: int
+        minimum size of small holes to fill to clean up the nucleus mask        
+    nucmask_holefill_max: int
+        maximum size of small holes to fill to clean up the nucleus mask         
+    nucmask_small_object_width: int
+        size of small objects to remove to clean up the nucleus mask
+    nucmask_slice_or_3D: str
+        Should the hole filling and size filtering occur slice-by-slice or in 3D?
+        Options: 'slice-by-slice' or '3D'
+    nucmask_connectivity: int
+        fill and filter connectivity between objects; should be an integer between 1 and ndim of image
 
     Returns
     -------------
@@ -239,9 +236,10 @@ def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
     # CORE_PROCESSING
     ###################
     # Cell mask
-    cytoplasm_filled = fill_and_filter_linear_size(cytoplasm_dilated, hole_min=cell_holefill_min, hole_max=cell_holefill_max, min_size=cell_small_object_width, method=cell_method, connectivity=cell_connectivity)
+    cytoplasm_filled = hole_filling_linear_size(cytoplasm_dilated,  hole_min=nucleus_min_sz, hole_max=nucleus_max_sz, fill_2d=nucleus_fill_2D)
     cytoplasm_eroded = skimage.morphology.binary_erosion(cytoplasm_filled)
     cell_bw = cytoplasm_eroded
+
     # Nucleus
     nuclei_xor = np.logical_xor(cytoplasm_mask, cell_bw)
 
@@ -249,7 +247,8 @@ def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
     # POST_PROCESSING
     ###################
     # Nucleus
-    nuc_cleaned_img = fill_and_filter_linear_size(nuclei_xor, hole_min=nuc_holefill_min, hole_max=nuc_holefill_max, min_size=nuc_small_object_width, method=nuc_method, connectivity=nuc_connectivity)
+    nuc_cleaned_img = fill_and_filter_linear_size(nuclei_xor, hole_min=nucmask_holefill_min, hole_max=nucmask_holefill_max, min_size=nucmask_small_object_width, method=nucmask_slice_or_3D, connectivity=nucmask_connectivity)
+    
     # Cell mask
     extra_from_dilate = np.logical_xor(nuc_cleaned_img, nuclei_xor)
     cell_mask_cleaned_img = np.logical_xor(cell_bw, extra_from_dilate)
@@ -260,7 +259,12 @@ def infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray,
     cell_mask = cell_mask_cleaned_img.astype(dtype=int)
     nucleus_mask = nuc_cleaned_img.astype(dtype=int)
 
-    return cell_mask, nucleus_mask
+    masks = np.stack((nucleus_mask, cytoplasm_mask, cell_mask), axis=0)
+
+    return masks
+
+    # return cell_mask, nucleus_mask
+
 
 ##########################
 #  fixed_infer_nucleus_cellmask_from_cytoplasm
@@ -276,32 +280,31 @@ def fixed_infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask: np.ndarray) -> n
  
     Returns
     -------------
-    nuclei_object
-        inferred nuclei
+    cell_mask
+        mask defining extent of the entire cell
+    nucleus_mask
+        mask defining extent of the nucleus
     
     """
-    cell_holefill_min = 0
-    cell_holefill_max = 500
-    cell_small_object_width = 0
-    cell_method = '3D'
-    cell_connectivity = 3
-    nuc_holefill_min = 0
-    nuc_holefill_max = 0
-    nuc_small_object_width = 20
-    nuc_method = '3D'
-    nuc_connectivity = 3
+    nucleus_min_sz = 0
+    nucleus_max_sz = 500
+    nucleus_fill_2D = False
+
+    nucmask_holefill_min = 0
+    nucmask_holefill_max = 0
+    nucmask_small_object_width = 20
+    nucmask_slice_or_3D = '3D'
+    nucmask_connectivity = 3
 
     return infer_nucleus_cellmask_from_cytoplasm(cytoplasm_mask,
-                                    cell_holefill_min,
-                                    cell_holefill_max,
-                                    cell_small_object_width,
-                                    cell_method,
-                                    cell_connectivity,
-                                    nuc_holefill_min,
-                                    nuc_holefill_max,
-                                    nuc_small_object_width,
-                                    nuc_method,
-                                    nuc_connectivity)
+                                                nucleus_min_sz,
+                                                nucleus_max_sz,
+                                                nucleus_fill_2D,
+                                                nucmask_holefill_min,
+                                                nucmask_holefill_max,
+                                                nucmask_small_object_width,
+                                                nucmask_slice_or_3D,
+                                                nucmask_connectivity)
 
 
 # def infer_nuclei_fromlabel_AICS(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

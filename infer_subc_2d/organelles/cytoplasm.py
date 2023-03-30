@@ -100,23 +100,78 @@ def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict
 
     return cytoplasm
 
-##########################
-#  infer_cytoplasm_from_composite
-##########################
-def infer_cytoplasm_from_composite(in_img: np.ndarray,
-                                    weights: list,
-                                    low_level_min_size: int,
-                                    thresh_method: str,
-                                    local_adjust: float,
-                                    holefill_min: int,
-                                    holefill_max: int,
-                                    small_object_width: int,
-                                    method: str,
-                                    connectivity: int
-                                                            ) -> np.ndarray:
+
+def infer_cytoplasm_fromaggr(img_in: np.ndarray,
+                             th_method: str,
+                             th_cutoff_sz: int,
+                             th_adjust: int,
+                             smallhole_min_sz: int,
+                             smallhole_max_sz: int,
+                             smallobj_max_sz: int,
+                             slice_or_3D: str,
+                             filter_connectivity: int) -> np.ndarray:
+    """ 
+    Procedure to mask the cytoplasmic area of a cell (based on 'MO' tresholding from 'aicssegmentation'). Includes hole and size filtering.
+
+    Parameters
+    ----------
+    img_in: np.dnarray
+        Grey scale fluorescence image of cytoplasmic area. Image should already be preprocessed (smoothing, rescaling, etc.)
+    th_method: str
+        Threshold method for masked_object_threshold() function in infer_subc_2D.core.img.
+        Options: "triangle", "median", and "ave_tri_med"
+    th_cutoff_sz: str 
+        Maximum object size for masked_object_threshold() function in infer_subc_2D.core.img.
+    th_adjust: str
+        Local threshold adjustment value for masked_object_threshold() function in infer_subc_2D.core.img.
+    smallhole_min_sz: int
+        Minimum size of hole to fill in cytoplasm mask.
+    smallhole_max_sz: int
+        Maximum size of hole to fill in cytoplasm mask.
+    smallobj_max_sz: int
+        Maximum small object size to remove from cytoplasm mask.
+    slices_or_3D: str
+        Should the filtering be performed slice-by-slice or in 3D?
+        Options: 'slice-by-slice', or '3D'
+    filter_connectivity: int
+        Connectivity of objects in cytoplasm mask for filtering function
+
+    Output
+    ------
+    cytoplasm_mask: np.ndarray
+        binary image of cyplasmic area (cell area without nucleus)
     """
-    Procedure to infer 3D cytoplasm (cell area without the nucleus) segmentation from multichannel z-stack input.
-    This can be used when segmenting the cytoplasm from a stain that fills the cytoplasm, but not the nuclear area.
+    ###################
+    # CORE_PROCESSING
+    ###################
+    cyto_bw = masked_object_thresh(img_in, th_method=th_method, cutoff_size=th_cutoff_sz, th_adjust=th_adjust)
+    
+    ###################
+    # POST_PROCESSING
+    ###################
+    cyto_cleaned_img = fill_and_filter_linear_size(cyto_bw, hole_min=smallhole_min_sz, hole_max=smallhole_max_sz, min_size=smallobj_max_sz, method=slice_or_3D, connectivity=filter_connectivity)
+    cytoplasm_mask = cyto_cleaned_img
+
+    return cytoplasm_mask 
+
+
+
+##########################
+#  infer_cytoplasm_fromaggr_wrapper
+##########################
+def infer_cytoplasm_fromaggr_wrapper(in_img: np.ndarray,
+                                    weights: list,
+                                    th_method: str,
+                                    th_cutoff_sz: int,
+                                    th_adjust: int,
+                                    smallhole_min_sz: int,
+                                    smallhole_max_sz: int,
+                                    smallobj_max_sz: int,
+                                    slice_or_3D: str,
+                                    filter_connectivity: int) -> np.ndarray:
+    """
+    Wrapper function for infer_cytoplasm_fromaggr(). 
+    Includes preprocessing steps: create weighted aggregate image, rescale, log, rescale
 
     Parameters
     ------------
@@ -125,51 +180,56 @@ def infer_cytoplasm_from_composite(in_img: np.ndarray,
     weights: list
         a list of weights for each channel in the image to create a merged image; 
         set to 0 if the channel should not be used
-    low_level_min_size: int
-        global threshold size restriction
-    thresh_method: str
-        global threshold method, 'ave', 'tri', or 'med'
-    local_adjust: float
-        local threshold factor
-    holefill_min: int
-        minimum hole size to fill
-    holefill_max: int
-        maximum hole size to fill
-    small_object_width: int
-        diameter of largest object to remove; all smaller object will be removed
-    method: str
-        '3D' or 'slice-by-slice'
-    connectivity: int
-        connectivity to determine indepedent object for size filtering
+    img_in: np.dnarray
+        Grey scale fluorescence image of cytoplasmic area. Image should already be preprocessed (smoothing, rescaling, etc.)
+    th_method: str
+        Threshold method for masked_object_threshold() function in infer_subc_2D.core.img.
+        Options: "triangle", "median", and "ave_tri_med"
+    th_cutoff_sz: str 
+        Maximum object size for masked_object_threshold() function in infer_subc_2D.core.img.
+    th_adjust: str
+        Local threshold adjustment value for masked_object_threshold() function in infer_subc_2D.core.img.
+    smallhole_min_sz: int
+        Minimum size of hole to fill in cytoplasm mask.
+    smallhole_max_sz: int
+        Maximum size of hole to fill in cytoplasm mask.
+    smallobj_max_sz: int
+        Maximum small object size to remove from cytoplasm mask.
+    slices_or_3D: str
+        Should the filtering be performed slice-by-slice or in 3D?
+        Options: 'slice-by-slice', or '3D'
+    filter_connectivity: int
+        Connectivity of objects in cytoplasm mask for filtering function
 
-    Returns
-    -------------
-    cytoplasm_mask
-        mask defined extent of cytoplasm (cell without the nuclear area)
+    Output
+    ------
+    cytoplasm_mask: np.ndarray
+        binary image of cytoplasmic area  (cell area without nucleus)
     
     """
-
     ###################
     # INPUT
     ###################
-    struct_img_raw = make_aggregate(in_img, weights[0], weights[1], weights[2], weights[3], weights[4], weights[5], scale_min_max=False)
+    composite = make_aggregate(in_img, weights[0], weights[1], weights[2], weights[3], weights[4], weights[5], scale_min_max=False)
 
     ###################
     # PRE_PROCESSING
     ###################           
-    composite = log_rescale_wrapper(struct_img_raw)
-
+    struct_img = log_rescale_wrapper(composite)
 
     ###################
     # CORE_PROCESSING
     ###################
-    bw = masked_object_thresh(composite, th_method=thresh_method, cutoff_size=low_level_min_size, th_adjust=local_adjust)
-
-    ###################
-    # POST_PROCESSING
-    ###################
-    cleaned_img = fill_and_filter_linear_size(bw, hole_min=holefill_min, hole_max=holefill_max, min_size=small_object_width, method=method, connectivity=connectivity)
-
+    cleaned_img = infer_cytoplasm_fromaggr(struct_img,
+                             th_method=th_method,
+                             th_cutoff_sz=th_cutoff_sz,
+                             th_adjust=th_adjust,
+                             smallhole_min_sz= smallhole_min_sz,
+                             smallhole_max_sz=smallhole_max_sz,
+                             smallobj_max_sz=smallobj_max_sz,
+                             slice_or_3D=slice_or_3D,
+                             filter_connectivity=filter_connectivity)
+    
     ###################
     # RENAMING
     ###################
@@ -177,44 +237,43 @@ def infer_cytoplasm_from_composite(in_img: np.ndarray,
 
     return cytoplasm_mask
 
+
 ##########################
 #  fixed_infer_cytoplasm_from_composite
 ##########################
-def fixed_infer_cytoplasm_from_composite(in_img: np.ndarray) -> np.ndarray:
+def fixed_infer_cytoplasm_fromaggr_wrapper(in_img: np.ndarray) -> np.ndarray:
     """
     Procedure to infer soma from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters
-    ------------
+    ----------
     in_img: np.ndarray
-        a 3d image containing all the channels
-    soma_mask: np.ndarray
-        mask
+        Raw image for processing using the infer_cytoplasm_fromaggr_wrapper() function.
+        Parameters are set for primary neuron images that were deconvolved.
  
     Returns
     -------------
-    nuclei_object
-        mask defined extent of NU
+    cytoplasm_mask
     
     """
     weights = [0,4,1,1,2,2]
-    low_level_min_size = 50
-    thresh_method = 'ave'
-    local_adjust = 0.05
-    holefill_min = 0
-    holefill_max = 30
-    small_object_width = 10
-    method = '3D'
-    connectivity = 1
-    
+    th_method= 'ave'
+    th_cutoff_sz= 50
+    th_adjust= 0.05
+    smallhole_min_sz= 0
+    smallhole_max_sz= 30
+    smallobj_max_sz= 10
+    slice_or_3D= '3D'
+    filter_connectivity= 1
 
-    return infer_cytoplasm_from_composite(in_img,
+
+    return infer_cytoplasm_fromaggr_wrapper(in_img,
                                             weights,
-                                            low_level_min_size,
-                                            thresh_method,
-                                            local_adjust,
-                                            holefill_min,
-                                            holefill_max,
-                                            small_object_width,
-                                            method,
-                                            connectivity)
+                                            th_method,
+                                            th_cutoff_sz,
+                                            th_adjust,
+                                            smallhole_min_sz,
+                                            smallhole_max_sz,
+                                            smallobj_max_sz,
+                                            slice_or_3D,
+                                            filter_connectivity)
