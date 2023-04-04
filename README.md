@@ -52,9 +52,6 @@ Given that the github repos are not yet whitelisted, the source directory needs 
 [uploading files via the workspace article](https://knowledgebase.aridhia.io/article/uploading-files-via-the-workspace/).
 [Using BLOB storage](https://knowledgebase.aridhia.io/article/using-blob-storage/)
 
-### Uploading files to Blobs
-> The file upload to Blob storage follows the process described in [uploading files via the workspace article](https://knowledgebase.aridhia.io/article/uploading-files-via-the-workspace/). Note that due to the nature of Blob storage, folder hierarchies cannot exist without content. This means that you won't be able to create empty folders, and after refreshing the page the empty folders will be gone from your Blob storage. There is a workaround: you can create an empty folder, and without closing the window, add or upload a new file to the folder.
-
 ## Getting Started
 
 ### Prerequisites
@@ -87,17 +84,19 @@ The following are prerequisites and should be installed prior to using the workf
 
 ### Installation
 
-`infer_subc_2d` can be installed from `PyPI` via `pip`
+`infer_subc_2d` is not yet available on `PyPI` so must be  be `pip` ionstalled from source
 ```
-pip install infer_subc_2d
+pip install git+https://github.com/ndcn/infer-subc-2D.git
 ```
 
 ## Usage
 
 ```py
-from infer_subc_2d.organelles import infer_NUCLEI
+from infer_subc_2d.organelles import infer_lyso
+from infer_subc_2d.core.file_io import read_czi_image
 
-NU_object, NU_label, out_p =  infer_NUCLEI(raw_nuclei.copy(), default_params) 
+img_data,meta_dict = read_czi_image("path/to/image.czi")
+lyso_obj =  infer_lyso(img_data) 
 
 ```
 
@@ -111,8 +110,6 @@ $ infer_subc_2d
 
 ## Roadmap
 
- - [ ] Add `infer_subc_2d` to ADWB whitelist
- - [ ] Update prerequisites
  - [ ] Create `PyPI` package
  - [ ] Update installation instructions to reflect optimal use of `conda` environments
 
