@@ -57,6 +57,8 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
     # intensity_img = apply_mask(intensity_img,mask )  #not needed
     input_obj = apply_mask(input_obj, mask)
     labels = label(input_obj).astype("int")
+
+    # start with LABEL
     properties = ["label"]
     # add intensity:
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]

@@ -70,7 +70,7 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     name: str
         name of organelle.  i.e. nuclei, lyso, etc.
     meta_dict:
-        dictionary of meta-data (ome)
+        dictionary of meta-data (ome) only using original file name here, but could add metadata
     out_data_path:
         Path object where tiffs are written to
 
@@ -86,17 +86,17 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     # channel_axis = meta_dict['channel_axis']
 
     # copy the original file name to meta
-    img_name = meta_dict["file_name"]  #
+    img_name = Path(meta_dict["file_name"])  #
     # add params to metadata
 
     if not Path.exists(out_data_path):
         Path.mkdir(out_data_path)
         print(f"making {out_data_path}")
 
-    img_name_out = name + "_" + img_name.split("/")[-1].split(".")[0]
+    img_name_out = f"{img_name.stem}-{name}"
     # HACK: skip the ome
     # out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
-    out_file_n = export_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
+    out_file_n = export_tiff(img_out, meta_dict, img_name_out, str(out_data_path), name)
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -110,13 +110,15 @@ def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_p
     img = meta_dict["metadata"]["aicsimage"]
     scale = meta_dict["scale"]
     channel_axis = meta_dict["channel_axis"]
-    img_name = meta_dict["file_name"]
+
+    img_name = Path(meta_dict["file_name"])  #
     # add params to metadata
     meta_dict["layer_names"] = layer_names
     out_path = data_root_path / "inferred_objects"
-    img_name_out = "binarized_" + img_name.split("/")[-1].split(".")[0]
+    name = "stack"
+    img_name_out = f"{img_name.stem}-{name}"
 
-    out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_path) + "/", layer_names)
+    out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_path), layer_names)
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -232,34 +234,35 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
 
     start = time.time()
 
-    out_name = out_path + img_name + ".tiff"
+    out_name = Path(out_path, f"{img_name}.tiff")
 
-    image_names = [img_name]
-    # chan_names = meta_in['metadata']['aicsimage'].channel_names
+    # TODO: add metadata OR simpliify and pass name rather than meta-data
+    # image_names = [img_name]
+    # # chan_names = meta_in['metadata']['aicsimage'].channel_names
+    # physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+    # # dimension_order = ["CZYX"]
+    # if channel_names is None:
+    #     channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    # else:
+    #     channel_names = [channel_names]
+    # if len(data_in.shape) == 3:  # single channel zstack
+    #     dimension_order = ["ZYX"]
+    #     # data_in = data_in[np.newaxis, :, :, :]
+    # elif len(data_in.shape) == 2:  # single channel , 1Z
+    #     dimension_order = ["YX"]
+    #     # data_in = data_in[np.newaxis, np.newaxis, :, :]
+    #     physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
 
-    physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
-
-    # dimension_order = ["CZYX"]
-    if channel_names is None:
-        channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
-    else:
-        channel_names = [channel_names]
-
-    if len(data_in.shape) == 3:  # single channel zstack
-        dimension_order = ["ZYX"]
-        # data_in = data_in[np.newaxis, :, :, :]
-    elif len(data_in.shape) == 2:  # single channel , 1Z
-        dimension_order = ["YX"]
-        # data_in = data_in[np.newaxis, np.newaxis, :, :]
-        physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
-
-    if data_in.dtype == "bool":
+    dtype = data_in.dtype
+    if dtype == "bool":
         data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
+        data_in[data_in > 0] = 1
+        dtype = data_in.dtype
 
     ret = imwrite(
         out_name,
         data_in,
+        dtype=dtype,
         # metadata={
         #     "axes": dimension_order,
         #     # "physical_pixel_sizes": physical_pixel_sizes,
@@ -272,12 +275,25 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
 
 
 # function to collect all the
-def list_image_files(data_folder: Path, file_type: str) -> List:
+def list_image_files(data_folder: Path, file_type: str, prefix: Union[str, None] = None) -> List:
     """
     get a list of all the filetypes
     TODO: aics has cleaner functions than this "lambda"
+    should this use Path methods? or return Path?
     """
-    return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
+    if prefix is not None:
+        return sorted(data_folder.glob(f"{prefix}*{file_type}"))
+    else:
+        return sorted(data_folder.glob(f"*{file_type}"))
+
+    # if prefix is not None:
+    #     return [
+    #         os.path.join(data_folder, f_name)
+    #         for f_name in os.listdir(data_folder)
+    #         if f_name.endswith(file_type) and f_name.startswith(prefix)
+    #     ]
+    # else:
+    #     return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
 
 
 ## DEPRICATE BELOW?
@@ -309,25 +325,6 @@ class AICSImageReaderWrap:
         self.image = image
         self.meta = meta
         self.raw_meta = get_raw_meta_data(meta)
-
-
-def save_parameters(out_p, img_name, out_path) -> str:
-    """
-    #  out_p: defaultdict,
-    # img_name: str,
-    # out_path: types.PathLike,
-    """
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "wb") as f:
-        pickle.dump(out_p, f)
-    return out_name
-
-
-def load_parameters(img_name, out_path) -> defaultdict:
-    out_name = str(out_path) + "/" + img_name + "_params.pkl"
-    with open(out_name, "rb") as f:
-        x = pickle.load(f)
-    return x
 
 
 def export_ndarray(data_in, img_name, out_path) -> str:
@@ -364,10 +361,12 @@ def import_inferred_organelle_AICS(name: str, meta_dict: Dict, out_data_path: Pa
     exported file name
 
     """
-    img_name = meta_dict["file_name"]
+    img_name = Path(meta_dict["file_name"])
     # HACK: skip OME
     # organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
-    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.tiff"
+
+    organelle_fname = f"{img_name.stem}-{name}.tiff"
+
     organelle_path = out_data_path / organelle_fname
 
     if Path.exists(organelle_path):
@@ -400,14 +399,14 @@ def export_inferred_organelle_AICS(img_out: np.ndarray, name: str, meta_dict: Di
     exported file name
 
     """
-    img_name = meta_dict["file_name"]  #
+    img_name = Path(meta_dict["file_name"])  #
 
     if not Path.exists(out_data_path):
         Path.mkdir(out_data_path)
         print(f"making {out_data_path}")
 
-    img_name_out = name + "_" + img_name.split("/")[-1].split(".")[0]
-    out_file_n = export_tiff_AICS(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
+    img_name_out = f"{img_name.stem}-{name}"
+    out_file_n = export_tiff_AICS(img_out, meta_dict, img_name_out, str(out_data_path), name)
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -438,13 +437,13 @@ def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str
     start = time.time()
     # img_name = meta_in["file_name"]  #
     # add params to metadata
-    out_name = out_path + img_name + ".tiff"
+    out_name = Path(out_path, img_name + ".tiff")
 
     if data_in.dtype == "bool":
         data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
+        data_in[data_in > 0] = 1
 
-    OmeTiffWriter.save(data=data_in, uri=out_name, dim_order="ZYX")
+    OmeTiffWriter.save(data=data_in, uri=out_name.as_uri(), dim_order="ZYX")
     end = time.time()
     print(f">>>>>>>>>>>> export_tiff_AICS ({(end - start):0.2f}) sec")
     print(f"saved file AICS {out_name}")

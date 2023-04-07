@@ -13,6 +13,7 @@ from infer_subc_2d.core.img import (
     select_channel_from_raw,
     masked_object_thresh,
     scale_and_smooth,
+    label_uint16,
 )
 
 
@@ -98,7 +99,7 @@ def infer_golgi(
     ###################
     struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
 
-    return struct_obj
+    return label_uint16(struct_obj)
 
 
 ##########################

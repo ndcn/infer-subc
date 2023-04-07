@@ -73,5 +73,11 @@
         },
         "parent": 6,
         "annotation": "basic mito - fill/filter: 7"
+    },
+    "8": {
+        "category": "postprocessing",
+        "function": "label_uint16",
+        "parent": 7,
+        "annotation": "label to uint16 for export 8"
     }
 }

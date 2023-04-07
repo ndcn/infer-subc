@@ -13,6 +13,7 @@ from infer_subc_2d.core.img import (
     scale_and_smooth,
     select_channel_from_raw,
     fill_and_filter_linear_size,
+    label_uint16,
 )
 
 
@@ -73,7 +74,7 @@ def infer_perox(
     # struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
     struct_obj = fill_and_filter_linear_size(bw, hole_min=0, hole_max=0, min_size=small_obj_w)
 
-    return struct_obj
+    return label_uint16(struct_obj)
 
 
 ### CONVENIENCE / TESTING PROCEDURES

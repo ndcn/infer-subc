@@ -10,6 +10,7 @@ from infer_subc_2d.core.img import (
     vesselness_slice_by_slice,
     select_channel_from_raw,
     scale_and_smooth,
+    label_uint16
 )
 
 
@@ -68,7 +69,7 @@ def infer_mito(
     ###################
     struct_obj = size_filter_linear_size(struct_img, min_size=small_obj_w)
 
-    return struct_obj
+    return label_uint16(struct_obj)
 
 
 ##########################

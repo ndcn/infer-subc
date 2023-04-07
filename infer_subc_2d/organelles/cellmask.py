@@ -76,7 +76,7 @@ def non_linear_cellmask_transform_MCZ(in_img):
 
 
 def choose_max_label_cellmask_union_nucleus(
-    cellmask_img: np.ndarray, cellmask_obj: np.ndarray, nuclei_obj: np.ndarray
+    cellmask_img: np.ndarray, cellmask_obj: np.ndarray, nuclei_labels: np.ndarray
 ) -> np.ndarray:
     """get cellmask UNION nuclei for largest signal label
 
@@ -86,22 +86,22 @@ def choose_max_label_cellmask_union_nucleus(
         the cellmask image intensities
     cellmask_obj:
         thresholded cellmask mask
-    nuclei_obj:
-        inferred nuclei
+    nuclei_labels:
+        inferred nuclei labels (np.uint16)
 
     Returns
     -------------
         boolean np.ndarray of cellmask+nuc corresponding to the label of largest total cellmask signal
 
     """
-    nuc_labels = label(nuclei_obj)
-    cellmask_labels = masked_inverted_watershed(cellmask_img, nuc_labels, cellmask_obj)
+
+    cellmask_labels = masked_inverted_watershed(cellmask_img, nuclei_labels, cellmask_obj)
 
     keep_label = get_max_label(cellmask_img, cellmask_labels)
 
     cellmask_out = np.zeros_like(cellmask_labels)
     cellmask_out[cellmask_labels == keep_label] = 1
-    cellmask_out[nuc_labels == keep_label] = 1
+    cellmask_out[nuclei_labels == keep_label] = 1
 
     return cellmask_out > 0
 

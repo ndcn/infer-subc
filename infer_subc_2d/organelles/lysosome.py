@@ -8,11 +8,7 @@ from aicssegmentation.core.vessel import filament_2d_wrapper
 
 from infer_subc_2d.constants import LYSO_CH
 from infer_subc_2d.core.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc_2d.core.img import (
-    scale_and_smooth,
-    fill_and_filter_linear_size,
-    select_channel_from_raw,
-)
+from infer_subc_2d.core.img import scale_and_smooth, fill_and_filter_linear_size, select_channel_from_raw, label_uint16
 
 
 ##########################
@@ -93,7 +89,7 @@ def infer_lyso(
     # POST_PROCESSING
     ###################
     struct_obj = fill_and_filter_linear_size(bw, hole_min=min_hole_w, hole_max=max_hole_w, min_size=small_obj_w)
-    return struct_obj
+    return label_uint16(struct_obj)
 
 
 ##########################
