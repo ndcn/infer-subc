@@ -23,8 +23,8 @@
         "function": "apply_threshold",
         "parameter_values": {
             "method": "otsu",
-            "thresh_factor": 0.8,
-            "thresh_min": 0.5,
+            "thresh_factor": 0.7,
+            "thresh_min": 0.33,
             "thresh_max": 1.0
         },
         "parent": 2,
@@ -35,7 +35,7 @@
         "function": "fill_and_filter_linear_size",
         "parameter_values": {
             "hole_min": 0,
-            "hole_max": 2.5,
+            "hole_max": 2,
             "min_size": 4,
             "method": "slice_by_slice"
         },

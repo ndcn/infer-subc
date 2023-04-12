@@ -1754,5 +1754,11 @@
         "python::module": "infer_subc_2d.core.img",
         "python::function": "label_uint16",
         "parameters": null
+    },
+    "get_interior_labels": {
+        "name": "label objects and restrict to center (as uint8)",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "get_interior_labels",
+        "parameters": null
     }
 }

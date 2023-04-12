@@ -40,9 +40,9 @@ def stack_layers(*layers) -> np.ndarray:
 
 
 def stack_masks(nuc_mask: np.ndarray, cellmask: np.ndarray, cyto_mask: np.ndarray) -> np.ndarray:
-    """stack canonical masks:  cellmask, nuclei, cytoplasm"""
+    """stack canonical masks:  cellmask, nuclei, cytoplasm as uint8 (never more than 255 nuclei)"""
     layers = [nuc_mask, cellmask, cyto_mask]
-    return np.stack(layers, axis=0)
+    return np.stack(layers, axis=0).astype(np.uint8)
 
 
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
@@ -261,7 +261,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-        np.ndimage of labeled segmentations NOT touching the sides
+        np.ndimage of labeled segmentations NOT touching the sides as `np.uint8`
 
     """
     segmented_padded = np.pad(
@@ -271,7 +271,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
         constant_values=0,
     )
     interior_labels = clear_border(segmented_padded)[1:-1]
-    return interior_labels
+    return interior_labels.astype(np.uint8)
 
 
 def label_uint16(in_obj: np.ndarray) -> np.ndarray:

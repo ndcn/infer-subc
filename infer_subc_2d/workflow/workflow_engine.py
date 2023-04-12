@@ -121,6 +121,47 @@ class WorkflowEngine:
         definition = self._workflow_config.get_workflow_definition_from_config_file(Path(file_path))
         return BatchWorkflow(definition, input_dir, output_dir, segmentation_name, channel_index)
 
+    # JAH: add segmentation_name ... do i need it?
+    def get_executable_batch_workflows_from_config_file(
+        self,
+        file_path: Union[List[str], List[Path]],
+        input_dir: Union[str, Path],
+        output_dir: Union[str, Path],
+        segmentation_names: List[str],
+        channel_index: int = -1,
+    ):
+        """
+        Get an executable batch workflow object from a configuration file
+
+        inputs:
+            file_path (str|Path): Path to the workflow configuration file
+            input_dir (str|Path): Directory containing input files for the batch processing
+            output_dir (str|Path): Output directory for the batch processing
+            channel_index (int): Index of the channel to process in each image (usually a structure channel)
+        """
+        if file_path is None:
+            raise ArgumentNullError("file_path")
+        if segmentation_names is None:
+            raise ArgumentNullError("segmentation_name")
+        if input_dir is None:
+            raise ArgumentNullError("input_dir")
+        if output_dir is None:
+            raise ArgumentNullError("output_dir")
+
+        definitions = [self._workflow_config.get_workflow_definition_from_config_file(Path(fn)) for fn in file_path]
+        return BatchWorkflow(definitions, input_dir, output_dir, segmentation_names, channel_index)
+
+        # return [
+        #     self.get_executable_batch_workflow_from_config_file(fp, input_dir, output_dir, nm, channel_index)
+        #     for fp, nm in zip(file_path, segmentation_names)
+        # ]
+
+        # b_wfls = []
+        # for wf,s_nm in zip(file_path,segmentation_name):
+        #     definition = self._workflow_config.get_workflow_definition_from_config_file(Path(wf))
+        #     b_wfls.append(BatchWorkflow(definition, input_dir, output_dir, s_nm, channel_index))
+        # return b_wfls
+
     def save_workflow_definition(self, workflow_definition: WorkflowDefinition, output_file_path: Union[str, Path]):
         if workflow_definition is None:
             raise ArgumentNullError("workflow_definition")
