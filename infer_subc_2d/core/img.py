@@ -288,7 +288,10 @@ def label_uint16(in_obj: np.ndarray) -> np.ndarray:
         np.ndimage of labeled segmentations as np.uint16
 
     """
-    return label(in_obj).astype(np.uint16)
+    if in_obj.dtype == "bool":
+        return label(in_obj).astype(np.uint16)
+    else:  # in_obj.dtype == np.uint8:
+        return label(in_obj > 0).astype(np.uint16)
 
 
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:

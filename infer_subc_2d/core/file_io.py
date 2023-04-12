@@ -43,17 +43,20 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
     exported file name
 
     """
-    img_name = meta_dict["file_name"]
-    # HACK: skip OME
-    # organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.ome.tiff"
-    organelle_fname = f"{name}_{img_name.split('/')[-1].split('.')[0]}.tiff"
+
+    # copy the original file name to meta
+    img_name = Path(meta_dict["file_name"])  #
+    # add params to metadata
+
+    organelle_fname = f"{img_name.stem}-{name}.tiff"
+
     organelle_path = out_data_path / organelle_fname
 
     if Path.exists(organelle_path):
         # organelle_obj, _meta_dict = read_ome_image(organelle_path)
         organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
         print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
-        return organelle_obj > 0
+        return organelle_obj
     else:
         print(f"`{name}` object not found: {organelle_path}")
         raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
@@ -258,6 +261,7 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
         data_in = data_in.astype(np.uint8)
         data_in[data_in > 0] = 1
         dtype = data_in.dtype
+        print(f"changed dtype from bool to {dtype}")
 
     ret = imwrite(
         out_name,
