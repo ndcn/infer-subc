@@ -145,7 +145,7 @@ class BatchWorkflow:
 
                 # Save output
                 # output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
-                output_path = self._output_dir / f"{self._segmentation_name}_{f.stem}.tiff"
+                output_path = self._output_dir / f"{f.stem}-{self._segmentation_name}.tiff"
 
                 result = workflow.get_most_recent_result()
 
@@ -244,10 +244,18 @@ class BatchWorkflow:
             image (np.ndarray): segmented image
 
         Returns
-            np.ndarray: image converted to uint8 for saving
+            np.ndarray: image converted to uint8 for saving if boolean... otherwise
         """
-        image = image.astype(np.uint8)
-        image[image > 0] = 255
+        if image.dtype == "bool":
+            image = image.astype(np.uint8)
+            image[image > 0] = 1
+            msg = f"converted boolean to {image.dtype}. "
+            self._write_to_log_file(msg)
+        elif image.dtype != np.uint16:
+            msg = f"somehow this image dtype is: {image.dtype}"
+            print(msg)
+            self._write_to_log_file(msg)
+
         return image
 
     def _write_to_log_file(self, text: str):

@@ -1748,5 +1748,11 @@
         "python::module": "infer_subc_2d.core.img",
         "python::function": "stack_masks",
         "parameters": null
+    },
+    "label_uint16": {
+        "name": "label objects to uint16",
+        "python::module": "infer_subc_2d.core.img",
+        "python::function": "label_uint16",
+        "parameters": null
     }
 }

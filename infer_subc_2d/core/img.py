@@ -256,7 +256,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
 
     Parameters
     ------------
-    img_in: np.ndarray
+    img_in:
         a 3d image
 
     Returns
@@ -272,6 +272,26 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
     )
     interior_labels = clear_border(segmented_padded)[1:-1]
     return interior_labels
+
+
+def label_uint16(in_obj: np.ndarray) -> np.ndarray:
+    """
+    label segmentation and return as uint16
+
+    Parameters
+    ------------
+    in_obj:
+        a 3d image segmentaiton
+
+    Returns
+    -------------
+        np.ndimage of labeled segmentations as np.uint16
+
+    """
+    if in_obj.dtype == "bool":
+        return label(in_obj).astype(np.uint16)
+    else:  # in_obj.dtype == np.uint8:
+        return label(in_obj > 0).astype(np.uint16)
 
 
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:

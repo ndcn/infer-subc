@@ -14,6 +14,7 @@ from infer_subc_2d.core.img import (
     select_channel_from_raw,
     scale_and_smooth,
     apply_mask,
+    label_uint16,
 )
 from infer_subc_2d.constants import NUC_CH
 
@@ -85,7 +86,8 @@ def infer_nuclei_fromlabel(
     # POST_PROCESSING
     ###################
     nuclei_object = fill_and_filter_linear_size(nuclei_object, hole_min=0, hole_max=max_hole_w, min_size=small_obj_w)
-    return nuclei_object
+
+    return label_uint16(nuclei_object)
 
 
 ##########################

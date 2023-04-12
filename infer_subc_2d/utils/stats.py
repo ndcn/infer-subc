@@ -33,7 +33,7 @@ def _my_props_to_dict(
     return _props_to_dict(rp, properties=properties, separator="-")
 
 
-def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
+def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
     """collect volumentric stats from skimage.measure.regionprops
         properties = ["label","max_intensity", "mean_intensity", "min_intensity" ,"area"->"volume" , "equivalent_diameter",
         "centroid", "bbox","euler_number", "extent"
@@ -53,10 +53,13 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
     pandas dataframe of stats and the regionprops object
     """
 
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    input_labels = _assert_uint16_labels(input_labels)
+
     # mask
-    # intensity_img = apply_mask(intensity_img,mask )  #not needed
-    input_obj = apply_mask(input_obj, mask)
-    labels = label(input_obj).astype("int")
+    input_labels = apply_mask(input_labels, mask)
+
+    # start with LABEL
     properties = ["label"]
     # add intensity:
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
@@ -74,15 +77,13 @@ def get_summary_stats_3D(input_obj: np.ndarray, intensity_img, mask: np.ndarray)
     # etc
     properties = properties + ["euler_number", "extent"]  # only works for BIG organelles: 'convex_area','solidity',
 
-    rp = regionprops(labels, intensity_image=intensity_img, extra_properties=extra_properties)
+    rp = regionprops(input_labels, intensity_image=intensity_img, extra_properties=extra_properties)
 
     props = _my_props_to_dict(
-        rp, labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
+        rp, input_labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
     )
-    # props = regionprops_table(
-    #     labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
-    # )
-    props["surface_area"] = surface_area_from_props(labels, props)
+
+    props["surface_area"] = surface_area_from_props(input_labels, props)
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
     #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
@@ -120,8 +121,8 @@ def surface_area_from_props(labels, props):
     return surface_areas
 
 
-def get_simple_stats_3D(A, mask):
-    """collect volumentric stats of A"""
+def get_simple_stats_3D(a, mask):
+    """collect volumentric stats of `a`"""
 
     properties = ["label"]  # our index to organelles
     # add area
@@ -131,7 +132,9 @@ def get_simple_stats_3D(A, mask):
     # etc
     properties = properties + ["slice"]
 
-    labels = label(apply_mask(A, mask)).astype("int")
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    labels = _assert_uint16_labels(a)
+
     # props = regionprops_table(labels, intensity_image=None,
     #                             properties=properties, extra_properties=[])
 
@@ -144,8 +147,19 @@ def get_simple_stats_3D(A, mask):
     return stats_table, rp
 
 
-def get_AintB_stats_3D(A, B, mask, shell_A=False):
-    """collect volumentric stats of A intersect B"""
+def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
+    """
+    wrapper to enforce having the right labels
+    """
+    if inp.dtype == "bool" or inp.dtype == np.uint8:
+        return label(inp > 0).astype(np.uint16)
+    return inp
+
+
+def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
+    """
+    collect volumentric stats of `a` intersect `b`
+    """
     properties = ["label"]  # our index to organelles
     # add area
     properties = properties + ["area", "equivalent_diameter"]
@@ -154,21 +168,22 @@ def get_AintB_stats_3D(A, B, mask, shell_A=False):
     # etc
     properties = properties + ["slice"]
 
-    Alab = label(A).astype("int")
-    Blab = label(B).astype("int")
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    a = _assert_uint16_labels(a)
+    b = _assert_uint16_labels(b)
 
-    if shell_A:
-        A = np.logical_xor(A, binary_erosion(A))
+    if use_shell_a:
+        a_int_b = np.logical_and(np.logical_xor(a > 0, binary_erosion(a > 0)), b > 0)
+    else:
+        a_int_b = np.logical_and(a > 0, b > 0)
 
-    A_int_B = np.logical_and(A, B)
-
-    labels = label(apply_mask(A_int_B, mask)).astype("int")
+    labels = label(apply_mask(a_int_b, mask)).astype("int")
 
     props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None)
 
     props["surface_area"] = surface_area_from_props(labels, props)
-    props["label_A"] = [Alab[s].max() for s in props["slice"]]
-    props["label_B"] = [Blab[s].max() for s in props["slice"]]
+    props["label_a"] = [a[s].max() for s in props["slice"]]
+    props["label_b"] = [b[s].max() for s in props["slice"]]
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
     props_table.drop(columns="slice", inplace=True)
@@ -177,13 +192,15 @@ def get_AintB_stats_3D(A, B, mask, shell_A=False):
 
 
 # untested 2D version
-def get_summary_stats_2D(input_obj, intensity_img, mask):
+def get_summary_stats_2D(input_labels, intensity_img, mask):
     """collect volumentric stats"""
 
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    input_labels = _assert_uint16_labels(input_labels)
+
     # mask
-    # intensity_img = apply_mask(intensity_img,mask )  #not needed
-    input_obj = apply_mask(input_obj, mask)
-    labels = label(input_obj).astype("int")
+    input_labels = apply_mask(input_labels, mask)
+
     properties = ["label"]
     # add intensity:
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
@@ -202,9 +219,9 @@ def get_summary_stats_2D(input_obj, intensity_img, mask):
     #  perimeter:
     properties = properties + ["perimeter", "perimeter_crofton"]
 
-    rp = regionprops(labels, intensity_image=intensity_img, extra_properties=extra_properties)
+    rp = regionprops(input_labels, intensity_image=intensity_img, extra_properties=extra_properties)
     props = _my_props_to_dict(
-        rp, labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
+        rp, input_labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
     )
     props_table = pd.DataFrame(props)
     #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
