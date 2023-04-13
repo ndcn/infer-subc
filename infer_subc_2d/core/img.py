@@ -1208,6 +1208,7 @@ def find_neighbors(labels):
     return (v_count, v_index, v_neighbor)
 
 
+# from CellProfiler
 def fixup_scipy_ndimage_result(whatever_it_returned):
     """Convert a result from scipy.ndimage to a numpy array
 

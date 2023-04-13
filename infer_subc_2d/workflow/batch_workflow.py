@@ -195,7 +195,7 @@ class BatchWorkflow:
             )
         else:
             files_processed = self._processed_files - self._failed_files
-            wfs = ", ".join([wfd.name for wfd in self._workflow_definitions.name])
+            wfs = ", ".join([wfd.name for wfd in self._workflow_definitions])
             report = (
                 f"{files_processed}/{self._processed_files} files were successfully processed \n "
                 f"Using the Workflows: {wfs}"
