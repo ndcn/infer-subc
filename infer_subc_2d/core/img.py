@@ -40,9 +40,9 @@ def stack_layers(*layers) -> np.ndarray:
 
 
 def stack_masks(nuc_mask: np.ndarray, cellmask: np.ndarray, cyto_mask: np.ndarray) -> np.ndarray:
-    """stack canonical masks:  cellmask, nuclei, cytoplasm"""
+    """stack canonical masks:  cellmask, nuclei, cytoplasm as uint8 (never more than 255 nuclei)"""
     layers = [nuc_mask, cellmask, cyto_mask]
-    return np.stack(layers, axis=0)
+    return np.stack(layers, axis=0).astype(np.uint8)
 
 
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
@@ -252,7 +252,7 @@ def masked_object_thresh(
 
 def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
     """
-    gets the labeled objects from the X,Y "interior" of the image. We only want to clear the objects touching the sides of the volume, but not the top and bottom, so we pad and crop the volume along the 0th axis to avoid clearing the mitotic nucleus
+    gets the labeled objects from the X,Y "interior" of the image. We only want to clear the objects touching the sides of the volume, but not the top and bottom, so we pad and crop the volume along the 0th axis
 
     Parameters
     ------------
@@ -261,7 +261,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-        np.ndimage of labeled segmentations NOT touching the sides
+        np.ndimage of labeled segmentations NOT touching the sides as `np.uint8`
 
     """
     segmented_padded = np.pad(
@@ -270,8 +270,10 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
         mode="constant",
         constant_values=0,
     )
-    interior_labels = clear_border(segmented_padded)[1:-1]
-    return interior_labels
+    interior = clear_border(segmented_padded)[1:-1]
+    return interior
+    # relabel?
+    # return label(interior).astype(np.uint16)
 
 
 def label_uint16(in_obj: np.ndarray) -> np.ndarray:
@@ -699,14 +701,19 @@ def masked_inverted_watershed(img_in, markers, mask):
     return labels_out
 
 
-def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
-    """keep only the label with the maximum raw signal
+def choose_max_label(
+    raw_signal: np.ndarray, labels_in: np.ndarray, target_labels: Union[np.ndarray, None] = None
+) -> np.ndarray:
+    """
+    keep only the segmentation corresponding to the maximum raw signal.  candidate  label is taken from target_labels if not None
 
     Parameters
     ------------
     raw_signal:
         the image to filter on
     labels_in:
+        segmentation labels
+    target_labels:
         labels to consider
 
     Returns
@@ -714,19 +721,25 @@ def choose_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarra
         np.ndarray of labels corresponding to the largest total signal
 
     """
-    keep_label = get_max_label(raw_signal, labels_in)
+    keep_label = get_max_label(raw_signal, labels_in, target_labels)
     labels_max = np.zeros_like(labels_in)
     labels_max[labels_in == keep_label] = 1
     return labels_max
 
 
-def get_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
-    """keep only the label with the maximum raw signal
-        Parameters
+def get_max_label(
+    raw_signal: np.ndarray, labels_in: np.ndarray, target_labels: Union[np.ndarray, None] = None
+) -> np.ndarray:
+    """
+    keep only the label with the maximum raw signal.  candidate  label is taken from target_labels if not None
+
+    Parameters
     ------------
     raw_signal:
         the image to filter on
     labels_in:
+        segmentation labels
+    target_labels:
         labels to consider
 
     Returns
@@ -734,7 +747,10 @@ def get_max_label(raw_signal: np.ndarray, labels_in: np.ndarray) -> np.ndarray:
         np.ndarray of labels corresponding to the largest total signal
 
     """
-    all_labels = np.unique(labels_in)[1:]
+    if target_labels is None:
+        all_labels = np.unique(labels_in)[1:]
+    else:
+        all_labels = np.unique(target_labels)[1:]
 
     total_signal = [raw_signal[labels_in == label].sum() for label in all_labels]
     # combine NU and "labels" to make a SOMA
@@ -1192,6 +1208,7 @@ def find_neighbors(labels):
     return (v_count, v_index, v_neighbor)
 
 
+# from CellProfiler
 def fixup_scipy_ndimage_result(whatever_it_returned):
     """Convert a result from scipy.ndimage to a numpy array
 

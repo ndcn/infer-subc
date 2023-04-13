@@ -29,7 +29,7 @@
         "function": "scale_and_smooth",
         "parameter_values": {
             "median_sz": 4,
-            "gauss_sig": 3.4
+            "gauss_sig": 4.5
         },
         "parent": 2,
         "annotation": "cellmask segmentation: 3"
@@ -45,8 +45,8 @@
         "function": "masked_object_thresh",
         "parameter_values": {
             "th_method": "ave_tri_med",
-            "cutoff_size": 100,
-            "th_adjust": 0.8
+            "cutoff_size": 375,
+            "th_adjust": 0.94
         },
         "parent": 4,
         "annotation": "cellmask segmentation: 5"
@@ -56,8 +56,8 @@
         "function": "fill_and_filter_linear_size",
         "parameter_values": {
             "hole_min": 0,
-            "hole_max": 45,
-            "min_size": 25,
+            "hole_max": 55,
+            "min_size": 42,
             "method": "slice_by_slice"
         },
         "parent": 5,
@@ -66,6 +66,9 @@
     "7": {
         "category": "postpostprocessing",
         "function": "choose_max_label_cellmask_union_nucleus",
+        "parameter_values": {
+            "interior_labels": true
+        },
         "parent": [
             3,
             6,
@@ -93,6 +96,6 @@
             7,
             8
         ],
-        "annotation": "export  canonical masks (nuc,cellmask, cyto) 9"
+        "annotation": "export  canonical masks (nuc,cellmask, cyto) as np.uint8 9"
     }
 }

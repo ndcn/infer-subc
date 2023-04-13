@@ -12,8 +12,8 @@
         "category": "preprocessing",
         "function": "scale_and_smooth",
         "parameter_values": {
-            "median_sz": 4,
-            "gauss_sig": 1.4
+            "median_sz": 3,
+            "gauss_sig": 2.6
         },
         "parent": 1,
         "annotation": "basic mito segmentation: 2"
@@ -34,8 +34,8 @@
         "parameter_values": {
             "hole_min": 0,
             "hole_max": 25,
-            "min_size": 15,
-            "method": "slice_by_slice"
+            "min_size": 11,
+            "method": "3D"
         },
         "parent": 3,
         "annotation": "basic mito - fill/filter: 4"

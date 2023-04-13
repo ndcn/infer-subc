@@ -56,8 +56,8 @@
         "function": "fill_and_filter_linear_size",
         "parameter_values": {
             "hole_min": 0,
-            "hole_max": 25,
-            "min_size": 15,
+            "hole_max": 40,
+            "min_size": 4,
             "method": "slice_by_slice"
         },
         "parent": 5,

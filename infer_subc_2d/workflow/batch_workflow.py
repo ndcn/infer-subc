@@ -33,24 +33,24 @@ class BatchWorkflow:
 
     def __init__(
         self,
-        workflow_definition: WorkflowDefinition,
+        workflow_definitions: List[WorkflowDefinition],
         input_dir: Union[str, Path],
         output_dir: Union[str, Path],
-        segmentation_name: str,  # JAH: add segmentation name for export
+        segmentation_names: List[str],  # JAH: add segmentation name for export
         channel_index: int = -1,  # JAH: change so all negative indices return ALL the channels/zslices
     ):
-        if workflow_definition is None:
-            raise ArgumentNullError("workflow_definition")
-        if segmentation_name is None:
-            raise ArgumentNullError("segmentation_name")
+        if workflow_definitions is None:
+            raise ArgumentNullError("workflow_definitions")
+        if segmentation_names is None:
+            raise ArgumentNullError("segmentation_names")
         if input_dir is None:
             raise ArgumentNullError("input_dir")
         if output_dir is None:
             raise ArgumentNullError("output_dir")
 
-        self._workflow_definition = workflow_definition
+        self._workflow_definitions = workflow_definitions
         self._input_dir = Path(input_dir)
-        self._segmentation_name = segmentation_name
+        self._segmentation_names = segmentation_names
 
         if not self._input_dir.exists():
             raise ValueError("The input directory does not exist")
@@ -70,7 +70,7 @@ class BatchWorkflow:
 
     @property
     def total_files(self) -> int:
-        return len(self._input_files)
+        return len(self._input_files) * len(self._workflow_definitions)
 
     @property
     def processed_files(self) -> int:
@@ -89,8 +89,8 @@ class BatchWorkflow:
         return self._output_dir
 
     @property
-    def segmentation_name(self) -> str:
-        return self._segmentation_name
+    def segmentation_names(self) -> List[str]:
+        return self._segmentation_names
 
     def is_done(self) -> bool:
         """
@@ -110,7 +110,7 @@ class BatchWorkflow:
             return
 
         print("Starting batch workflow...")
-        print(f"Found {self.total_files} files to process.")
+        print(f"Found {self.total_files} files X workflows to process.")
 
         while not self.is_done():
             self.execute_next()
@@ -128,55 +128,61 @@ class BatchWorkflow:
 
     def _execute_generator_func(self):
         for f in self._input_files:
-            try:
-                print(f"Start file {f.name}")
+            print(f"Start file {f.name}")
+            for wf, seg_nm in zip(self._workflow_definitions, self._segmentation_names):
+                try:
+                    # read and format image in the way we expect
+                    # read_image = AICSImage(f)
+                    # image_from_path = self._format_image_to_3d(read_image)
+                    image_from_path = self._format_image_to_3d(f)
 
-                # read and format image in the way we expect
+                    # Run workflow on image
+                    msg = f": {seg_nm} :"
+                    self._write_to_log_file(msg)
 
-                # read_image = AICSImage(f)
-                # image_from_path = self._format_image_to_3d(read_image)
-                image_from_path = self._format_image_to_3d(f)
+                    workflow = Workflow(wf, image_from_path)
+                    while not workflow.is_done():
+                        workflow.execute_next()
+                        result = workflow.get_most_recent_result()
+                        print(f"current result shape + type: {result.shape}, {result.dtype}")
+                        yield
 
-                # Run workflow on image
-                workflow = Workflow(self._workflow_definition, image_from_path)
-                while not workflow.is_done():
-                    workflow.execute_next()
-                    yield
+                    # Save output
+                    # output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
+                    output_path = self._output_dir / f"{f.stem}-{seg_nm}.tiff"
 
-                # Save output
-                # output_path = self._output_dir / f"{f.stem}.segmentation.tiff"
-                output_path = self._output_dir / f"{f.stem}-{self._segmentation_name}.tiff"
+                    result = workflow.get_most_recent_result()
+                    result = self._format_output(result)
 
-                result = workflow.get_most_recent_result()
+                    ret = imwrite(
+                        output_path,
+                        result,
+                        dtype=result.dtype,
+                        # metadata={
+                        #     "axes": dimension_order,
+                        #     # "physical_pixel_sizes": physical_pixel_sizes,
+                        #     # "channel_names": channel_names,
+                        # },
+                    )
+                    # if len(result.shape) == 3:
+                    #     # TODO:  replace with. tifffile writer ...
+                    #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
+                    # else:
+                    #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="CZYX")
 
-                ret = imwrite(
-                    output_path,
-                    self._format_output(result),
-                    # metadata={
-                    #     "axes": dimension_order,
-                    #     # "physical_pixel_sizes": physical_pixel_sizes,
-                    #     # "channel_names": channel_names,
-                    # },
-                )
-                # if len(result.shape) == 3:
-                #     # TODO:  replace with. tifffile writer ...
-                #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
-                # else:
-                #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="CZYX")
+                    msg = f"SUCCESS: {f}:{seg_nm}. Output saved at {output_path}"
+                    print(msg)
+                    self._write_to_log_file(msg)
 
-                msg = f"SUCCESS: {f}. Output saved at {output_path}"
-                print(msg)
-                self._write_to_log_file(msg)
+                except Exception as ex:
+                    self._failed_files += 1
+                    msg = f"FAILED: {f}:{seg_nm}, ERROR: {ex}"
+                    print(msg)
+                    self._write_to_log_file(msg)
+                finally:
+                    self._processed_files += 1
 
-            except Exception as ex:
-                self._failed_files += 1
-                msg = f"FAILED: {f}, ERROR: {ex}"
-                print(msg)
-                self._write_to_log_file(msg)
-            finally:
-                self._processed_files += 1
-
-            yield
+                yield
 
     def write_log_file_summary(self):
         """
@@ -189,9 +195,10 @@ class BatchWorkflow:
             )
         else:
             files_processed = self._processed_files - self._failed_files
+            wfs = ", ".join([wfd.name for wfd in self._workflow_definitions])
             report = (
                 f"{files_processed}/{self._processed_files} files were successfully processed \n "
-                f"Using the Workflow: {self._workflow_definition.name}"
+                f"Using the Workflows: {wfs}"
             )
         self._write_to_log_file(report)
 
@@ -219,7 +226,11 @@ class BatchWorkflow:
         # return image.get_image_data("ZYX")
         # JAH: refactdor to use reader_function
         data, meta, layer_type = reader_function(image_path)[0]
-        name = str(image_path).split("/")[-1].split(".")[0]
+
+        if isinstance(image_path, str):
+            image_path = Path(image_path)
+        name = image_path.stem
+
         channel_names = meta.pop("name")  # list of names for each layer
         meta["channel_names"] = channel_names
         meta["file_name"] = name
@@ -251,8 +262,14 @@ class BatchWorkflow:
             image[image > 0] = 1
             msg = f"converted boolean to {image.dtype}. "
             self._write_to_log_file(msg)
-        elif image.dtype != np.uint16:
-            msg = f"somehow this image dtype is: {image.dtype}"
+        elif image.dtype == np.uint8:
+            msg = f"mask already  {image.dtype}"
+            print(msg)
+            self._write_to_log_file(msg)
+            image[image > 0] = 1
+        else:
+            image = image.astype(np.uint16)
+            msg = f" envorced  {image.dtype}"
             print(msg)
             self._write_to_log_file(msg)
 
