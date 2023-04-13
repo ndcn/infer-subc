@@ -70,7 +70,7 @@ class BatchWorkflow:
 
     @property
     def total_files(self) -> int:
-        return len(self._input_files)
+        return len(self._input_files) * len(self._workflow_definitions)
 
     @property
     def processed_files(self) -> int:
@@ -110,7 +110,7 @@ class BatchWorkflow:
             return
 
         print("Starting batch workflow...")
-        print(f"Found {self.total_files} files to process.")
+        print(f"Found {self.total_files} files X workflows to process.")
 
         while not self.is_done():
             self.execute_next()
@@ -195,9 +195,10 @@ class BatchWorkflow:
             )
         else:
             files_processed = self._processed_files - self._failed_files
+            wfs = ", ".join([wfd.name for wfd in self._workflow_definitions.name])
             report = (
                 f"{files_processed}/{self._processed_files} files were successfully processed \n "
-                f"Using the Workflow: {self._workflow_definition.name}"
+                f"Using the Workflows: {wfs}"
             )
         self._write_to_log_file(report)
 

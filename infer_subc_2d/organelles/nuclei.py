@@ -88,7 +88,8 @@ def infer_nuclei_fromlabel(
     ###################
     nuclei_object = fill_and_filter_linear_size(nuclei_object, hole_min=0, hole_max=max_hole_w, min_size=small_obj_w)
 
-    return get_interior_labels(nuclei_object)
+    return label_uint16(nuclei_object)
+    # return get_interior_labels(nuclei_object)
 
 
 ##########################

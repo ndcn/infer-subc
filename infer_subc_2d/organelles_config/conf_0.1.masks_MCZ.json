@@ -66,6 +66,9 @@
     "7": {
         "category": "postpostprocessing",
         "function": "choose_max_label_cellmask_union_nucleus",
+        "parameter_values": {
+            "interior_labels": true
+        },
         "parent": [
             3,
             6,

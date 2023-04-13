@@ -998,12 +998,6 @@
         "python::function": "non_linear_soma_transform_MCZ",
         "parameters": null
     },
-    "get_max_label": {
-        "name": "get the label with the maximum raw signa",
-        "python::module": "infer_subc_2d.core.img",
-        "python::function": "get_max_label",
-        "parameters": null
-    },
     "choose_max_label_soma_union_nucleus": {
         "name": "get cellmask UNION nuclei for largest signal label",
         "python::module": "infer_subc_2d.organelles.cellmask",
@@ -1177,7 +1171,16 @@
         "name": "get cellmask + nuclei for largest signal label",
         "python::module": "infer_subc_2d.organelles.cellmask",
         "python::function": "choose_max_label_cellmask_union_nucleus",
-        "parameters": null
+        "parameters": {
+            "interior_labels": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
     },
     "make_aggregate": {
         "name": "weighted sum wrapper (plugin)",

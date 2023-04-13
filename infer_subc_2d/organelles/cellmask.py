@@ -29,6 +29,7 @@ from infer_subc_2d.core.img import (
     masked_inverted_watershed,
     fill_and_filter_linear_size,
     get_max_label,
+    get_interior_labels,
 )
 
 
@@ -76,7 +77,7 @@ def non_linear_cellmask_transform_MCZ(in_img):
 
 
 def choose_max_label_cellmask_union_nucleus(
-    cellmask_img: np.ndarray, cellmask_obj: np.ndarray, nuclei_labels: np.ndarray
+    cellmask_img: np.ndarray, cellmask_obj: np.ndarray, nuclei_labels: np.ndarray, interior_labels: bool = True
 ) -> np.ndarray:
     """get cellmask UNION nuclei for largest signal label
 
@@ -97,7 +98,12 @@ def choose_max_label_cellmask_union_nucleus(
 
     cellmask_labels = masked_inverted_watershed(cellmask_img, nuclei_labels, cellmask_obj)
 
-    keep_label = get_max_label(cellmask_img, cellmask_labels)
+    # should we restrict to interior nuclear labels?
+    # get_interior_labels(nuclei_object)
+    # would need to update get_max_label to only choose the labels in get_interior_label
+    target_labels = get_interior_labels(nuclei_labels) if interior_labels else None
+
+    keep_label = get_max_label(cellmask_img, cellmask_labels, target_labels=target_labels)
 
     cellmask_out = np.zeros_like(cellmask_labels)
     cellmask_out[cellmask_labels == keep_label] = 1
