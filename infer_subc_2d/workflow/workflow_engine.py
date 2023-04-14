@@ -43,6 +43,16 @@ class WorkflowEngine:
 
         return Workflow(definition, input_image)
 
+    # JAH: add segmentation_name ... do i need it?
+    def add_workflow(self, file_path: Union[Path, str], workflow_name: Union[str, None] = None) -> WorkflowDefinition:
+        """
+        add WorkflowDefinition to list from a configuration file
+        """
+        defn = self._workflow_config.get_workflow_definition_from_config_file(
+            Path(file_path), workflow_name, prebuilt=False
+        )
+        self._workflow_definitions += [defn]
+
     def get_executable_batch_workflow(
         self,
         workflow_name: str,

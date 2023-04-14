@@ -34,12 +34,12 @@ class SegmentationWrap:
         self.image = image
         self.meta = meta
         # self.raw_meta = get_raw_meta_data(meta)
-        
-    def add_mask(self, name: str, mask:np.ndarray):
+
+    def add_mask(self, name: str, mask: np.ndarray):
         self.mask_names.append(name)
         self.masks.append(mask)
 
-    def add_segmentation(self, name: str, segmentation:np.ndarray, channel: int):
+    def add_segmentation(self, name: str, segmentation: np.ndarray, channel: int):
         self.channel_names.append(name)
         self.channels.append(channel)
         self.segmentations.append(segmentation)
@@ -57,10 +57,12 @@ class WorkflowDefinition:
 
     name: str
     steps: List[WorkflowStep]
+    prebuilt: bool
 
-    def __init__(self, name: str, steps: List[WorkflowStep]):
+    def __init__(self, name: str, steps: List[WorkflowStep], prebuilt: bool = True):
         self.name = name
         self.steps = steps
+        self.prebuilt = prebuilt
         self.from_file = True
 
 
