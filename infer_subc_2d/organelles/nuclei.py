@@ -68,11 +68,8 @@ def infer_nuclei_fromlabel(
     ###################
     if nuc_ch is None:
         nuc_ch = NUC_CH
-    print(f" in_img = {in_img.shape}")
 
     nuclei = select_channel_from_raw(in_img, nuc_ch)
-
-    print(f"nuclei size = {nuclei.shape}")
 
     nuclei = scale_and_smooth(nuclei, median_sz=median_sz, gauss_sig=gauss_sig)
 
