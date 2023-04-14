@@ -8,8 +8,11 @@ from typing import List, Union
 from aicsimageio import AICSImage
 from aicsimageio.writers import OmeTiffWriter
 from pathlib import Path
-from aicssegmentation.util.filesystem import FileSystemUtilities
-from aicssegmentation.exceptions import ArgumentNullError
+
+# from aicssegmentation.util.filesystem import FileSystemUtilities
+# from aicssegmentation.exceptions import ArgumentNullError
+from ..utils.filesystem import FileSystemUtilities
+from ..exceptions import ArgumentNullError
 from .workflow import Workflow
 from .workflow_definition import WorkflowDefinition
 
@@ -17,6 +20,7 @@ SUPPORTED_FILE_EXTENSIONS = ["tiff", "tif", "czi"]
 
 # from infer_subc_2d.core.file_io import reader_function
 from ..core.file_io import reader_function
+
 from typing import Union
 from pathlib import Path
 
@@ -128,7 +132,8 @@ class BatchWorkflow:
 
     def _execute_generator_func(self):
         for f in self._input_files:
-            print(f"Start file {f.name}")
+            msg = f"\nprocessing::: {f.name} :"
+            self._write_to_log_file(msg)
             for wf, seg_nm in zip(self._workflow_definitions, self._segmentation_names):
                 try:
                     # read and format image in the way we expect
@@ -144,7 +149,7 @@ class BatchWorkflow:
                     while not workflow.is_done():
                         workflow.execute_next()
                         result = workflow.get_most_recent_result()
-                        print(f"current result shape + type: {result.shape}, {result.dtype}")
+                        # print(f"current result shape + type: {result.shape}, {result.dtype}")
                         yield
 
                     # Save output
@@ -170,7 +175,7 @@ class BatchWorkflow:
                     # else:
                     #     OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="CZYX")
 
-                    msg = f"SUCCESS: {f}:{seg_nm}. Output saved at {output_path}"
+                    msg = f"SUCCESS: {f}:{seg_nm}. >>>> {output_path.name}"
                     print(msg)
                     self._write_to_log_file(msg)
 
@@ -269,7 +274,7 @@ class BatchWorkflow:
             image[image > 0] = 1
         else:
             image = image.astype(np.uint16)
-            msg = f" envorced  {image.dtype}"
+            msg = f" enforced  {image.dtype}"
             print(msg)
             self._write_to_log_file(msg)
 

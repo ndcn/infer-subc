@@ -79,7 +79,7 @@ class WorkflowConfig:
             try:
                 obj = json.load(file)
                 # print(obj)
-                return self._workflow_decoder(obj, workflow_name or file_path.name, prebuilt)
+                return self._workflow_decoder(obj, workflow_name or file_path.stem, prebuilt)
             except Exception as ex:
                 raise ConfigurationException(f"Error reading json configuration from {file_path}") from ex
 
@@ -143,7 +143,6 @@ class WorkflowConfig:
         """
         functions = self.get_all_functions()
         steps: List[WorkflowStep] = list()
-
         for step_k, step_v in obj.items():
             # print(f"step_k{step_k}  - step_v{step_v}")
 
@@ -181,11 +180,7 @@ class WorkflowConfig:
 
         steps.sort(key=lambda s: s.step_number)
 
-        if prebuilt:
-            # return PrebuiltWorkflowDefinition(workflow_name, steps)
-            print("prebuilt but still packing into WorkflowDefinition")
-
-        return WorkflowDefinition(workflow_name, steps)
+        return WorkflowDefinition(workflow_name, steps, prebuilt=prebuilt)
 
     def _workflow_encoder(self, workflow_definition: WorkflowDefinition) -> Dict:
         """
