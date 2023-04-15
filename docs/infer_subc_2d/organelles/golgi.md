@@ -1,3 +1,3 @@
-# infer_subc_2d/organelles/golgi
+# infer_subc/organelles/golgi
 
-::: infer_subc_2d.organelles.golgi
+::: infer_subc.organelles.golgi

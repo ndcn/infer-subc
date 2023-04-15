@@ -1,18 +1,18 @@
-# infer_subc_2d
+# infer_subc
 
 [![codecov](https://codecov.io/gh/ergonyc/infer-subc/branch/main/graph/badge.svg?token=infer-subc_token_here)](https://codecov.io/gh/ergonyc/infer-subc)
 [![CI](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml/badge.svg)](https://github.com/ergonyc/infer-subc/actions/workflows/main.yml)
 
 ## About The Project
 
-`infer_subc_2d` 
+`infer_subc` 
 - aims to create a simple, extensible, and reproducible workflow to measure (or infer) the shape, position, size, and interaction of several sub-cellular components. These data can then be applied later to better understand the spatial coordination of these structures and the interactome during key biological processes.
 
 - is part of a larger collaboration between the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program and the Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
 
 
 
-## `infer_subc_2d` Workflow
+## `infer_subc` Workflow
 
 The staring point of this workflow is a set of multichannel images, where each channel labels a different sub-cellular component. The workflow can then be completed in a _**suggested**_ series of steps, outlined in the notebooks below.
 
@@ -84,7 +84,7 @@ The following are prerequisites and should be installed prior to using the workf
 
 ### Installation
 
-`infer_subc_2d` is not yet available on `PyPI` so must be  be `pip` ionstalled from source
+`infer_subc` is not yet available on `PyPI` so must be  be `pip` ionstalled from source
 ```
 pip install git+https://github.com/ndcn/infer-subc-2D.git
 ```
@@ -92,8 +92,8 @@ pip install git+https://github.com/ndcn/infer-subc-2D.git
 ## Usage
 
 ```py
-from infer_subc_2d.organelles import infer_lyso
-from infer_subc_2d.core.file_io import read_czi_image
+from infer_subc.organelles import infer_lyso
+from infer_subc.core.file_io import read_czi_image
 
 img_data,meta_dict = read_czi_image("path/to/image.czi")
 lyso_obj =  infer_lyso(img_data) 
@@ -103,9 +103,9 @@ lyso_obj =  infer_lyso(img_data)
  🚧 WIP 🚧 (🚨🚨🚨🚨 )
 > NOTE: command line capabilities not implimented
 ```bash
-$ python -m infer_subc_2d
+$ python -m infer_subc
 #or
-$ infer_subc_2d
+$ infer_subc
 ```
 
 ## Roadmap

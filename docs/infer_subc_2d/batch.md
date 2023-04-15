@@ -1,5 +1,5 @@
-# infer_subc_2d/batch
+# infer_subc/batch
 
 functions which help with processing batches of files
 
-::: infer_subc_2d.batch.batch_process
+::: infer_subc.batch.batch_process

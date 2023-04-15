@@ -1,5 +1,5 @@
-# infer_subc_2d/utils/img
+# infer_subc/utils/img
 
 Image processing functions.  Most are wrappers to well known `skimage` and `scipy.ndimate` utilities as well as core routines from `aicssegmentation`
 
-::: infer_subc_2d.utils.img
+::: infer_subc.utils.img

@@ -1,6 +1,6 @@
 #
 
-## infer_subc_2d
+## infer_subc
 
 Several sub-modules organize the segmentation.
 
