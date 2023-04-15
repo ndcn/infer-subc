@@ -89,4 +89,4 @@ In order to leverage the A
 
 ## `organelles` submodule
 
-::: infer_subc_2d.organelles
+::: infer_subc.organelles

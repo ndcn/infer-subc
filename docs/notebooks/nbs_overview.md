@@ -14,4 +14,4 @@ Robust inference of subcellular objects:
   -  8️⃣. [Infer ***endoplasmic reticulum***](https://github.com/ndcn/infer-subc-2D/tree/main/notebooks/08_endoplasmic_reticulum.ipynb)
   -  9️⃣. [Infer ***lipid body***](https://github.com/ndcn/infer-subc-2D/tree/main/notebooks/09_lipid_bodies.ipynb) 
 
-::: infer_subc_2d.organelles
+::: infer_subc.organelles

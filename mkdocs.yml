@@ -1,27 +1,27 @@
-site_name: 'infer_subc_2d'
+site_name: 'infer_subc'
 
 nav:
   - Home: 'index.md'
   - framework: 'framework.md'
-  - 'infer_subc_2d module': 
-    - 'overview': 'infer_subc_2d/overview.md'
+  - 'infer_subc module': 
+    - 'overview': 'infer_subc/overview.md'
     - 'organelles': 
-      - 'Overview' : 'infer_subc_2d/organelles.md'
-      - 'soma' : 'infer_subc_2d/organelles/soma.md'
-      - 'nuclei' : 'infer_subc_2d/organelles/nuclei.md'
-      - 'cytosol' : 'infer_subc_2d/organelles/cytosol.md'
-      - 'lysosome' : 'infer_subc_2d/organelles/lysosome.md'
-      - 'mitochondria' : 'infer_subc_2d/organelles/mitochondria.md'
-      - 'golgi complex' : 'infer_subc_2d/organelles/golgi.md'
-      - 'peroxisome' : 'infer_subc_2d/organelles/peroxisome.md'
-      - 'endoplasmic reticulum' : 'infer_subc_2d/organelles/er.md'
-      - 'lipid bodies' : 'infer_subc_2d/organelles/lipid.md' 
+      - 'Overview' : 'infer_subc/organelles.md'
+      - 'soma' : 'infer_subc/organelles/soma.md'
+      - 'nuclei' : 'infer_subc/organelles/nuclei.md'
+      - 'cytosol' : 'infer_subc/organelles/cytosol.md'
+      - 'lysosome' : 'infer_subc/organelles/lysosome.md'
+      - 'mitochondria' : 'infer_subc/organelles/mitochondria.md'
+      - 'golgi complex' : 'infer_subc/organelles/golgi.md'
+      - 'peroxisome' : 'infer_subc/organelles/peroxisome.md'
+      - 'endoplasmic reticulum' : 'infer_subc/organelles/er.md'
+      - 'lipid bodies' : 'infer_subc/organelles/lipid.md' 
     - 'utils': 
-      - 'file_io' : 'infer_subc_2d/utils/file_io.md'
-      - 'img' : 'infer_subc_2d/utils/img.md'
-      - 'etc' : 'infer_subc_2d/utils/etc.md'
-    - 'batch': 'infer_subc_2d/batch.md'
-    - 'workflow': 'infer_subc_2d/workflow.md'
+      - 'file_io' : 'infer_subc/utils/file_io.md'
+      - 'img' : 'infer_subc/utils/img.md'
+      - 'etc' : 'infer_subc/utils/etc.md'
+    - 'batch': 'infer_subc/batch.md'
+    - 'workflow': 'infer_subc/workflow.md'
 
   # - Notebooks: 
   #   - 'Overview' : notebooks/nbs_overview.md

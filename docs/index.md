@@ -1,6 +1,6 @@
-# Welcome to infer_subc_2d
+# Welcome to infer_subc
 
- `infer_subc_2d` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
+ `infer_subc` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
 
 This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
 
@@ -47,5 +47,5 @@ Early in the develepmont we chose to leverage the Allen Cell & Structure Segment
 
 -------
 
-For full documentation visit [github.io.com/infer_subc_2d](https://ndcn.github.io/infer-subc-2D/).
+For full documentation visit [github.io.com/infer_subc](https://ndcn.github.io/infer-subc-2D/).
 Robust inference of subcellular objects:
