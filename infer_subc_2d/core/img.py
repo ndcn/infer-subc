@@ -261,7 +261,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-        np.ndimage of labeled segmentations NOT touching the sides as `np.uint8`
+        np.ndimage of labeled segmentations NOT touching the sides
 
     """
     segmented_padded = np.pad(
@@ -1246,7 +1246,7 @@ def adjacent(labels):
 
 def img_to_uint8(data_in: np.ndarray) -> np.ndarray:
     """
-    helper to convert bask to uint8 (true -> 255)
+    helper to convert bask to `binary` uint8 (true -> 255) to accomodate napari default scaling
     """
     print(f"changing from {data_in.dtype} to np.uint8")
     data_in = data_in.astype(np.uint8)
