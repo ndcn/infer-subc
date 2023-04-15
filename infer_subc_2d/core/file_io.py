@@ -99,7 +99,7 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     img_name_out = f"{img_name.stem}-{name}"
     # HACK: skip the ome
     # out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
-    out_file_n = export_tiff(img_out, meta_dict, img_name_out, str(out_data_path), name)
+    out_file_n = export_tiff(img_out, img_name_out, out_data_path, name, meta_dict)
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -219,23 +219,29 @@ def read_tiff_image(image_name):
     return tiff image with tifffile.imread.  Using the `reader_function` (vial read_ome_image) and AICSimage is too slow
         prsumably handling the OME meta data is what is so slow.
     """
-    start = time.time()
+    # start = time.time()
     image = imread(
         image_name,
     )
-    end = time.time()
-    print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype}in ({(end - start):0.2f}) sec")
+    # end = time.time()
+    # print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype} in ({(end - start):0.2f}) sec")
     return image  # .get_image_data("CZYX")
 
 
-def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
+def export_tiff(
+    data_in: np.ndarray,
+    img_name: str,
+    out_path: Union[Path, str],
+    channel_names: Union[List[str], None] = None,
+    meta_in: Union[Dict, None] = None,
+) -> int:
     """
     wrapper for exporting  tiff with tifffile.imwrite
      --> usiong AICSimage is too slow
         prsumably handling the OME meta data is what is so slow.
     """
 
-    start = time.time()
+    # start = time.time()
 
     out_name = Path(out_path, f"{img_name}.tiff")
 
@@ -259,10 +265,11 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
     dtype = data_in.dtype
     if dtype == "bool":
         data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 1
+        data_in[data_in > 0] = 255
         dtype = data_in.dtype
         print(f"changed dtype from bool to {dtype}")
-
+    else:
+        print("export dtype - {dtype}")
     ret = imwrite(
         out_name,
         data_in,
@@ -273,20 +280,21 @@ def export_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
         #     # "channel_names": channel_names,
         # },
     )
-    end = time.time()
-    print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
+    # end = time.time()
+    # print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
     return ret
 
 
 # function to collect all the
-def list_image_files(data_folder: Path, file_type: str, prefix: Union[str, None] = None) -> List:
+def list_image_files(data_folder: Path, file_type: str, postfix: Union[str, None] = None) -> List:
     """
     get a list of all the filetypes
     TODO: aics has cleaner functions than this "lambda"
     should this use Path methods? or return Path?
     """
-    if prefix is not None:
-        return sorted(data_folder.glob(f"{prefix}*{file_type}"))
+
+    if postfix is not None:
+        return sorted(data_folder.glob(f"*{postfix}{file_type}"))
     else:
         return sorted(data_folder.glob(f"*{file_type}"))
 
@@ -410,7 +418,8 @@ def export_inferred_organelle_AICS(img_out: np.ndarray, name: str, meta_dict: Di
         print(f"making {out_data_path}")
 
     img_name_out = f"{img_name.stem}-{name}"
-    out_file_n = export_tiff_AICS(img_out, meta_dict, img_name_out, str(out_data_path), name)
+    out_file_n = export_tiff_AICS(img_out, img_name_out, out_data_path, name, meta_dict)
+
     print(f"saved file: {out_file_n}")
     return out_file_n
 
@@ -434,7 +443,13 @@ def read_tiff_image_AICS(image_name):
     return im_out
 
 
-def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str:
+def export_tiff_AICS(
+    data_in: np.ndarray,
+    img_name: str,
+    out_path: Union[Path, str],
+    channel_names: Union[List[str], None] = None,
+    meta_in: Union[Dict, None] = None,
+) -> str:
     """
     aicssegmentation way to do it
     """
@@ -445,7 +460,7 @@ def export_tiff_AICS(data_in, meta_in, img_name, out_path, channel_names) -> str
 
     if data_in.dtype == "bool":
         data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 1
+        data_in[data_in > 0] = 255
 
     OmeTiffWriter.save(data=data_in, uri=out_name.as_uri(), dim_order="ZYX")
     end = time.time()
