@@ -752,7 +752,7 @@ def get_max_label(
         all_labels = np.unique(target_labels)[1:]
 
     total_signal = [raw_signal[labels_in == label].sum() for label in all_labels]
-    # combine NU and "labels" to make a SOMA
+    # combine NU and "labels" to make a CELLMASK
     keep_label = all_labels[np.argmax(total_signal)]
 
     return keep_label

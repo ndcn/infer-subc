@@ -43,7 +43,7 @@ def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarr
     ------------
     input_obj:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    soma_mask:
+    cellmask:
         a 3d image containing the cellmask object (mask)
     mask:
         a 3d image containing the cellmask object (mask)

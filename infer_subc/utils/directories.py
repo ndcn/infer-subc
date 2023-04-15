@@ -7,7 +7,7 @@ from pathlib import Path
 
 class Directories:
     """
-    Provides safe paths to common infer-subc-2D module directories
+    Provides safe paths to common infer-subc module directories
     """
 
     _module_base_dir = Path(infer_subc.__file__).parent

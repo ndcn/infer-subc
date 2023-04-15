@@ -13,7 +13,7 @@ Here the specific parameters of the organelle inference procedures can be fine-t
 #### `conf_infer_.json`s
 Each organelle has its own procedure.
 `conf_1.2.nuclei_stepbystep_from_raw.json`
-`conf_1.3.cytosol_from_raw.json`
+`conf_1.3.cytoplasm_from_raw.json`
 `conf_1.4.lysosome_stepbystep_from_raw.json`
 `conf_1.5.mitochondria_stepbystep_from_raw.json`
 `conf_1.6.golgi_stepbystep_from_raw.json`

@@ -10,7 +10,7 @@ pip install aicssegmentation #downgrades napari and scikitlearn
 
 pip install napari-aicsimageio  
 
-pip install -e <path to infer-subc-2d>
+pip install -e <path to infer-subc>
 pip install -e <path to organelle-segmenter-plugin>
 
 

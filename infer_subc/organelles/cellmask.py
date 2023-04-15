@@ -35,8 +35,8 @@ from infer_subc.core.img import (
 
 def raw_cellmask_fromaggr(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
     """define cellmask image
-    SOMA_W = (6.,1.,2.)
-    SOMA_CH = (LYSO_CH,ER_CH,GOLGI_CH)
+    CELLMASK_W = (6.,1.,2.)
+    CELLMASK_CH = (LYSO_CH,ER_CH,GOLGI_CH)
 
     Parameters
     ------------
