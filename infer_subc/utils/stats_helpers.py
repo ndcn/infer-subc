@@ -7,10 +7,10 @@ from infer_subc.core.img import apply_mask
 import pandas as pd
 from infer_subc.utils.stats import _assert_uint16_labels
 
-from .stats import get_aXb_stats_3D, get_summary_stats_3D, get_simple_stats_3D
+from .stats import get_aXb_stats_3D, get_summary_stats_3D, get_simple_stats_3D, get_proj_XYstats, get_proj_Zstats
 
 
-def shell_cross_stats(
+def dump_shell_cross_stats(
     organelle_names: List[str], organelles: List[np.ndarray], mask: np.ndarray, out_data_path: Path, source_file: str
 ) -> int:
     """
@@ -39,10 +39,10 @@ def shell_cross_stats(
     return count
 
 
-def organelle_stats(
+def dump_organelle_stats(
     organelle_names: List[str],
     organelles: List[np.ndarray],
-    intinsities: List[np.ndarray],
+    intensities: List[np.ndarray],
     mask: np.ndarray,
     out_data_path: Path,
     source_file: str,
@@ -57,7 +57,7 @@ def organelle_stats(
         print(f"getting stats for A = {target}")
         a = organelles[j]
         # A_stats_tab, rp = get_simple_stats_3D(A,mask)
-        a_stats_tab, rp = get_summary_stats_3D(a, intinsities[j], mask)
+        a_stats_tab, rp = get_summary_stats_3D(a, intensities[j], mask)
 
         # loop over Bs
         for i, nmi in enumerate(organelle_names):
@@ -112,7 +112,7 @@ def dump_stats(
     """
 
     stats_table, _ = get_summary_stats_3D(segmentation, intensity_img, mask)
-    csv_path = out_data_path / f"{source_file.stem}-{name}-basicstats.csv"
+    csv_path = out_data_path / f"{source_file.stem}-{name}-basic-stats.csv"
     stats_table.to_csv(csv_path)
     print(f"dumped {name} table to {csv_path}")
 
@@ -122,3 +122,52 @@ def dump_stats(
 # refactor to just to a target vs. list of probes
 # for nuclei mask == cellmask
 # for all oother mask == cytoplasm
+
+
+def dump_projection_stats(
+    organelle_names: List[str], 
+    organelles: List[np.ndarray], 
+    intensities: List[np.ndarray], 
+    cellmask_obj:np.ndarray, 
+    nuclei_obj:np.ndarray, 
+    organelle_mask: np.ndarray, 
+    out_data_path: Path, 
+    source_file: str
+) -> int:
+    """
+    get all cross stats between organelles `a` and `b`, and "shell of `a`" and `b`.   "shell" is the boundary of `a`
+    calls `get_proj_XYstats`  `get_proj_Zstats`
+    """
+    count = 0
+    for j, organelle_name in enumerate(organelle_names):
+       
+        organelle_obj = organelles[j]
+        organelle_img = intensities[j]
+
+        rad_stats, _ = get_proj_XYstats(        
+                cellmask_obj,
+                organelle_mask,
+                organelle_obj,
+                organelle_img,
+                organelle_name,
+                nuclei_obj
+                )
+
+        csv_path = out_data_path / f"{source_file.stem}-{organelle_name}-radial-stats.csv"
+        rad_stats.to_csv(csv_path)
+
+        d_stats = get_depth_stats(        
+                cellmask_obj,
+                organelle_mask,
+                organelle_obj,
+                organelle_img,
+                organelle_name,
+                nuclei_obj
+                )
+        csv_path = out_data_path / f"{source_file.stem}-{organelle_name}-depth-stats.csv"
+        d_stats.to_csv(csv_path)
+        count += 1
+
+    print(f"dumped {count}x2 csvs")
+
+    return count

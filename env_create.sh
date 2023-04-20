@@ -36,11 +36,9 @@ pip install centrosome
 pip install aicsimageio 
 pip install aicspylibczi
 pip install aicssegmentation #downgrades napari and scikitlearn
-
 pip install napari-aicsimageio  
 
-
-
+pip install centrosome aicsimageio tifffile aicspylibczi aicssegmentation napari-aicsimageio
 
 
 
@@ -49,12 +47,9 @@ conda activate napari10
 conda install -c conda-forge ipython ipykernel pip notebook napari scipy scikit-learn
 conda install matplotlib
 
+pip install centrosome
 pip install aicsimageio tifffile aicspylibczi aicssegmentation napari-aicsimageio
 
-pip install aicspylibczi
-pip install aicssegmentation #downgrades napari and scikitlearn
-
-pip install napari-aicsimageio  
 
 
 

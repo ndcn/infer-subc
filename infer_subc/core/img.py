@@ -864,6 +864,8 @@ def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     img_out:
         a new (copied) array with mask applied
     """
+    assert img_in.shape == mask.shape
+
     img_out = img_in.copy()
     if mask.dtype == "bool":
         img_out[~mask] = 0
