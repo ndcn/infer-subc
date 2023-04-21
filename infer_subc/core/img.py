@@ -296,6 +296,23 @@ def label_uint16(in_obj: np.ndarray) -> np.ndarray:
         return label(in_obj > 0).astype(np.uint16)
 
 
+def label_bool_as_uint16(in_obj: np.ndarray) -> np.ndarray:
+    """
+    label segmentation and return as uint16
+
+    Parameters
+    ------------
+    in_obj:
+        a 3d image segmentaiton
+
+    Returns
+    -------------
+        np.ndimage of labeled segmentations as np.uint16
+
+    """
+    return (in_obj > 0).astype(np.uint16)
+
+
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -752,7 +769,7 @@ def get_max_label(
         all_labels = np.unique(target_labels)[1:]
 
     total_signal = [raw_signal[labels_in == label].sum() for label in all_labels]
-    # combine NU and "labels" to make a SOMA
+    # combine NU and "labels" to make a CELLMASK
     keep_label = all_labels[np.argmax(total_signal)]
 
     return keep_label
@@ -864,6 +881,8 @@ def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     img_out:
         a new (copied) array with mask applied
     """
+    assert img_in.shape == mask.shape
+
     img_out = img_in.copy()
     if mask.dtype == "bool":
         img_out[~mask] = 0
@@ -1250,7 +1269,7 @@ def img_to_uint8(data_in: np.ndarray) -> np.ndarray:
     """
     print(f"changing from {data_in.dtype} to np.uint8")
     data_in = data_in.astype(np.uint8)
-    data_in[data_in > 0] = 255
+    data_in[data_in > 0] = 1
     return data_in
 
 

@@ -263,23 +263,24 @@ def export_tiff(
     #     physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
 
     dtype = data_in.dtype
-    if dtype == "bool":
-        data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
+    if dtype == "bool" or dtype == np.uint8:
+        data_in = data_in.astype(np.uint16)
+        data_in[data_in > 0] = 1
         dtype = data_in.dtype
         print(f"changed dtype from bool to {dtype}")
     else:
         print("export dtype - {dtype}")
+        
     ret = imwrite(
-        out_name,
-        data_in,
-        dtype=dtype,
-        # metadata={
-        #     "axes": dimension_order,
-        #     # "physical_pixel_sizes": physical_pixel_sizes,
-        #     # "channel_names": channel_names,
-        # },
-    )
+            out_name,
+            data_in,
+            dtype=dtype,
+            # metadata={
+            #     "axes": dimension_order,
+            #     # "physical_pixel_sizes": physical_pixel_sizes,
+            #     # "channel_names": channel_names,
+            # },
+        )
     # end = time.time()
     # print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
     return ret

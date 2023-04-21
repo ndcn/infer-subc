@@ -13,6 +13,7 @@ from infer_subc.core.img import (
     # normalized_edge_preserving_smoothing,
     scale_and_smooth,
     label_uint16,
+    label_bool_as_uint16,
 )
 
 
@@ -74,7 +75,7 @@ def infer_ER(
     ###################
     struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
 
-    return label_uint16(struct_obj)
+    return label_bool_as_uint16(struct_obj)
 
 
 ##########################

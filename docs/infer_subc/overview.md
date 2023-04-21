@@ -7,7 +7,7 @@ NOTE:  this is designed to work with a second repo `organelle-segmenter-plugin` 
 In addition to the python based module there are a series of expository Jupyter notebooks which demonstrate the logic and development of the library.
 
 ### organelles
-These are function to infer each specific organelles from their respective channels: Nuclei, Soma (Cell Membrane TBD), Lysosome, Mitochondria, Golgi, Peroxisome, Endoplasmic Reticulum, and Lipid bodies.
+These are function to infer each specific organelles from their respective channels: Nuclei, Cellmask (Cell Membrane TBD), Lysosome, Mitochondria, Golgi, Peroxisome, Endoplasmic Reticulum, and Lipid bodies.
 
 
 ### utils

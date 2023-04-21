@@ -20,14 +20,14 @@ As a general framework for our data processing pipeline we are defining 4 steps:
 Here we make explicit what we are trying to accomplish.
 
 ## GOAL:  Infer sub-cellular components in order to understand interactome 
-To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
+To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and CELLMASK) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
 As part of goal setting we will also enumerate the specific tasks that need to be done to reach the goal.
 #### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
-  - 1️⃣-***soma***
+  - 1️⃣-***cellmask***
   - 2️⃣-***nuclei***
-  - 3️⃣-***cytosol***
+  - 3️⃣-***cytoplasm***
   - 4️⃣-***lysosome***
   - 5️⃣-***mitochondria***
   - 6️⃣-***golgi***
@@ -60,7 +60,7 @@ The bulk of the code in this repo is to solve this step:  processing the "raw" d
 The imported images have already been pre-processed to transform the 32 channel spectral measuremnts into "linearly unmixed" images which estimate independently labeled sub-cellular components.  Thes 7 channels (plus a residual "non-linear" signal) will be used to infer the shapes and extents of these sub-cellular components.   
 A single "optimal" Z slice is chosen for each image for subsequent 2D analysis.
 We will perform computational image analysis on the pictures to _segment_ (or _binarize_) the components of interest for measurement.  In other procedures we can used these labels as "ground truth" labels to train machine learning models to automatically perform the inference of these objects.
-Pseudo-independent processing of the imported multi-channel image to acheive each of the 9 objecives stated above.  i.e. infering: NUCLEI, SOMA, CYTOSOL, LYSOSOME, MITOCHONDRIA, GOLGI COMPLEX, PEROZISOMES, ENDOPLASMIC RETICULUM, and LIPID BODIES
+Pseudo-independent processing of the imported multi-channel image to acheive each of the 9 objecives stated above.  i.e. infering: NUCLEI, CELLMASK, CYTOPLASM, LYSOSOME, MITOCHONDRIA, GOLGI COMPLEX, PEROZISOMES, ENDOPLASMIC RETICULUM, and LIPID BODIES
 
 ### General flow for infering objects via segmentation
 - (extraction) 

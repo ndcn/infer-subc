@@ -5,9 +5,9 @@
 This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
 
 ## Overview
-In general we ware interested in making segmentations which are the inferred organelles for each cell.   Procedurally we will need to define some masking ROIs which correspond to the soma, wholecell (soma + dendrites) and cytosol (soma minus nucleus.)  THerefore we need to first infer nuclei, soma, and cytosol as the first steps.  
+In general we ware interested in making segmentations which are the inferred organelles for each cell.   Procedurally we will need to define some masking ROIs which correspond to the cellmask, wholecell (cellmask + dendrites) and cytoplasm (cellmask minus nucleus.)  THerefore we need to first infer nuclei, cellmask, and cytoplasm as the first steps.  
 
-From there the organelle segmentations are largely independent, and we will employ the cytosol (or soma for the nucleus segmentation) as a mask when collecting statistics about the individual organelle objects. 
+From there the organelle segmentations are largely independent, and we will employ the cytoplasm (or cellmask for the nucleus segmentation) as a mask when collecting statistics about the individual organelle objects. 
 
 
 Notebooks  found [here]( link ) provide the template
@@ -16,15 +16,15 @@ Notebooks  found [here]( link ) provide the template
 
 #### GOAL:  Infer sub-cellular components in order to understand interactome 
 
-To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
+To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and CELLMASK) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
 
 #### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
   - Nescessary masks and nuclei
     -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
-    -  #### 2️⃣. [Infer SOMA](./notebooks/01_infer_soma.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
-    -  #### 3️⃣. [Infer CYTOSOL](./notebooks/03_infer_cytosol.ipynb) 
+    -  #### 2️⃣. [Infer CELLMASK](./notebooks/01_infer_cellmask.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
+    -  #### 3️⃣. [Infer CYTOPLASM](./notebooks/03_infer_cytoplasm.ipynb) 
 
   - individual organelles
     -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
@@ -47,5 +47,5 @@ Early in the develepmont we chose to leverage the Allen Cell & Structure Segment
 
 -------
 
-For full documentation visit [github.io.com/infer_subc](https://ndcn.github.io/infer-subc-2D/).
+For full documentation visit [github.io.com/infer_subc](https://ndcn.github.io/infer-subc/).
 Robust inference of subcellular objects:
