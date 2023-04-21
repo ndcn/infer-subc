@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Any, List
+from typing import Any, List, Union
 from pathlib import Path
 
 from infer_subc.core.img import apply_mask
@@ -7,7 +7,7 @@ from infer_subc.core.img import apply_mask
 import pandas as pd
 from infer_subc.utils.stats import _assert_uint16_labels
 
-from .stats import get_aXb_stats_3D, get_summary_stats_3D, get_simple_stats_3D, get_proj_XYstats, get_proj_Zstats
+from .stats import get_aXb_stats_3D, get_summary_stats_3D, get_simple_stats_3D, get_radial_stats, get_depth_stats
 
 
 def dump_shell_cross_stats(
@@ -132,7 +132,9 @@ def dump_projection_stats(
     nuclei_obj:np.ndarray, 
     organelle_mask: np.ndarray, 
     out_data_path: Path, 
-    source_file: str
+    source_file: str,
+    n_rad_bins: Union[int,None] = None,
+    n_zernike: Union[int,None] = None,
 ) -> int:
     """
     get all cross stats between organelles `a` and `b`, and "shell of `a`" and `b`.   "shell" is the boundary of `a`
@@ -144,17 +146,23 @@ def dump_projection_stats(
         organelle_obj = organelles[j]
         organelle_img = intensities[j]
 
-        rad_stats, _ = get_proj_XYstats(        
+        rad_stats,z_stats _ = get_radial_stats(        
                 cellmask_obj,
                 organelle_mask,
                 organelle_obj,
                 organelle_img,
                 organelle_name,
-                nuclei_obj
+                nuclei_obj,
+                n_rad_bins,
+                n_zernike
                 )
 
         csv_path = out_data_path / f"{source_file.stem}-{organelle_name}-radial-stats.csv"
         rad_stats.to_csv(csv_path)
+
+        csv_path = out_data_path / f"{source_file.stem}-{organelle_name}-zernike-stats.csv"
+        z_stats.to_csv(csv_path)
+        
 
         d_stats = get_depth_stats(        
                 cellmask_obj,
@@ -162,12 +170,14 @@ def dump_projection_stats(
                 organelle_obj,
                 organelle_img,
                 organelle_name,
-                nuclei_obj
+                nuclei_obj,
+                n_bins=n_rad_bins
                 )
         csv_path = out_data_path / f"{source_file.stem}-{organelle_name}-depth-stats.csv"
         d_stats.to_csv(csv_path)
         count += 1
-
-    print(f"dumped {count}x2 csvs")
+   
+        
+        print(f"dumped {count}x3 csvs")
 
     return count

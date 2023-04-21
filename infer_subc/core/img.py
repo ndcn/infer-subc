@@ -296,6 +296,23 @@ def label_uint16(in_obj: np.ndarray) -> np.ndarray:
         return label(in_obj > 0).astype(np.uint16)
 
 
+def label_bool_as_uint16(in_obj: np.ndarray) -> np.ndarray:
+    """
+    label segmentation and return as uint16
+
+    Parameters
+    ------------
+    in_obj:
+        a 3d image segmentaiton
+
+    Returns
+    -------------
+        np.ndimage of labeled segmentations as np.uint16
+
+    """
+    return (in_obj > 0).astype(np.uint16)
+
+
 def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarray:
     """
     wrapper for applying 2D median filter slice by slice on a 3D image
@@ -1252,7 +1269,7 @@ def img_to_uint8(data_in: np.ndarray) -> np.ndarray:
     """
     print(f"changing from {data_in.dtype} to np.uint8")
     data_in = data_in.astype(np.uint8)
-    data_in[data_in > 0] = 255
+    data_in[data_in > 0] = 1
     return data_in
 
 

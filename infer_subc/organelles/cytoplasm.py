@@ -90,7 +90,7 @@ def get_cytoplasm(nuclei_obj: np.ndarray, cellmask: np.ndarray, meta_dict: Dict,
 
     """
     try:
-        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)
+        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)>0
     except:
         start = time.time()
         print("starting segmentation...")

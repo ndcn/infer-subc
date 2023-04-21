@@ -10,6 +10,7 @@ from scipy.sparse import coo_matrix
 
 import centrosome.cpmorphology
 import centrosome.propagate
+import centrosome.zernike
 
 from infer_subc.core.img import apply_mask
 
@@ -252,16 +253,32 @@ def create_masked_Z_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=N
     
     return img_out.sum(axis=0)
 
-def get_Z_proj_stats(        
+
+
+###################################
+### DISTRIBUTIONAL STATS
+###################################
+def get_radial_stats(        
         cellmask_obj: np.ndarray,
         organelle_mask: np.ndarray,
         organelle_obj:np.ndarray,
         organelle_img: np.ndarray,
         organelle_name: str,
         nuclei_obj: Union[np.ndarray, None],
+        n_rad_bins: Union[int,None] = None,
+        n_zernike: Union[int,None] = None,
         ):
 
     """
+    Params
+
+
+    Returns
+    -----------
+    rstats table of radial distributions
+    zstats table of zernike magnitudes and phases
+    rad_bins image of the rstats bins over the cellmask_obj 
+
     """
 
 
@@ -272,11 +289,11 @@ def get_Z_proj_stats(
 
     nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
 
-    stats = get_radial_distribution(cellmask_proj=cellmask_proj, org_proj=org_proj, img_proj=img_proj, org_name=organelle_name, nucleus_proj=nucleus_proj)
+    radial_stats, radial_bin_mask = get_radial_distribution(cellmask_proj=cellmask_proj, org_proj=org_proj, img_proj=img_proj, org_name=organelle_name, nucleus_proj=nucleus_proj, n_bins=n_rad_bins)
     
-    # TODO:  zernike stats
+    zernike_stats = get_zernike_stats(cellmask_proj=cellmask_proj, org_proj=org_proj, img_proj=img_proj, org_name=organelle_name, nucleus_proj=nucleus_proj, zernike_degree = n_zernike)
 
-    return stats
+    return radial_stats,zernike_stats,radial_bin_mask
     
 def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep_nuc_bins):
     """
@@ -360,10 +377,7 @@ def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep
 
         good_mask = cl > 0
 
-
-    ################   ################
     ## define spatial distribution from masks
-    ################   ################
     # collect arrays of centers
     i_center = np.zeros(cl.shape)
     i_center[good_mask] = i[cl[good_mask] - 1]
@@ -439,11 +453,12 @@ def get_radial_distribution(
     bin_indexes = (normalized_distance * bin_count).astype(int)
     bin_indexes[bin_indexes > bin_count] = bin_count # shouldn't do anything
 
+    #                 (    i          ,         j              )
     labels_and_bins = (good_labels - 1, bin_indexes[good_mask])
-
-    histogram_cmsk = coo_matrix( (cellmask_proj[good_mask], labels_and_bins), (nobjects, bin_count) ).toarray()
-    histogram_org = coo_matrix( (org_proj[good_mask], labels_and_bins), (nobjects, bin_count) ).toarray()
-    histogram_img = coo_matrix( (img_proj[good_mask], labels_and_bins), (nobjects, bin_count) ).toarray()
+    #                coo_matrix( (             data,             (i, j)    ), shape=                      )
+    histogram_cmsk = coo_matrix( (cellmask_proj[good_mask], labels_and_bins), shape=(nobjects, bin_count) ).toarray()
+    histogram_org = coo_matrix(  (org_proj[good_mask],      labels_and_bins), shape=(nobjects, bin_count) ).toarray()
+    histogram_img = coo_matrix(  (img_proj[good_mask],      labels_and_bins), shape=(nobjects, bin_count) ).toarray()
 
     bin_indexes = (normalized_distance * bin_count).astype(int)
 
@@ -577,10 +592,99 @@ def get_depth_stats(
     nucleus_proj = create_masked_depth_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
 
     stats_tab = pd.DataFrame({'organelle':organelle_name,'mask':'cellmask','bin':range(cellmask_obj.shape[0]),'n_bins':cellmask_obj.shape[0],'cm_vox_cnt':cellmask_proj,'org_vox_cnt':org_proj,'org_intensity':img_proj,'nuc_vox_cnt':nucleus_proj})
-
     return stats_tab
     
 
+# Zernicke routines.  inspired by cellprofiler, but heavily simplified
+def zernicke_stat(pixels,z):
+    """
+    
+    """
+    vr = np.sum(pixels[:,:,np.newaxis]*z.real, axis=(0,1))
+    vi = np.sum(pixels[:,:,np.newaxis]*z.imag, axis=(0,1))    
+    magnitude = np.sqrt(vr * vr + vi * vi) / pixels.sum()
+    phase = np.arctan2(vr, vi)
+    # return {"zer_mag": magnitude, "zer_phs": phase}
+    return magnitude, phase
+
+
+
+def zernike_polynomial(labels, zernike_is):
+    """
+    
+
+    """
+    # First, get a table of centers and radii of minimum enclosing
+    # circles for the cellmask
+    ij, r = centrosome.cpmorphology.minimum_enclosing_circle( labels )
+    # Then compute x and y, the position of each labeled pixel
+    # within a unit circle around the object
+    iii, jjj = np.mgrid[0 : labels.shape[0], 0 : labels.shape[1]]
+
+    # translate+scale
+    iii = (iii-ij[0][0] ) / r
+    jjj = (jjj-ij[0][1] ) / r
+
+    z = centrosome.zernike.construct_zernike_polynomials(
+        iii, jjj, zernike_is
+    )
+    return z
+    
+def get_zernike_stats(        
+        cellmask_obj: np.ndarray,
+        organelle_mask: np.ndarray,
+        organelle_obj:np.ndarray,
+        organelle_img: np.ndarray,
+        organelle_name: str,
+        nuclei_obj: Union[np.ndarray, None] = None,
+        zernike_degree: int = 9
+        ):
+
+    """
+    
+    """
+
+
+    # flattened
+    cellmask_proj = create_masked_Z_projection(cellmask_obj)
+    org_proj = create_masked_Z_projection(organelle_obj,organelle_mask.astype(bool))
+    img_proj = create_masked_Z_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
+
+    nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
+
+
+    nobjects = 1
+    labels = label(cellmask_proj>0) #extent as 0,1 rather than bool
+    zernike_indexes = centrosome.zernike.get_zernike_indexes( zernike_degree + 1)
+
+
+    z = zernike_polynomial(labels, zernike_indexes)
+
+    z_cm = zernicke_stat(cellmask_proj, z)
+    z_org = zernicke_stat(org_proj, z)
+    z_nuc = zernicke_stat(nucleus_proj, z)
+    z_img = zernicke_stat(img_proj, z)
+
+
+    nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)]
+
+
+    stats_tab = pd.DataFrame({'organelle':organelle_name,
+                              'mask':'cellmask',
+                              'zernike_n':zernike_indexes[:,0],
+                              'zernike_m':zernike_indexes[:,1],
+                                'cm_zer_mag':z_cm[0],
+                                'cm_zer_phs':z_cm[1],   
+                                'obj_zer_mag':z_org[0],
+                                'obj_zer_phs':z_org[1],
+                                'nuc_zer_mag':z_nuc[0],
+                                'nuc_zer_phs':z_nuc[1],
+                                'img_zer_mag':z_img[0],
+                                'img_zer_mag':z_img[1]}
+                                )
+
+
+    return stats_tab
 
 # untested 2D version
 def get_summary_stats_2D(input_labels, intensity_img, mask):

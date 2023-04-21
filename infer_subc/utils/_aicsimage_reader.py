@@ -331,8 +331,8 @@ def export_ome_tiff(data_in, meta_in, img_name, out_path, channel_names) -> str:
         data_in = data_in[np.newaxis, np.newaxis, :, :]
 
     if data_in.dtype == "bool":
-        data_in = data_in.astype(np.uint8)
-        data_in[data_in > 0] = 255
+        data_in = data_in.astype(np.uint16)
+        data_in[data_in > 0] = 1
 
     out_ome = OmeTiffWriter.build_ome(
         [data_in.shape],

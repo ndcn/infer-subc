@@ -262,16 +262,11 @@ class BatchWorkflow:
         Returns
             np.ndarray: image converted to uint8 for saving if boolean... otherwise
         """
-        if image.dtype == "bool":
-            image = image.astype(np.uint8)
-            image[image > 0] = 255
+        if image.dtype == "bool" or image.dtype == np.uint8:
+            image = image.astype(np.uint16)
+            image[image > 0] = 1
             msg = f"converted boolean to {image.dtype}. "
             self._write_to_log_file(msg)
-        elif image.dtype == np.uint8:
-            msg = f"mask already  {image.dtype}"
-            print(msg)
-            self._write_to_log_file(msg)
-            image[image > 0] = 255
         else:
             image = image.astype(np.uint16)
             msg = f" enforced  {image.dtype}"
