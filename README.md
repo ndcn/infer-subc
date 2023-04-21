@@ -18,9 +18,9 @@ The staring point of this workflow is a set of multichannel images, where each c
 
 **Identify a single cell of interest**
 
-1. [Infer soma](./notebooks/01_infer_soma.ipynb) (🚨 Steps 2-9 depend on establishing a good solution here)
+1. [Infer cellmask](./notebooks/01_infer_cellmask.ipynb) (🚨 Steps 2-9 depend on establishing a good solution here)
 2. [Infer nuclei ](./notebooks/02_infer_nuclei.ipynb)
-3. [Infer cytosol](./notebooks/03_infer_cytosol.ipynb) 
+3. [Infer cytoplasm](./notebooks/03_infer_cytoplasm.ipynb) 
 
 **Segment each of the organelles**
 
@@ -86,7 +86,7 @@ The following are prerequisites and should be installed prior to using the workf
 
 `infer_subc` is not yet available on `PyPI` so must be  be `pip` ionstalled from source
 ```
-pip install git+https://github.com/ndcn/infer-subc-2D.git
+pip install git+https://github.com/ndcn/infer-subc.git
 ```
 
 ## Usage

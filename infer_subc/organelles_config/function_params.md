@@ -25,8 +25,8 @@ This function is commonly used to mask out some area from a specific segmentatio
 Infers a single *soma* with a hard-coded aggregate signal (`raw_soma_MCZ`) followed by PREPROCESSING --  _normalization_, _filtering_; CORE processing -- threholding; and POST-PROCESSING -- watershed labeling a _masked object thresholded_ nuclei and size filtering. POST-POST-PROCESSING involves choosing the max label.
 * no parameters 
 
-#### infer_cytosol
-Infers the *cytosol* by taking the *soma* masked by the *nuclei*
+#### infer_cytoplasm
+Infers the *cytoplasm* by taking the *soma* masked by the *nuclei*
 * no parameters 
 
 #### infer_cell_membrane (NOT IMPLIMENTED)

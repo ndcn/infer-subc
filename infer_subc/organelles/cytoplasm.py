@@ -11,7 +11,7 @@ from infer_subc.core.img import apply_mask
 ##########################
 #  infer_cytoplasm
 ##########################
-def infer_cytoplasm(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nuclei: bool = True) -> np.ndarray:
+def infer_cytoplasm(nuclei_object: np.ndarray, cellmask: np.ndarray, erode_nuclei: bool = True) -> np.ndarray:
     """
     Procedure to infer infer from linearly unmixed input. (logical cellmask AND NOT nucleus)
 
@@ -19,7 +19,7 @@ def infer_cytoplasm(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nucl
     ------------
     nuclei_object:
         a 3d image containing the nuclei object
-    soma_mask:
+    cellmask:
         a 3d image containing the cellmask object (mask)
     erode_nuclei:
         should we erode?
@@ -30,18 +30,18 @@ def infer_cytoplasm(nuclei_object: np.ndarray, soma_mask: np.ndarray, erode_nucl
         boolean np.ndarray
 
     """
-    nucleus_obj = apply_mask(nuclei_object, soma_mask)
+    nucleus_obj = apply_mask(nuclei_object, cellmask)
 
     if erode_nuclei:
-        cytoplasm_mask = np.logical_xor(soma_mask, binary_erosion(nucleus_obj))
+        cytoplasm_mask = np.logical_xor(cellmask, binary_erosion(nucleus_obj))
     else:
-        cytoplasm_mask = np.logical_xor(soma_mask, nucleus_obj)
+        cytoplasm_mask = np.logical_xor(cellmask, nucleus_obj)
 
     return cytoplasm_mask
 
 
 def infer_and_export_cytoplasm(
-    nuclei_object: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict, out_data_path: Path
+    nuclei_object: np.ndarray, cellmask: np.ndarray, meta_dict: Dict, out_data_path: Path
 ) -> np.ndarray:
     """
     infer nucleus and write inferred nuclei to ome.tif file
@@ -50,7 +50,7 @@ def infer_and_export_cytoplasm(
     ------------
     nuclei_object:
         a 3d image containing the nuclei object
-    soma_mask:
+    cellmask:
         a 3d image containing the cellmask object (mask)
     meta_dict:
         dictionary of meta-data (ome)
@@ -62,14 +62,14 @@ def infer_and_export_cytoplasm(
     exported file name
 
     """
-    cytoplasm = infer_cytoplasm(nuclei_object, soma_mask)
+    cytoplasm = infer_cytoplasm(nuclei_object, cellmask)
 
     out_file_n = export_inferred_organelle(cytoplasm, "cytoplasm", meta_dict, out_data_path)
     print(f"inferred cytoplasm. wrote {out_file_n}")
     return cytoplasm
 
 
-def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+def get_cytoplasm(nuclei_obj: np.ndarray, cellmask: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
     """
     load cytoplasm if it exists, otherwise calculate and write to ome.tif file
 
@@ -77,7 +77,7 @@ def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict
     ------------
     in_img:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    soma_mask:
+    cellmask:
         a 3d image containing the cellmask object (mask)
     meta_dict:
         dictionary of meta-data (ome)
@@ -90,11 +90,11 @@ def get_cytoplasm(nuclei_obj: np.ndarray, soma_mask: np.ndarray, meta_dict: Dict
 
     """
     try:
-        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)
+        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)>0
     except:
         start = time.time()
         print("starting segmentation...")
-        cytoplasm = infer_and_export_cytoplasm(nuclei_obj, soma_mask, meta_dict, out_data_path)
+        cytoplasm = infer_and_export_cytoplasm(nuclei_obj, cellmask, meta_dict, out_data_path)
         end = time.time()
         print(f"inferred cytoplasm in ({(end - start):0.2f}) sec")
 

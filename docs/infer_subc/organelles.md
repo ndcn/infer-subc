@@ -2,9 +2,9 @@
 
 The code in this sub-module have the routines to perform a (hopefully) robust inference of subcellular objects:
 
-+ 1️⃣-***soma***
++ 1️⃣-***cellmask***
 + 2️⃣-***nuclei***
-+ 3️⃣-***cytosol***
++ 3️⃣-***cytoplasm***
 + 4️⃣-***lysosome***
 + 5️⃣-***mitochondria***
 + 6️⃣-***golgi***
@@ -12,7 +12,7 @@ The code in this sub-module have the routines to perform a (hopefully) robust in
 + 8️⃣-***endoplasmic reticulum***
 + 9️⃣-***lipid body***
 
-From the results of the  1️⃣-***soma***, 2️⃣-***nuclei***, the  3️⃣-***cytosol***, a mask of the cytosol for each cell of interest is derived.
+From the results of the  1️⃣-***cellmask***, 2️⃣-***nuclei***, the  3️⃣-***cytoplasm***, a mask of the cytoplasm for each cell of interest is derived.
 
 By "inference of sub-cellular objects" we mean assigning each pixel to belonging to an organell as estimated from the florescence image in the apropriate channel.  This is done here by image processing and thresholding.
 
@@ -24,17 +24,17 @@ By "inference of sub-cellular objects" we mean assigning each pixel to belonging
 
 #### GOAL:  Infer sub-cellular components in order to understand interactome 
 
-To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and SOMA) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
+To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and CELLMASK) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
 
 #### summary of _OBJECTIVES_ ✅
 Robust inference of subcellular objects:
-- 1️⃣-***soma***
+- 1️⃣-***cellmask***
 - 2️⃣-***nuclei***
-- 3️⃣-***cytosol***
+- 3️⃣-***cytoplasm***
 - 4️⃣-***lysosome***
 - 5️⃣-***mitochondria***
 - 6️⃣-***golgi***
-- 7️⃣. ***peroxisome***
+- 7️⃣-***peroxisome***
 - 8️⃣-***endoplasmic reticulum***
 - 9️⃣-***lipid body***
 
@@ -57,7 +57,7 @@ Robust inference of subcellular objects:
 The imported images have already been pre-processed to transform the 32 channel spectral measuremnts into "linearly unmixed" images which estimate independently labeled sub-cellular components.  Thes 7 channels (plus a residual "non-linear" signal) will be used to infer the shapes and extents of these sub-cellular components.   
 A single "optimal" Z slice is chosen for each image for subsequent 2D analysis.
 We will perform computational image analysis on the pictures to _segment_ (or _binarize_) the components of interest for measurement.  In other procedures we can used these labels as "ground truth" labels to train machine learning models to automatically perform the inference of these objects.
-Pseudo-independent processing of the imported multi-channel image to acheive each of the 9 objecives stated above.  i.e. infering: NUCLEI, SOMA, CYTOSOL, LYSOSOME, MITOCHONDRIA, GOLGI COMPLEX, PEROZISOMES, ENDOPLASMIC RETICULUM, and LIPID BODIES
+Pseudo-independent processing of the imported multi-channel image to acheive each of the 9 objecives stated above.  i.e. infering: NUCLEI, CELLMASK, CYTOPLASM, LYSOSOME, MITOCHONDRIA, GOLGI COMPLEX, PEROZISOMES, ENDOPLASMIC RETICULUM, and LIPID BODIES
 
 ### General flow for infering objects via segmentation
 - (extraction) 

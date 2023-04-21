@@ -46,11 +46,11 @@ def fixed_infer_organelles(img_data):
     # # Stage 1:  nuclei, cellmask, cytoplasm
     # img_2D = fixed_get_optimal_Z_image(img_data)
 
-    soma_mask = fixed_infer_cellmask_fromaggr(img_data)
+    cellmask = fixed_infer_cellmask_fromaggr(img_data)
 
-    nuclei_object = fixed_infer_nuclei(img_data, soma_mask)
+    nuclei_object = fixed_infer_nuclei(img_data, cellmask)
 
-    cytoplasm_mask = infer_cytoplasm(nuclei_object, soma_mask)
+    cytoplasm_mask = infer_cytoplasm(nuclei_object, cellmask)
 
     # cyto masked objects.
     lyso_object = fixed_infer_lyso(img_data, cytoplasm_mask)
@@ -68,7 +68,7 @@ def fixed_infer_organelles(img_data):
         peroxi_object,
         er_object,
         LD_object,
-        soma_mask,
+        cellmask,
         cytoplasm_mask,
     ]
 
@@ -80,7 +80,7 @@ def fixed_infer_organelles(img_data):
         "peroxisome",
         "er",
         "LD_body",
-        "soma_mask",
+        "cellmask",
         "cytoplasm_mask",
     ]
     # TODO: pack outputs into something napari readable
@@ -123,7 +123,7 @@ def process_czi_image(czi_file_name, data_root_path):
 
 
 def stack_organelle_objects(
-    soma_mask,
+    cellmask,
     nuclei_object,
     cytoplasm_mask,
     lyso_object,
@@ -135,7 +135,7 @@ def stack_organelle_objects(
 ) -> np.ndarray:
     """wrapper to stack the inferred objects into a single numpy.ndimage"""
     img_layers = [
-        soma_mask,
+        cellmask,
         nuclei_object,
         cytoplasm_mask,
         lyso_object,

@@ -35,8 +35,8 @@ from infer_subc.core.img import (
 
 def raw_cellmask_fromaggr(img_in: np.ndarray, scale_min_max: bool = True) -> np.ndarray:
     """define cellmask image
-    SOMA_W = (6.,1.,2.)
-    SOMA_CH = (LYSO_CH,ER_CH,GOLGI_CH)
+    CELLMASK_W = (6.,1.,2.)
+    CELLMASK_CH = (LYSO_CH,ER_CH,GOLGI_CH)
 
     Parameters
     ------------
@@ -265,7 +265,7 @@ def infer_and_export_cellmask(
     cellmask = fixed_infer_cellmask_fromaggr(in_img, nuclei_obj)
     out_file_n = export_inferred_organelle(cellmask, "cellmask", meta_dict, out_data_path)
     print(f"inferred cellmask. wrote {out_file_n}")
-    return cellmask
+    return cellmask>0
 
 
 def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
@@ -299,4 +299,4 @@ def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, ou
         end = time.time()
         print(f"inferred (and exported) cellmask in ({(end - start):0.2f}) sec")
 
-    return cellmask
+    return cellmask>0
