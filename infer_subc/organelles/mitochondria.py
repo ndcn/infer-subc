@@ -117,7 +117,7 @@ def infer_and_export_mito(in_img: np.ndarray, meta_dict: Dict, out_data_path: Pa
 
     """
     mitochondria = fixed_infer_mito(in_img)
-    out_file_n = export_inferred_organelle(mitochondria, "mitochondria", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(mitochondria, "mito", meta_dict, out_data_path)
     print(f"inferred mitochondria. wrote {out_file_n}")
     return mitochondria
 
@@ -142,7 +142,7 @@ def get_mito(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.nda
     """
 
     try:
-        mitochondria = import_inferred_organelle("mitochondria", meta_dict, out_data_path)
+        mitochondria = import_inferred_organelle("mito", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")

@@ -294,7 +294,7 @@ def get_radial_stats(
     img_proj = create_masked_Z_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
 
     nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) 
-    
+
     radial_stats, radial_bin_mask = get_radial_distribution(cellmask_proj=cellmask_proj, 
                                                             org_proj=org_proj, 
                                                             img_proj=img_proj, 
@@ -527,6 +527,10 @@ def get_radial_distribution(
     )
 
     statistics = []
+    stat_names =[]
+    cv_cmsk = []
+    cv_obj = []
+    cv_img = []
     # collect the numbers from each "bin"
     for bin in range(bin_count):
         bin_mask = good_mask & (bin_indexes == bin)
@@ -563,31 +567,48 @@ def get_radial_distribution(
 
         bin_name = str(bin) if bin > 0 else "Ctr"
 
-        # there's gotta be a better way to collect this stuff together... pandas?
-        statistics += [
-            (   bin_name,
-                # np.mean(number_at_distance[:, bin]), 
-                # np.mean(histogram_cmsk[:, bin]), 
-                # np.mean(histogram_org[:, bin]), 
-                # np.mean(histogram_img[:, bin]), 
-                np.mean(radial_cv_cmsk) ,
-                np.mean(radial_cv_obj) ,
-                np.mean(radial_cv_img) )
-        ]
+        # # there's gotta be a better way to collect this stuff together... pandas?
+        # statistics += [
+        #     (   bin_name,
+        #         # np.mean(number_at_distance[:, bin]), 
+        #         # np.mean(histogram_cmsk[:, bin]), 
+        #         # np.mean(histogram_org[:, bin]), 
+        #         # np.mean(histogram_img[:, bin]), 
+        #         np.mean(radial_cv_cmsk) ,
+        #         np.mean(radial_cv_obj) ,
+        #         np.mean(radial_cv_img) )
+        # ]
+        stat_names.append(bin_name)
+        cv_cmsk.append(float(np.mean(radial_cv_cmsk)))  #convert to float to make importing from csv more straightforward
+        cv_obj.append(float(np.mean(radial_cv_obj)))
+        cv_img.append(float(np.mean(radial_cv_obj)))
 
     # TODO: fix this grooooos hack
     # col_names=['organelle','mask','bin','n_bins','n_pix','cm_vox_cnt','org_vox_cnt','org_intensity','cm_radial_cv','org_radial_cv','img_radial_cv']
+    # stats_dict={'organelle': org_name,
+    #             'mask': 'cell',
+    #             'radial_n_bins': bin_count,
+    #             'radial_bins': [[s[0] for s in statistics]],
+    #             'radial_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
+    #             'radial_org_vox_cnt': [histogram_org.squeeze().tolist()],
+    #             'radial_org_intensity': [histogram_img.squeeze().tolist()],
+    #             'radial_n_pix': [number_at_distance.squeeze().tolist()],
+    #             'radial_cm_cv':[[s[1] for s in statistics]],
+    #             'radial_org_cv':[[s[2] for s in statistics]],
+    #             'radial_img_cv':[[s[3] for s in statistics]],
+    #             }
+    
     stats_dict={'organelle': org_name,
                 'mask': 'cell',
                 'radial_n_bins': bin_count,
-                'radial_bins': [[s[0] for s in statistics]],
+                'radial_bins': [stat_names],
                 'radial_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
                 'radial_org_vox_cnt': [histogram_org.squeeze().tolist()],
                 'radial_org_intensity': [histogram_img.squeeze().tolist()],
                 'radial_n_pix': [number_at_distance.squeeze().tolist()],
-                'radial_cm_cv':[[s[1] for s in statistics]],
-                'radial_org_cv':[[s[2] for s in statistics]],
-                'radial_img_cv':[[s[3] for s in statistics]],
+                'radial_cm_cv':[cv_cmsk],
+                'radial_org_cv':[cv_obj],
+                'radial_img_cv':[cv_img],
                 }
 
     # stats_tab = pd.DataFrame(statistics,columns=col_names)
@@ -627,13 +648,13 @@ def get_depth_stats(
     z_bins = [i for i in range(cellmask_obj.shape[0])]
 
     stats_tab = pd.DataFrame({'organelle':organelle_name,
-                              'mask':'cell',
-                              'n_z':cellmask_obj.shape[0],
-                              'z':[z_bins],
-                              'z_cm_vox_cnt':[cellmask_proj],
-                              'z_org_vox_cnt':[org_proj],
-                              'z_org_intensity':[img_proj],
-                              'z_nuc_vox_cnt':[nucleus_proj]})
+                            'mask':'cell',
+                            'n_z':cellmask_obj.shape[0],
+                            'z':[z_bins],
+                            'z_cm_vox_cnt':[cellmask_proj.tolist()],
+                            'z_org_vox_cnt':[org_proj.tolist()],
+                            'z_org_intensity':[img_proj.tolist()],
+                            'z_nuc_vox_cnt':[nucleus_proj.tolist()]})
     return stats_tab
     
 
@@ -687,7 +708,6 @@ def get_zernike_stats(
     
     """
 
-    nobjects = 1
     labels = label(cellmask_proj>0) #extent as 0,1 rather than bool
     zernike_indexes = centrosome.zernike.get_zernike_indexes( zernike_degree + 1)
 
@@ -700,23 +720,20 @@ def get_zernike_stats(
     z_img = zernicke_stat(img_proj, z)
 
 
-    # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)]
-
-
+    # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)
     stats_tab = pd.DataFrame({'organelle':organelle_name,
-                              'mask':'cell',
-                              'zernike_n':[zernike_indexes[:,0]],
-                              'zernike_m':[zernike_indexes[:,1]],
-                                'zernike_cm_mag':[z_cm[0]],
-                                'zernike_cm_phs':[z_cm[1]],   
-                                'zernike_obj_mag':[z_org[0]],
-                                'zernike_obj_phs':[z_org[1]],
-                                'zernike_nuc_mag':[z_nuc[0]],
-                                'zernike_nuc_phs':[z_nuc[1]],
-                                'zernike_img_mag':[z_img[0]],
-                                'zernike_img_mag':[z_img[1]]}
+                                'mask':'cell',
+                                'zernike_n':[zernike_indexes[:,0].tolist()],
+                                'zernike_m':[zernike_indexes[:,1].tolist()],
+                                'zernike_cm_mag':[z_cm[0].tolist()],
+                                'zernike_cm_phs':[z_cm[1].tolist()],   
+                                'zernike_obj_mag':[z_org[0].tolist()],
+                                'zernike_obj_phs':[z_org[1].tolist()],
+                                'zernike_nuc_mag':[z_nuc[0].tolist()],
+                                'zernike_nuc_phs':[z_nuc[1].tolist()],
+                                'zernike_img_mag':[z_img[0].tolist()],
+                                'zernike_img_mag':[z_img[1].tolist()]}
                                 )
-
 
     return stats_tab
 

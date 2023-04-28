@@ -64,7 +64,7 @@ def infer_and_export_cytoplasm(
     """
     cytoplasm = infer_cytoplasm(nuclei_object, cellmask)
 
-    out_file_n = export_inferred_organelle(cytoplasm, "cytoplasm", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(cytoplasm, "cyto", meta_dict, out_data_path)
     print(f"inferred cytoplasm. wrote {out_file_n}")
     return cytoplasm
 
@@ -90,7 +90,7 @@ def get_cytoplasm(nuclei_obj: np.ndarray, cellmask: np.ndarray, meta_dict: Dict,
 
     """
     try:
-        cytoplasm = import_inferred_organelle("cytoplasm", meta_dict, out_data_path)>0
+        cytoplasm = import_inferred_organelle("cyto", meta_dict, out_data_path)>0
     except:
         start = time.time()
         print("starting segmentation...")
