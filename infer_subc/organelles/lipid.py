@@ -133,7 +133,7 @@ def infer_and_export_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path
 
     """
     lipid = fixed_infer_LD(in_img)
-    out_file_n = export_inferred_organelle(lipid, "lipid", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(lipid, "LD", meta_dict, out_data_path)
     print(f"inferred lipid. wrote {out_file_n}")
     return lipid
 
@@ -158,7 +158,7 @@ def get_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarr
     """
 
     try:
-        lipid = import_inferred_organelle("lipid", meta_dict, out_data_path)
+        lipid = import_inferred_organelle("LD", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")

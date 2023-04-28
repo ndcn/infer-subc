@@ -122,7 +122,7 @@ def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path
 
     """
     er = fixed_infer_ER(in_img)
-    out_file_n = export_inferred_organelle(er, "er", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(er, "ER", meta_dict, out_data_path)
     print(f"inferred ER. wrote {out_file_n}")
     return er
 
@@ -147,12 +147,12 @@ def get_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarr
     """
 
     try:
-        er = import_inferred_organelle("er", meta_dict, out_data_path)
+        er = import_inferred_organelle("ER", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")
         er = infer_and_export_ER(in_img, meta_dict, out_data_path)
         end = time.time()
-        print(f"inferred (and exported) er in ({(end - start):0.2f}) sec")
+        print(f"inferred (and exported) ER in ({(end - start):0.2f}) sec")
 
     return er

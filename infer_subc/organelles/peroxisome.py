@@ -132,7 +132,7 @@ def infer_and_export_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: P
 
     """
     peroxisome = fixed_infer_perox(in_img)
-    out_file_n = export_inferred_organelle(peroxisome, "peroxisome", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(peroxisome, "perox", meta_dict, out_data_path)
     print(f"inferred peroxisome. wrote {out_file_n}")
     return peroxisome
 
@@ -158,7 +158,7 @@ def get_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.nd
     try:
         start = time.time()
         print("starting segmentation...")
-        peroxisome = import_inferred_organelle("peroxisome", meta_dict, out_data_path)
+        peroxisome = import_inferred_organelle("perox", meta_dict, out_data_path)
         end = time.time()
         print(f"loaded peroxisome in ({(end - start):0.2f}) sec")
     except:
