@@ -42,7 +42,7 @@
     },
     "5": {
         "category": "postprocessing",
-        "function": "label_uint16",
+        "function": "label_bool_as_uint16",
         "parent": 4,
         "annotation": "label to uint16 for export 5"
     }
