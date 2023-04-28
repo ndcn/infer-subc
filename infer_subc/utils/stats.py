@@ -17,49 +17,6 @@ from infer_subc.core.img import apply_mask
 import pandas as pd
 
 
-# taken from cellprofiler_core.utilities.core.object
-def size_similarly(labels, secondary):
-    """Size the secondary matrix similarly to the labels matrix
-
-    labels - labels matrix
-    secondary - a secondary image or labels matrix which might be of
-                different size.
-    Return the resized secondary matrix and a mask indicating what portion
-    of the secondary matrix is bogus (manufactured values).
-
-    Either the mask is all ones or the result is a copy, so you can
-    modify the output within the unmasked region w/o destroying the original.
-    """
-    if labels.shape[:2] == secondary.shape[:2]:
-        return secondary, np.ones(secondary.shape, bool)
-    if labels.shape[0] <= secondary.shape[0] and labels.shape[1] <= secondary.shape[1]:
-        if secondary.ndim == 2:
-            return (
-                secondary[: labels.shape[0], : labels.shape[1]],
-                np.ones(labels.shape, bool),
-            )
-        else:
-            return (
-                secondary[: labels.shape[0], : labels.shape[1], :],
-                np.ones(labels.shape, bool),
-            )
-
-    # Some portion of the secondary matrix does not cover the labels
-    result = np.zeros(
-        list(labels.shape) + list(secondary.shape[2:]), secondary.dtype
-    )
-    i_max = min(secondary.shape[0], labels.shape[0])
-    j_max = min(secondary.shape[1], labels.shape[1])
-    if secondary.ndim == 2:
-        result[:i_max, :j_max] = secondary[:i_max, :j_max]
-    else:
-        result[:i_max, :j_max, :] = secondary[:i_max, :j_max, :]
-    mask = np.zeros(labels.shape, bool)
-    mask[:i_max, :j_max] = 1
-    return result, mask
-
-
-
 
 def _my_props_to_dict(
     rp, label_image, intensity_image=None, properties=("label", "area", "centroid", "bbox"), extra_properties=None
@@ -93,10 +50,10 @@ def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarr
 
     Parameters
     ------------
-    input_obj:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    cellmask:
-        a 3d image containing the cellmask object (mask)
+    input_labels:
+        a 3d  np.ndarray image of the inferred organelle labels
+    intensity_img:
+        a 3d np.ndarray image of the florescence intensity
     mask:
         a 3d image containing the cellmask object (mask)
 
@@ -173,32 +130,6 @@ def surface_area_from_props(labels, props):
     return surface_areas
 
 
-def get_simple_stats_3D(a, mask):
-    """collect volumentric stats of `a`"""
-
-    properties = ["label"]  # our index to organelles
-    # add area
-    properties = properties + ["area", "equivalent_diameter"]
-    #  position:
-    properties = properties + ["centroid", "bbox"]  # ,  'weighted_centroid']
-    # etc
-    properties = properties + ["slice"]
-
-    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
-    labels = _assert_uint16_labels(a)
-
-    # props = regionprops_table(labels, intensity_image=None,
-    #                             properties=properties, extra_properties=[])
-
-    rp = regionprops(labels, intensity_image=None, extra_properties=[])
-    props = _my_props_to_dict(rp, labels, intensity_image=None, properties=properties, extra_properties=None)
-
-    stats_table = pd.DataFrame(props)
-    stats_table.rename(columns={"area": "volume"}, inplace=True)
-
-    return stats_table, rp
-
-
 def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
     """
     wrapper to enforce having the right labels
@@ -234,11 +165,40 @@ def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
     props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None)
 
     props["surface_area"] = surface_area_from_props(labels, props)
-    props["label_a"] = [a[s].max() for s in props["slice"]]
-    props["label_b"] = [b[s].max() for s in props["slice"]]
+    # there could be a bug here if there are spurious labels in the corners of the slices
+
+    label_a = []
+    index_ab = []
+    label_b = []
+    for index, lab in enumerate(props["label"]):
+        # this seems less elegant than you might wish, given that regionprops returns a slice,
+        # but we need to expand the slice out by one voxel in each direction, or surface area freaks out
+        volume = labels[props["slice"][index]]
+        la = a[props["slice"][index]]
+        lb = b[props["slice"][index]]
+        volume = volume == lab
+        la = la[volume]
+        lb = lb[volume]
+
+        all_as = np.unique(la[la>0]).tolist()
+        all_bs = np.unique(lb[lb>0]).tolist()
+        if len(all_as) != 1:
+            print(f"we have an error.  as-> {all_as}")
+        if len(all_bs) != 1:
+            print(f"we have an error.  bs-> {all_bs}")
+
+        label_a.append(all_as[0] )
+        label_b.append(all_bs[0] )
+        index_ab.append(f"{all_as[0]}_{all_bs[0]}") 
+
+
+    props["label_a"] = label_a #[np.unique(a[s])[:1].tolist() for s in props["slice"]]
+    props["label_b"] = label_b #[np.unique(b[s])[:1].tolist() for s in props["slice"]]
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
     props_table.drop(columns="slice", inplace=True)
+    props_table.insert(loc=0,column='label_',value=index_ab)
+    props_table.insert(loc=0,column='shell',value=use_shell_a)
 
     return props_table
 
@@ -258,13 +218,59 @@ def create_masked_Z_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=N
 ###################################
 ### DISTRIBUTIONAL STATS
 ###################################
+
+
+# taken from cellprofiler_core.utilities.core.object
+def size_similarly(labels, secondary):
+    """Size the secondary matrix similarly to the labels matrix
+
+    labels - labels matrix
+    secondary - a secondary image or labels matrix which might be of
+                different size.
+    Return the resized secondary matrix and a mask indicating what portion
+    of the secondary matrix is bogus (manufactured values).
+
+    Either the mask is all ones or the result is a copy, so you can
+    modify the output within the unmasked region w/o destroying the original.
+    """
+    if labels.shape[:2] == secondary.shape[:2]:
+        return secondary, np.ones(secondary.shape, bool)
+    if labels.shape[0] <= secondary.shape[0] and labels.shape[1] <= secondary.shape[1]:
+        if secondary.ndim == 2:
+            return (
+                secondary[: labels.shape[0], : labels.shape[1]],
+                np.ones(labels.shape, bool),
+            )
+        else:
+            return (
+                secondary[: labels.shape[0], : labels.shape[1], :],
+                np.ones(labels.shape, bool),
+            )
+
+    # Some portion of the secondary matrix does not cover the labels
+    result = np.zeros(
+        list(labels.shape) + list(secondary.shape[2:]), secondary.dtype
+    )
+    i_max = min(secondary.shape[0], labels.shape[0])
+    j_max = min(secondary.shape[1], labels.shape[1])
+    if secondary.ndim == 2:
+        result[:i_max, :j_max] = secondary[:i_max, :j_max]
+    else:
+        result[:i_max, :j_max, :] = secondary[:i_max, :j_max, :]
+    mask = np.zeros(labels.shape, bool)
+    mask[:i_max, :j_max] = 1
+    return result, mask
+
+
+
+
 def get_radial_stats(        
         cellmask_obj: np.ndarray,
         organelle_mask: np.ndarray,
         organelle_obj:np.ndarray,
         organelle_img: np.ndarray,
         organelle_name: str,
-        nuclei_obj: Union[np.ndarray, None],
+        nuclei_obj: np.ndarray,
         n_rad_bins: Union[int,None] = None,
         n_zernike: Union[int,None] = None,
         ):
@@ -287,17 +293,30 @@ def get_radial_stats(
     org_proj = create_masked_Z_projection(organelle_obj,organelle_mask.astype(bool))
     img_proj = create_masked_Z_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
 
-    nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
-
-    radial_stats, radial_bin_mask = get_radial_distribution(cellmask_proj=cellmask_proj, org_proj=org_proj, img_proj=img_proj, org_name=organelle_name, nucleus_proj=nucleus_proj, n_bins=n_rad_bins)
+    nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) 
     
-    zernike_stats = get_zernike_stats(cellmask_proj=cellmask_proj, org_proj=org_proj, img_proj=img_proj, org_name=organelle_name, nucleus_proj=nucleus_proj, zernike_degree = n_zernike)
+    radial_stats, radial_bin_mask = get_radial_distribution(cellmask_proj=cellmask_proj, 
+                                                            org_proj=org_proj, 
+                                                            img_proj=img_proj, 
+                                                            org_name=organelle_name, 
+                                                            nucleus_proj=nucleus_proj, 
+                                                            n_bins=n_rad_bins
+                                                            )
+    
+    zernike_stats = get_zernike_stats(
+                                      cellmask_proj=cellmask_proj, 
+                                      org_proj=org_proj, 
+                                      img_proj=img_proj, 
+                                      organelle_name=organelle_name, 
+                                      nucleus_proj=nucleus_proj, 
+                                      zernike_degree = n_zernike
+                                      )
 
     return radial_stats,zernike_stats,radial_bin_mask
     
 def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep_nuc_bins):
     """
-    
+    helper for radial distribution
     """
     d_to_edge = centrosome.cpmorphology.distance_to_edge(labels) # made a local version
     ## use the nucleus as the center 
@@ -396,7 +415,7 @@ def get_radial_distribution(
         org_proj: np.ndarray,
         img_proj: np.ndarray,
         org_name: str,
-        nucleus_proj: Union[np.ndarray, None],
+        nucleus_proj: np.ndarray,
         n_bins: int = 5,
         from_edges: bool = True,
     ):
@@ -426,22 +445,24 @@ def get_radial_distribution(
     """
 
     # other params
-    bin_count = n_bins
+    bin_count = n_bins if n_bins is not None else 5
     scale_bins = True 
     keep_nuc_bins = True # this toggles whether to count things inside the nuclei mask.  
     center_on_nuc = False # choosing the edge of the nuclei or the center as the center to propogate from
 
-    if nucleus_proj is not None:
-        center_objects = nucleus_proj>0 
+    center_objects = nucleus_proj>0 
 
     nobjects = 1
-    labels = label(cellmask_proj>0) #extent as 0,1 rather than bool
+    labels = label(cellmask_proj>0) #extent as 0,1 rather than bool    
+
 
     ################   ################
     ## define masks for computing distances
     ################   ################
     normalized_distance, good_mask, i_center, j_center = get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep_nuc_bins)
     
+    if normalized_distance is None:
+        print('WTF!!  normailzed_distance returned wrong')
 
     ################   ################
     ## get histograms
@@ -449,6 +470,10 @@ def get_radial_distribution(
     ngood_pixels = np.sum(good_mask)
     good_labels = labels[good_mask]
     nobjects = 1
+
+
+    # protect against None normaized_distances
+
 
     bin_indexes = (normalized_distance * bin_count).astype(int)
     bin_indexes[bin_indexes > bin_count] = bin_count # shouldn't do anything
@@ -502,7 +527,6 @@ def get_radial_distribution(
     )
 
     statistics = []
-    object_name = 'cellmask'
     # collect the numbers from each "bin"
     for bin in range(bin_count):
         bin_mask = good_mask & (bin_indexes == bin)
@@ -541,24 +565,34 @@ def get_radial_distribution(
 
         # there's gotta be a better way to collect this stuff together... pandas?
         statistics += [
-            (org_name,
-                object_name,
-                bin_name,
-                str(bin_count),
-                np.mean(number_at_distance[:, bin]), 
-                np.mean(histogram_cmsk[:, bin]), 
-                np.mean(histogram_org[:, bin]), 
-                np.mean(histogram_img[:, bin]), 
+            (   bin_name,
+                # np.mean(number_at_distance[:, bin]), 
+                # np.mean(histogram_cmsk[:, bin]), 
+                # np.mean(histogram_org[:, bin]), 
+                # np.mean(histogram_img[:, bin]), 
                 np.mean(radial_cv_cmsk) ,
                 np.mean(radial_cv_obj) ,
                 np.mean(radial_cv_img) )
         ]
 
-    # TODO:  construct pictures of the histogram levels mapped to the bin_indexes array
-    stats_tab = pd.DataFrame(statistics,columns=['organelle','mask','bin','n_bins','n_pix','cm_vox_cnt','org_vox_cnt','org_intensity','cm_radial_cv','org_radial_cv','img_radial_cv'])
+    # TODO: fix this grooooos hack
+    # col_names=['organelle','mask','bin','n_bins','n_pix','cm_vox_cnt','org_vox_cnt','org_intensity','cm_radial_cv','org_radial_cv','img_radial_cv']
+    stats_dict={'organelle': org_name,
+                'mask': 'cell',
+                'radial_n_bins': bin_count,
+                'radial_bins': [[s[0] for s in statistics]],
+                'radial_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
+                'radial_org_vox_cnt': [histogram_org.squeeze().tolist()],
+                'radial_org_intensity': [histogram_img.squeeze().tolist()],
+                'radial_n_pix': [number_at_distance.squeeze().tolist()],
+                'radial_cm_cv':[[s[1] for s in statistics]],
+                'radial_org_cv':[[s[2] for s in statistics]],
+                'radial_img_cv':[[s[3] for s in statistics]],
+                }
 
+    # stats_tab = pd.DataFrame(statistics,columns=col_names)
+    stats_tab = pd.DataFrame(stats_dict)  
     return stats_tab, bin_indexes
-
 
 
 def create_masked_depth_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=None, to_bool:bool=True) -> np.ndarray:
@@ -590,8 +624,16 @@ def get_depth_stats(
     img_proj = create_masked_depth_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
 
     nucleus_proj = create_masked_depth_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
+    z_bins = [i for i in range(cellmask_obj.shape[0])]
 
-    stats_tab = pd.DataFrame({'organelle':organelle_name,'mask':'cellmask','bin':range(cellmask_obj.shape[0]),'n_bins':cellmask_obj.shape[0],'cm_vox_cnt':cellmask_proj,'org_vox_cnt':org_proj,'org_intensity':img_proj,'nuc_vox_cnt':nucleus_proj})
+    stats_tab = pd.DataFrame({'organelle':organelle_name,
+                              'mask':'cell',
+                              'n_z':cellmask_obj.shape[0],
+                              'z':[z_bins],
+                              'z_cm_vox_cnt':[cellmask_proj],
+                              'z_org_vox_cnt':[org_proj],
+                              'z_org_intensity':[img_proj],
+                              'z_nuc_vox_cnt':[nucleus_proj]})
     return stats_tab
     
 
@@ -630,28 +672,20 @@ def zernike_polynomial(labels, zernike_is):
     )
     return z
     
+
+   
 def get_zernike_stats(        
-        cellmask_obj: np.ndarray,
-        organelle_mask: np.ndarray,
-        organelle_obj:np.ndarray,
-        organelle_img: np.ndarray,
+        cellmask_proj: np.ndarray,
+        org_proj:np.ndarray,
+        img_proj: np.ndarray,
         organelle_name: str,
-        nuclei_obj: Union[np.ndarray, None] = None,
+        nucleus_proj: Union[np.ndarray, None] = None,
         zernike_degree: int = 9
         ):
 
     """
     
     """
-
-
-    # flattened
-    cellmask_proj = create_masked_Z_projection(cellmask_obj)
-    org_proj = create_masked_Z_projection(organelle_obj,organelle_mask.astype(bool))
-    img_proj = create_masked_Z_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
-
-    nucleus_proj = create_masked_Z_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
-
 
     nobjects = 1
     labels = label(cellmask_proj>0) #extent as 0,1 rather than bool
@@ -666,25 +700,53 @@ def get_zernike_stats(
     z_img = zernicke_stat(img_proj, z)
 
 
-    nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)]
+    # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)]
 
 
     stats_tab = pd.DataFrame({'organelle':organelle_name,
-                              'mask':'cellmask',
-                              'zernike_n':zernike_indexes[:,0],
-                              'zernike_m':zernike_indexes[:,1],
-                                'cm_zer_mag':z_cm[0],
-                                'cm_zer_phs':z_cm[1],   
-                                'obj_zer_mag':z_org[0],
-                                'obj_zer_phs':z_org[1],
-                                'nuc_zer_mag':z_nuc[0],
-                                'nuc_zer_phs':z_nuc[1],
-                                'img_zer_mag':z_img[0],
-                                'img_zer_mag':z_img[1]}
+                              'mask':'cell',
+                              'zernike_n':[zernike_indexes[:,0]],
+                              'zernike_m':[zernike_indexes[:,1]],
+                                'zernike_cm_mag':[z_cm[0]],
+                                'zernike_cm_phs':[z_cm[1]],   
+                                'zernike_obj_mag':[z_org[0]],
+                                'zernike_obj_phs':[z_org[1]],
+                                'zernike_nuc_mag':[z_nuc[0]],
+                                'zernike_nuc_phs':[z_nuc[1]],
+                                'zernike_img_mag':[z_img[0]],
+                                'zernike_img_mag':[z_img[1]]}
                                 )
 
 
     return stats_tab
+
+
+# DEPRICATE
+def get_simple_stats_3D(a, mask):
+    """collect volumentric stats of `a`"""
+
+    properties = ["label"]  # our index to organelles
+    # add area
+    properties = properties + ["area", "equivalent_diameter"]
+    #  position:
+    properties = properties + ["centroid", "bbox"]  # ,  'weighted_centroid']
+    # etc
+    properties = properties + ["slice"]
+
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    labels = _assert_uint16_labels(a)
+
+    # props = regionprops_table(labels, intensity_image=None,
+    #                             properties=properties, extra_properties=[])
+
+    rp = regionprops(labels, intensity_image=None, extra_properties=[])
+    props = _my_props_to_dict(rp, labels, intensity_image=None, properties=properties, extra_properties=None)
+
+    stats_table = pd.DataFrame(props)
+    stats_table.rename(columns={"area": "volume"}, inplace=True)
+
+    return stats_table, rp
+
 
 # untested 2D version
 def get_summary_stats_2D(input_labels, intensity_img, mask):

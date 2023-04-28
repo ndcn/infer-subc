@@ -32,7 +32,7 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
     Parameters
     ------------
     name: str
-        name of organelle.  i.e. nuclei, lyso, etc.
+        name of organelle.  i.e. nuc, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome) from original file
     out_data_path:
@@ -71,7 +71,7 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     img_out:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     name: str
-        name of organelle.  i.e. nuclei, lyso, etc.
+        name of organelle.  i.e. nuc, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome) only using original file name here, but could add metadata
     out_data_path:
@@ -124,6 +124,7 @@ def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_p
     out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_path), layer_names)
     print(f"saved file: {out_file_n}")
     return out_file_n
+
 
 
 # # DEPRICATE
@@ -267,10 +268,10 @@ def export_tiff(
         data_in = data_in.astype(np.uint16)
         data_in[data_in > 0] = 1
         dtype = data_in.dtype
-        print(f"changed dtype from bool to {dtype}")
-    else:
-        print("export dtype - {dtype}")
-        
+        # print(f"changed `bool` -> {dtype}")
+    # else:
+        # print(f"export as {dtype}")
+
     ret = imwrite(
             out_name,
             data_in,
@@ -363,7 +364,7 @@ def import_inferred_organelle_AICS(name: str, meta_dict: Dict, out_data_path: Pa
     Parameters
     ------------
     name: str
-        name of organelle.  i.e. nuclei, lyso, etc.
+        name of organelle.  i.e. nuc, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome) from original file
     out_data_path:
@@ -401,7 +402,7 @@ def export_inferred_organelle_AICS(img_out: np.ndarray, name: str, meta_dict: Di
     img_out:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     name: str
-        name of organelle.  i.e. nuclei, lyso, etc.
+        name of organelle.  i.e. nuc, lyso, etc.
     meta_dict:
         dictionary of meta-data (ome)
     out_data_path:
