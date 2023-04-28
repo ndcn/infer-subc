@@ -141,7 +141,7 @@ def infer_and_export_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: 
     """
     nuclei = fixed_infer_nuclei(in_img)
 
-    out_file_n = export_inferred_organelle(nuclei, "nuclei", meta_dict, out_data_path)
+    out_file_n = export_inferred_organelle(nuclei, "nuc", meta_dict, out_data_path)
     print(f"inferred nuclei. wrote {out_file_n}")
     return nuclei
 
@@ -167,7 +167,7 @@ def get_nuclei(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.n
     """
 
     try:
-        nuclei = import_inferred_organelle("nuclei", meta_dict, out_data_path)
+        nuclei = import_inferred_organelle("nuc", meta_dict, out_data_path)
     except:
         start = time.time()
         print("starting segmentation...")
