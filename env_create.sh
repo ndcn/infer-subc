@@ -46,11 +46,24 @@ conda activate napari10
 conda install -c conda-forge ipython ipykernel pip notebook napari scipy scikit-learn matplotlib
 conda install matplotlib
 
-pip install centrosome
 pip install aicsimageio tifffile aicspylibczi aicssegmentation napari-aicsimageio
+pip install git+https://github.com/ergonyc/centrosome.git
 
 
+# for windows substitute "python -m pip install" for "pip install"
 
+# conda create -n win_cento python=3.10 
+# conda activate win_cento
+
+# conda install -c conda-forge pip notebook 
+# python -m pip install git+https://github.com/ergonyc/centrosome.git
+
+
+# python -m pip install napari scipy scikit-learn aicsimageio aicspylibczi aicssegmentation #downgrades napari and scikitlearn
+
+# # pip install 'napari[all]'
+# python -m pip install -e <path to infer-subc
+# python -m pip install -e <path to organelle-segmenter-plugin>
 
 
 

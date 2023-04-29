@@ -13,7 +13,10 @@ from .stats import ( get_aXb_stats_3D,
                     get_depth_stats, 
                     _assert_uint16_labels )
 
-from ..constants import organelle_to_colname
+from .batch import list_image_files, find_segmentation_tiff_files
+from infer_subc.core.file_io import read_czi_image, read_tiff_image
+
+from ..constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
 def make_organelle_stat_tables(
     organelle_names: List[str],
@@ -127,6 +130,7 @@ def make_organelle_stat_tables(
         proj_stats = pd.merge(proj_stats, d_stats,on=["organelle","mask"])
         proj_stats.insert(loc=0,column='ID',value=source_file.stem )
 
+
         # write out files... 
         # org_stats_tabs.append(A_stats_tab)
         csv_path = out_data_path / f"{source_file.stem}-{target}-stats.csv"
@@ -142,6 +146,61 @@ def make_organelle_stat_tables(
 
     print(f"dumped {count}x3 organelle stats ({organelle_names}) csvs")
     return count
+
+
+def dump_all_stats_tables(int_path: Union[Path,str], 
+                   out_path: Union[Path, str], 
+                   raw_path: Union[Path,str], 
+                   organelle_names: List[str]= ["nuclei","golgi","peroxi"], 
+                   organelle_chs: List[int]= [NUC_CH,GOLGI_CH, PEROX_CH], 
+                    ) -> int :
+    """  
+    TODO: add loggin instead of printing
+        append tiffcomments with provenance
+    """
+
+    
+    if isinstance(raw_path, str): raw_path = Path(raw_path)
+    if isinstance(int_path, str): int_path = Path(int_path)
+    if isinstance(out_path, str): out_path = Path(out_path)
+    
+    img_file_list = list_image_files(raw_path,".czi")
+
+    if not Path.exists(out_path):
+        Path.mkdir(out_path)
+        print(f"making {out_path}")
+        
+    for img_f in img_file_list:
+        filez = find_segmentation_tiff_files(img_f, organelle_names, int_path)
+        img_data,meta_dict = read_czi_image(filez["raw"])
+
+        # load organelles and masks
+        cyto_mask = read_tiff_image(filez["cyto"])
+        cellmask_obj = read_tiff_image(filez["cell"])
+
+
+
+        # create intensities from raw as list
+        intensities = [img_data[ch] for ch in organelle_chs]
+
+        # load organelles as list
+        organelles = [read_tiff_image(filez[org]) for org in organelle_names]
+        
+        #get mask (cyto_mask)
+        nuclei_obj = organelles[ organelle_names.index("nuc") ]
+
+        n_files = make_organelle_stat_tables(organelle_names, 
+                                      organelles,
+                                      intensities, 
+                                      nuclei_obj,
+                                      cellmask_obj,
+                                      cyto_mask, 
+                                      out_path, 
+                                      img_f,
+                                      n_rad_bins=5,
+                                      n_zernike=9)
+
+    return n_files
 
 
 
@@ -238,29 +297,6 @@ def summarize_by_id(stats_in:pd.DataFrame,agg_fn: List) -> pd.DataFrame:
 def create_stats_summary(summary_df:pd.DataFrame) -> pd.DataFrame:
     """
     """
-    # ['ID', 'organelle', 'label', 'max_intensity', 'mean_intensity',
-    #     'min_intensity', 'volume', 'equivalent_diameter', 'euler_number', 'extent',
-    #     'standard_deviation_intensity', 'surface_area', 'NU_overlap',
-    #     'NU_labels', 'MY_overlap', 'MY_labels', 'GL_overlap', 'GL_labels',
-    #     'PR_overlap', 'PR_labels', 'ER_overlap', 'ER_labels', 'LD_overlap',
-    #     'LD_labels'] #minus centers and 
-
-    # def fix_list_col(stats:pd.DataFrame) -> pd.DataFrame:
-    #     """ 
-    #     """
-    #     def str_col(x):    
-    #         if isinstance(x,str):
-    #             if x == '[]': return list()
-    #             xstr = x.strip("[]").replace("'", "").split(", ")
-    #             return [int(x) for x in xstr]
-    #         else:
-    #             return x
-
-        
-    #     label_stats = pd.DataFrame() 
-    #     for i,col in enumerate(stats.columns):    
-    #         label_stats[col] = stats[col].apply(str_col) if i>0 else stats[col]
-    #     return label_stats
     column_names = summary_df.columns
 
     def frac(x):
@@ -292,35 +328,6 @@ def create_stats_summary(summary_df:pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-
-# def create_proj_stats_summary(summary_df:pd.DataFrame) -> pd.DataFrame:
-#     """
-#     """
-#     proj_cols = ['ID', 'organelle', 'mask', 'radial_n_bins', 'radial_bins',
-#        'radial_cm_vox_cnt', 'radial_org_vox_cnt', 'radial_org_intensity',
-#        'radial_n_pix', 'radial_cm_cv', 'radial_org_cv', 'radial_img_cv',
-#        'zernike_n', 'zernike_m', 'zernike_cm_mag', 'zernike_cm_phs',
-#        'zernike_obj_mag', 'zernike_obj_phs', 'zernike_nuc_mag',
-#        'zernike_nuc_phs', 'zernike_img_mag', 'n_z', 'z', 'z_cm_vox_cnt',
-#        'z_org_vox_cnt', 'z_org_intensity', 'z_nuc_vox_cnt']
-#     def frac(x):
-#         return (x>0).sum()/x.count() 
-#     vol_cols = ['ID','volume']
-#     overlap_cols = ['ID'] + [col for col in column_names if col[3:]=='overlap']
-#     labels_cols = ['ID'] + [col for col in column_names if col[3:]=='labels']  
-#     agg_func_math = ['sum', 'mean', 'median', 'min', 'max', 'std','count']
-#     agg_func_overlap = ['sum', 'mean', 'median','count',frac]
-#     agg_func_labels = ['sum']
-#     agg_func_vol = ['sum', 'mean', 'median', 'min', 'max', 'std', 'var']
-#     math_summary = summarize_by_id( summary_df[math_cols] , agg_func_math)
-#     label_stats = fix_list_col(summary_df[labels_cols])
-#     label_summary = summarize_by_id( label_stats , agg_func_labels)
-#     overlap_summary = summarize_by_id( summary_df[overlap_cols] ,agg_func_overlap)
-#     vol_summary = summarize_by_id( summary_df[vol_cols] , agg_func_vol)
-#     result = pd.concat([math_summary, vol_summary, overlap_summary, label_summary], axis=1)
-#     return result
-
-
 def summarize_by_group(stats_in:pd.DataFrame, grp_col:list, agg_fn:list) -> pd.DataFrame:
     """ 
     """
@@ -332,12 +339,9 @@ def summarize_by_group(stats_in:pd.DataFrame, grp_col:list, agg_fn:list) -> pd.D
 def create_cross_stats_summary(summary_df:pd.DataFrame) -> pd.DataFrame:
     """
     """
+    # dropped_cols = ['centroid-0', 'centroid-1', 'centroid-2', 'bbox-0', 'bbox-1', 'bbox-2', 'bbox-3', 'bbox-4', 'bbox-5']
     # cross_cols = ['ID', 'organelle', 'organelle_b', 'shell', 'label_', 'label', 'volume',
-    #    'equivalent_diameter', 'centroid-0', 'centroid-1', 'centroid-2',
-    #    'bbox-0', 'bbox-1', 'bbox-2', 'bbox-3', 'bbox-4', 'bbox-5',
-    #    'surface_area', 'label_a', 'label_b']
-    cross_cols = ['ID', 'organelle', 'organelle_b', 'shell', 'label_', 'label', 'volume',
-       'equivalent_diameter','surface_area', 'label_a', 'label_b']
+    #    'equivalent_diameter','surface_area', 'label_a', 'label_b']
 
     group_cols = ['ID','organelle_b', 'shell']
     id_cols = ['label_','label_a', 'label_b'] 
@@ -374,11 +378,11 @@ def summarize_cross_stats(summary_df:pd.DataFrame) -> pd.DataFrame:
     return summary_i
 
 
-
 def pivot_cross_stats(summary_df:pd.DataFrame) -> pd.DataFrame:
     """
     """
     xstat_df = pd.DataFrame()
+    org_bs = summary_df["organelle_b"].unique()
     for i,org_b in enumerate(org_bs):
         org_i = summary_df.loc[summary_df["organelle_b"] == org_b]
 
@@ -548,7 +552,7 @@ def summarize_organelle_stats(int_path: Union[Path,str],
 
 
 
-def dump_organelle_stats(
+def dump_organelle_summary_tables(
                     int_path: Union[Path,str], 
                     out_path: Union[Path, str], 
                     organelle_names: List[str]= ["nuclei","golgi","peroxi"] ) -> int:
@@ -562,10 +566,7 @@ def dump_organelle_stats(
         print(f"making {out_path}")
 
 
-    all_stats_df, all_proj_stats_df, all_cross_stats_df = summarize_organelle_stats(out_data_path, 
-                                                    int_path, 
-                                                    organelle_names=organelle_names);
-
+    all_stats_df, all_proj_stats_df, all_cross_stats_df = summarize_organelle_stats( int_path, organelle_names )
 
     csv_path = out_path / f"summary-stats.csv"
     all_stats_df.to_csv(csv_path)
