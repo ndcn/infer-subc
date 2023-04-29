@@ -144,7 +144,7 @@ class Workflow:
               with user-provided parameters, use execute_next()
 
         Params:
-            none
+            none:None
 
         Returns
             (np.ndarray): Result of the final WorkflowStep.

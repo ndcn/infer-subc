@@ -21,17 +21,17 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
 #### summary of _OBJECTIVES_ ✅
 - robust inference of subcellular objects:
   - Nescessary masks and nuclei
-    -  #### 1️⃣. [infer NUCLEI ](./notebooks/02_infer_nuclei.ipynb)
-    -  #### 2️⃣. [Infer CELLMASK](./notebooks/01_infer_cellmask.ipynb) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
-    -  #### 3️⃣. [Infer CYTOPLASM](./notebooks/03_infer_cytoplasm.ipynb) 
+    -  #### 1️⃣. [infer NUCLEI ](./infer_subc/organelles.md)
+    -  #### 2️⃣. [Infer CELLMASK](./infer_subc/organelles.md) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
+    -  #### 3️⃣. [Infer CYTOPLASM](./infer_subc/organelles.md) 
 
   - individual organelles
-    -  #### 4️⃣. [Infer LYSOSOMES](./notebooks/04_infer_lysosome.ipynb) 
-    -  #### 5️⃣. [Infer MITOCHONDRIA](./notebooks/05_infer_mitochondria.ipynb)
-    -  #### 6️⃣. [Infer GOLGI complex](./notebooks/06_golgi.ipynb)
-    -  #### 7️⃣. [Infer PEROXISOMES](./notebooks/07_peroxisome.ipynb)
-    -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./notebooks/08_endoplasmic_reticulum.ipynb)
-    -   #### 9️⃣. [Infer LB](./notebooks/09_lipid_bodies.ipynb) 
+    -  #### 4️⃣. [Infer LYSOSOMES](./infer_subc/organelles.md) 
+    -  #### 5️⃣. [Infer MITOCHONDRIA](./infer_subc/organelles.md)
+    -  #### 6️⃣. [Infer GOLGI complex](./infer_subc/organelles.md)
+    -  #### 7️⃣. [Infer PEROXISOMES](./infer_subc/organelles.md)
+    -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./infer_subc/organelles.md)
+    -   #### 9️⃣. [Infer LB](./nbs/overview.md) 
 
 
 ----------------------------

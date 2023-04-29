@@ -1,5 +1,5 @@
-# infer_subc/batch
+# infer_subc/utils
 
 functions which help with processing batches of files
 
-::: infer_subc.batch.batch_process
+::: infer_subc.utils.batch
