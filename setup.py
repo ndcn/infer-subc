@@ -1,40 +1,8 @@
-"""Python setup.py for infer_subc package"""
-import io
-import os
-from setuptools import find_packages, setup
+#!/usr/bin/env python
 
+from setuptools import setup
 
-def read(*paths, **kwargs):
-    """Read the contents of a text file safely.
-    >>> read("infer_subc", "VERSION")
-    '0.1.0'
-    >>> read("README.md")
-    ...
-    """
+if __name__ == "__main__":
+    setup()
 
-    content = ""
-    with io.open(
-        os.path.join(os.path.dirname(__file__), *paths),
-        encoding=kwargs.get("encoding", "utf8"),
-    ) as open_file:
-        content = open_file.read().strip()
-    return content
-
-
-def read_requirements(path):
-    return [line.strip() for line in read(path).split("\n") if not line.startswith(('"', "#", "-", "git+"))]
-
-
-setup(
-    name="infer_subc",
-    version=read("infer_subc", "VERSION"),
-    description="Awesome infer_subc created by ergonyc",
-    url="https://github.com/ndcn/infer-subc/",
-    long_description=read("README.md"),
-    long_description_content_type="text/markdown",
-    author="ergonyc",
-    packages=find_packages(exclude=["tests", ".github"]),
-    install_requires=read_requirements("requirements.txt"),
-    entry_points={"console_scripts": ["infer_subc = infer_subc.__main__:main"]},
-    # extras_require={"test": read_requirements("requirements-test.txt")},
-)
+    
