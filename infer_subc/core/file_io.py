@@ -24,6 +24,153 @@ import time
 from dataclasses import dataclass
 
 
+# TODO:  remove reader_function overhead for writting "intermediate" .tif files
+
+
+def read_ome_image(image_name):
+    """
+    return output from napari aiscioimage reader
+    """
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
+
+    meta_out["file_name"] = image_name
+    return (data_out, meta_out)
+
+
+def read_czi_image(image_name):
+    """
+    return output from napari aiscioimage reader (alias for read_ome_image)
+    """
+    return read_ome_image(image_name)
+
+
+def read_tiff_image(image_name):
+    """
+    return tiff image with tifffile.imread.  Using the `reader_function` (vial read_ome_image) and AICSimage is too slow
+        prsumably handling the OME meta data is what is so slow.
+    """
+    # start = time.time()
+    image = imread(
+        image_name,
+    )
+    # end = time.time()
+    # print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype} in ({(end - start):0.2f}) sec")
+    return image  # .get_image_data("CZYX")
+
+
+def export_tiff(
+    data_in: np.ndarray,
+    img_name: str,
+    out_path: Union[Path, str],
+    channel_names: Union[List[str], None] = None,
+    meta_in: Union[Dict, None] = None,
+) -> int:
+    """
+    wrapper for exporting  tiff with tifffile.imwrite
+     --> usiong AICSimage is too slow
+        prsumably handling the OME meta data is what is so slow.
+    """
+
+    # start = time.time()
+
+    out_name = Path(out_path, f"{img_name}.tiff")
+
+    # TODO: add metadata OR simpliify and pass name rather than meta-data
+    # image_names = [img_name]
+    # # chan_names = meta_in['metadata']['aicsimage'].channel_names
+    # physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
+    # # dimension_order = ["CZYX"]
+    # if channel_names is None:
+    #     channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
+    # else:
+    #     channel_names = [channel_names]
+    # if len(data_in.shape) == 3:  # single channel zstack
+    #     dimension_order = ["ZYX"]
+    #     # data_in = data_in[np.newaxis, :, :, :]
+    # elif len(data_in.shape) == 2:  # single channel , 1Z
+    #     dimension_order = ["YX"]
+    #     # data_in = data_in[np.newaxis, np.newaxis, :, :]
+    #     physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
+
+    dtype = data_in.dtype
+    if dtype == "bool" or dtype == np.uint8:
+        data_in = data_in.astype(np.uint16)
+        data_in[data_in > 0] = 1
+        dtype = data_in.dtype
+        # print(f"changed `bool` -> {dtype}")
+    # else:
+        # print(f"export as {dtype}")
+
+    ret = imwrite(
+            out_name,
+            data_in,
+            dtype=dtype,
+            # metadata={
+            #     "axes": dimension_order,
+            #     # "physical_pixel_sizes": physical_pixel_sizes,
+            #     # "channel_names": channel_names,
+            # },
+        )
+    # end = time.time()
+    # print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
+    return ret
+
+
+# function to collect all the
+def list_image_files(data_folder: Path, file_type: str, postfix: Union[str, None] = None) -> List:
+    """
+    get a list of all the filetypes
+    TODO: aics has cleaner functions than this "lambda"
+    should this use Path methods? or return Path?
+    """
+
+    if postfix is not None:
+        return sorted(data_folder.glob(f"*{postfix}{file_type}"))
+    else:
+        return sorted(data_folder.glob(f"*{file_type}"))
+
+    # if prefix is not None:
+    #     return [
+    #         os.path.join(data_folder, f_name)
+    #         for f_name in os.listdir(data_folder)
+    #         if f_name.endswith(file_type) and f_name.startswith(prefix)
+    #     ]
+    # else:
+    #     return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
+
+
+## DEPRICATE BELOW?
+
+
+# TODO:  depricate AICSImageReaderWrap
+def read_input_image(image_name):
+    """
+    send output from napari aiscioimage reader wrapped in dataclass
+    """
+    data_out, meta_out, layer_type = reader_function(image_name)[0]
+    return AICSImageReaderWrap(image_name, data_out, meta_out)
+
+
+@dataclass
+class AICSImageReaderWrap:
+    """
+    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
+    TODO: make a nice reppr
+    """
+
+    name: str
+    image: np.ndarray
+    meta: Dict[str, Any]
+    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
+
+    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
+        self.name = name
+        self.image = image
+        self.meta = meta
+        self.raw_meta = get_raw_meta_data(meta)
+
+
+
 # TODO throw exception and call with try
 def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
     """
@@ -195,150 +342,7 @@ def get_raw_meta_data(meta_dict):
     return (raw_meta_data, ome_types)
 
 
-# TODO:  remove reader_function overhead for writting "intermediate" .tif files
 
-
-def read_ome_image(image_name):
-    """
-    return output from napari aiscioimage reader
-    """
-    data_out, meta_out, layer_type = reader_function(image_name)[0]
-
-    meta_out["file_name"] = image_name
-    return (data_out, meta_out)
-
-
-def read_czi_image(image_name):
-    """
-    return output from napari aiscioimage reader (alias for read_ome_image)
-    """
-    return read_ome_image(image_name)
-
-
-def read_tiff_image(image_name):
-    """
-    return tiff image with tifffile.imread.  Using the `reader_function` (vial read_ome_image) and AICSimage is too slow
-        prsumably handling the OME meta data is what is so slow.
-    """
-    # start = time.time()
-    image = imread(
-        image_name,
-    )
-    # end = time.time()
-    # print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype} in ({(end - start):0.2f}) sec")
-    return image  # .get_image_data("CZYX")
-
-
-def export_tiff(
-    data_in: np.ndarray,
-    img_name: str,
-    out_path: Union[Path, str],
-    channel_names: Union[List[str], None] = None,
-    meta_in: Union[Dict, None] = None,
-) -> int:
-    """
-    wrapper for exporting  tiff with tifffile.imwrite
-     --> usiong AICSimage is too slow
-        prsumably handling the OME meta data is what is so slow.
-    """
-
-    # start = time.time()
-
-    out_name = Path(out_path, f"{img_name}.tiff")
-
-    # TODO: add metadata OR simpliify and pass name rather than meta-data
-    # image_names = [img_name]
-    # # chan_names = meta_in['metadata']['aicsimage'].channel_names
-    # physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
-    # # dimension_order = ["CZYX"]
-    # if channel_names is None:
-    #     channel_names = [meta_in["metadata"]["aicsimage"].channel_names]
-    # else:
-    #     channel_names = [channel_names]
-    # if len(data_in.shape) == 3:  # single channel zstack
-    #     dimension_order = ["ZYX"]
-    #     # data_in = data_in[np.newaxis, :, :, :]
-    # elif len(data_in.shape) == 2:  # single channel , 1Z
-    #     dimension_order = ["YX"]
-    #     # data_in = data_in[np.newaxis, np.newaxis, :, :]
-    #     physical_pixel_sizes[0] = [physical_pixel_sizes[0][1:]]
-
-    dtype = data_in.dtype
-    if dtype == "bool" or dtype == np.uint8:
-        data_in = data_in.astype(np.uint16)
-        data_in[data_in > 0] = 1
-        dtype = data_in.dtype
-        # print(f"changed `bool` -> {dtype}")
-    # else:
-        # print(f"export as {dtype}")
-
-    ret = imwrite(
-            out_name,
-            data_in,
-            dtype=dtype,
-            # metadata={
-            #     "axes": dimension_order,
-            #     # "physical_pixel_sizes": physical_pixel_sizes,
-            #     # "channel_names": channel_names,
-            # },
-        )
-    # end = time.time()
-    # print(f">>>>>>>>>>>> tifffile.imwrite in ({(end - start):0.2f}) sec")
-    return ret
-
-
-# function to collect all the
-def list_image_files(data_folder: Path, file_type: str, postfix: Union[str, None] = None) -> List:
-    """
-    get a list of all the filetypes
-    TODO: aics has cleaner functions than this "lambda"
-    should this use Path methods? or return Path?
-    """
-
-    if postfix is not None:
-        return sorted(data_folder.glob(f"*{postfix}{file_type}"))
-    else:
-        return sorted(data_folder.glob(f"*{file_type}"))
-
-    # if prefix is not None:
-    #     return [
-    #         os.path.join(data_folder, f_name)
-    #         for f_name in os.listdir(data_folder)
-    #         if f_name.endswith(file_type) and f_name.startswith(prefix)
-    #     ]
-    # else:
-    #     return [os.path.join(data_folder, f_name) for f_name in os.listdir(data_folder) if f_name.endswith(file_type)]
-
-
-## DEPRICATE BELOW?
-
-
-# TODO:  depricate AICSImageReaderWrap
-def read_input_image(image_name):
-    """
-    send output from napari aiscioimage reader wrapped in dataclass
-    """
-    data_out, meta_out, layer_type = reader_function(image_name)[0]
-    return AICSImageReaderWrap(image_name, data_out, meta_out)
-
-
-@dataclass
-class AICSImageReaderWrap:
-    """
-    Simple dataclass wrapper for the AICSImage output to prepare for imprting to our bioim class
-    TODO: make a nice reppr
-    """
-
-    name: str
-    image: np.ndarray
-    meta: Dict[str, Any]
-    raw_meta: Tuple[Dict[str, Any], Union[Dict[str, Any], List]]
-
-    def __init__(self, name: str, image: np.ndarray, meta: Dict[str, Any]):
-        self.name = name
-        self.image = image
-        self.meta = meta
-        self.raw_meta = get_raw_meta_data(meta)
 
 
 def export_ndarray(data_in, img_name, out_path) -> str:

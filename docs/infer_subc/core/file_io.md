@@ -1,6 +1,6 @@
-# infer_subc/utils/file_io
+# infer_subc/core/file_io
 
 Helpers for file input and output
 
-::: infer_subc.utils.file_io
+::: infer_subc.core.file_io
 

@@ -4,10 +4,11 @@ nav:
   - Home: 'index.md'
   - framework: 'framework.md'
   - examples: 
-    - 'nbs/overview.md'
+    - 'notebooks' : 'nbs/overview.md'
+    - 'getting started' : 'config.md'
   - Napari:
-    - 'napari/plugin.md'
-    - 'napari/organelle_config.md'
+    - 'infer_subc/napari/plugin.md'
+    - 'infer_subc/napari/organelle_config.md'
   - 'infer_subc module': 
     - 'overview': 'infer_subc/overview.md'
     - 'organelles': 
@@ -22,11 +23,12 @@ nav:
       - 'ER' : 'infer_subc/organelles/er.md'
       - 'LD' : 'infer_subc/organelles/lipid.md' 
     - 'core': 
-      - 'file_io' : 'infer_subc/utils/file_io.md'
-      - 'img' : 'infer_subc/utils/img.md'
+      - 'file_io' : 'infer_subc/core/file_io.md'
+      - 'img' : 'infer_subc/core/img.md'
     - 'utils': 
+      - 'Overview' : 'infer_subc/utils/utils.md'
       - 'stats' : 'infer_subc/utils/stats.md'
-      - 'batch': 'infer_subc/batch.md'
+      - 'batch': 'infer_subc/utils/batch.md'
       - 'etc' : 'infer_subc/utils/etc.md'
     - 'workflow': 'infer_subc/workflow.md'
 
@@ -48,8 +50,8 @@ nav:
   #   # # - 'QC' : 'notebooks/nbs/12_QC.ipynb'
 
 plugins:
-  - mkdocs-jupyter:
-      theme: dark
+  # - mkdocs-jupyter:
+  #     theme: dark
   - search
   - mkdocstrings
 
