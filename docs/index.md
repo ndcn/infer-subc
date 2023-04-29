@@ -9,7 +9,6 @@ In general we ware interested in making segmentations which are the inferred org
 
 From there the organelle segmentations are largely independent, and we will employ the cytoplasm (or cellmask for the nucleus segmentation) as a mask when collecting statistics about the individual organelle objects. 
 
-
 Notebooks  found [here]( link ) provide the template
 
 ### Sub-Cellular object Inference PIPELINE OVERVIEW
