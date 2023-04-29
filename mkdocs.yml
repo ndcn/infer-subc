@@ -3,6 +3,11 @@ site_name: 'infer_subc'
 nav:
   - Home: 'index.md'
   - framework: 'framework.md'
+  - examples: 
+    - 'nbs/overview.md'
+  - Napari:
+    - 'napari/plugin.md'
+    - 'napari/organelle_config.md'
   - 'infer_subc module': 
     - 'overview': 'infer_subc/overview.md'
     - 'organelles': 
@@ -19,11 +24,10 @@ nav:
     - 'core': 
       - 'file_io' : 'infer_subc/utils/file_io.md'
       - 'img' : 'infer_subc/utils/img.md'
-      - 'zslice' : 'infer_subc/utils/zslice.md'
     - 'utils': 
       - 'stats' : 'infer_subc/utils/stats.md'
+      - 'batch': 'infer_subc/batch.md'
       - 'etc' : 'infer_subc/utils/etc.md'
-    - 'batch': 'infer_subc/batch.md'
     - 'workflow': 'infer_subc/workflow.md'
 
   # - Notebooks: 

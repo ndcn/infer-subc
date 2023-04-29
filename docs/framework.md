@@ -31,7 +31,7 @@ As part of goal setting we will also enumerate the specific tasks that need to b
   - 4️⃣-***lysosome***
   - 5️⃣-***mitochondria***
   - 6️⃣-***golgi***
-  - 7️⃣. ***peroxisome***
+  - 7️⃣-***peroxisome***
   - 8️⃣-***endoplasmic reticulum***
   - 9️⃣-***lipid body***
 
@@ -69,18 +69,22 @@ Pseudo-independent processing of the imported multi-channel image to acheive eac
 - Post-processing  🌘
 - (post-postprocessing) 
 
-### QC 🚧 WIP 🚧 
+### ~~QC 🚧 WIP 🚧~~ DEPRICATED
 
 Finally, once we have inferred the organelle objects, we need to quantify them. These statistics, and the relationships among them will constitute the "interactome".
 
 ## 4. QUANTIFICATION 📏📐🧮
 
 SUBCELLULAR COMPONENT METRICS
--  extent 
--  size
--  shape
--  position
-
+- general
+  -  extent 
+  -  size
+  -  position
+-  contacts (cross-stats)
+-  radial projection and depth stats 
+  - radial distribution (in cytosol)
+  - depth distribution
+  - zernike moments
 # ADDITIONAL CONSIDERATIONS
 
 ## NOTE: PIPELINE TOOL AND DESIGN CHOICES?
