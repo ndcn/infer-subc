@@ -23,13 +23,13 @@ other examples
 
 basics
 
-- 00.1️⃣. [framework overview](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/00.0_framework_overview.ipynb)
-- 00.1️⃣. [pipeline setup](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/00.1_pipeline_setup.ipynb)
+- 0️⃣0️⃣.1️⃣. [framework overview](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/00.0_framework_overview.ipynb)
+- 0️⃣0️⃣.1️⃣. [pipeline setup](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/00.1_pipeline_setup.ipynb)
 
 
 stats
 
-- 1️⃣0. [regionprop stats](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/10_regionprops.ipynb)
+- 1️⃣0️⃣. [regionprop stats](https://github.com/ndcn/infer-subc/blob/68976b1f56e0f2bac191e297077b8378c663793c/notebooks/10_regionprops.ipynb)
 
 workflow .json composition
 

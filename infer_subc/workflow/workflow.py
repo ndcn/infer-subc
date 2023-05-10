@@ -43,7 +43,7 @@ class Workflow:
         Get the next step to be performed
 
         Params:
-            none
+            none: None
 
         Returns
             (WorkflowStep): next WorkflowStep object to perform on image
@@ -69,7 +69,6 @@ class Workflow:
         step = self.get_next_step()
 
         log.info(f"Executing step #{step.step_number}")
-
         # Pick which image to perform the workflow step on
         image: np.ndarray = None
 
@@ -125,7 +124,7 @@ class Workflow:
         Get the result from the last executed WorkflowStep.
 
         Params:
-           none
+           none: None
 
         Returns
             (np.ndarray): Result of the last executed WorkflowStep,
@@ -144,7 +143,7 @@ class Workflow:
               with user-provided parameters, use execute_next()
 
         Params:
-            none:None
+            none: None
 
         Returns
             (np.ndarray): Result of the final WorkflowStep.
@@ -183,7 +182,7 @@ class Workflow:
         Check if all WorkflowSteps have been executed.
 
         Params:
-            none
+            none: None
 
         Returns
             (bool): True if all WorkflowSteps have been executed, False if not

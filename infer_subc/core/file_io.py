@@ -31,7 +31,7 @@ def read_ome_image(image_name):
     """
     return output from napari aiscioimage reader
     """
-    data_out, meta_out, layer_type = reader_function(image_name)[0]
+    data_out, meta_out, layer_type = reader_function(image_name, in_memory=True)[0]
 
     meta_out["file_name"] = image_name
     return (data_out, meta_out)
@@ -301,7 +301,7 @@ def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_p
 ### UTILS
 def etree_to_dict(t):
     """
-    etree dumper from stackoverflow use to dump meta_dict['metadata']['raw_image_metadata']
+    etree dumper from stackoverflow use to dump meta_dict[metadata][raw_image_metadata]
     """
     d = {t.tag: {} if t.attrib else None}
     children = list(t)
