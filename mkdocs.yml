@@ -1,11 +1,12 @@
 site_name: 'infer_subc'
-
 nav:
   - Home: 'index.md'
-  - framework: 'framework.md'
-  - examples: 
-    - 'notebooks' : 'nbs/overview.md'
-    - 'getting started' : 'config.md'
+  - frameworks: 
+    - 'reproducible imaging': 'framework.md'
+    - 'general workflow': 'pipeline.md'
+  - getting started: 
+    - 'install + config' : 'config.md'
+    - 'example notebooks' : 'nbs/overview.md'
   - Napari:
     - 'infer_subc/napari/plugin.md'
     - 'infer_subc/napari/organelle_config.md'
@@ -31,7 +32,6 @@ nav:
       - 'batch': 'infer_subc/utils/batch.md'
       - 'etc' : 'infer_subc/utils/etc.md'
     - 'workflow': 'infer_subc/workflow.md'
-
   # - Notebooks: 
   #   - 'Overview' : notebooks/nbs_overview.md
   #   - '00_setup' : 'notebooks/nbs/00.1_pipeline_setup.ipynb'
@@ -48,7 +48,6 @@ nav:
   #   # - 'batch processing' : 'notebooks/nbs/10_batch_processing.ipynb'
   #   # # - 'workflows' : 'notebooks/nbs/11_workflows.ipynb'
   #   # # - 'QC' : 'notebooks/nbs/12_QC.ipynb'
-
 plugins:
   # - mkdocs-jupyter:
   #     theme: dark
