@@ -1,11 +1,11 @@
 import numpy as np
 
-from aicsimageio import imread
+# from aicsimageio import imread
 from typing import Dict, Tuple, Any, Union, List
 from dataclasses import dataclass
-from ..utils.lazy import lazy_property  # infer_subc.utils.lazy
-from ..utils.directories import Directories  # infer_subc.utils.directories
-from .workflow_step import WorkflowStep
+# from infer_subc.utils.lazy import lazy_property  # infer_subc.utils.lazy
+from infer_subc.utils.directories import Directories  # infer_subc.utils.directories
+from infer_subc.workflow.workflow_step import WorkflowStep
 
 
 # TODO: create an WorkflowImage class

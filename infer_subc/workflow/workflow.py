@@ -2,9 +2,9 @@ import numpy as np
 import logging
 
 from typing import Any, Dict, List
-from ..exceptions import ArgumentNullError
-from .workflow_step import WorkflowStep
-from .workflow_definition import WorkflowDefinition
+from infer_subc.exceptions import ArgumentNullError
+from infer_subc.workflow.workflow_step import WorkflowStep
+from infer_subc.workflow.workflow_definition import WorkflowDefinition
 from napari.layers import Image
 
 log = logging.getLogger(__name__)

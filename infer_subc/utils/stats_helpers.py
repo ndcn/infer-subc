@@ -6,17 +6,17 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from .stats import ( get_aXb_stats_3D, 
+from infer_subc.utils.stats import ( get_aXb_stats_3D, 
                     get_summary_stats_3D, 
                     get_simple_stats_3D, 
                     get_radial_stats, 
                     get_depth_stats, 
                     _assert_uint16_labels )
 
-from .batch import list_image_files, find_segmentation_tiff_files
+from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
-from ..constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
+from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
 def make_organelle_stat_tables(
     organelle_names: List[str],
