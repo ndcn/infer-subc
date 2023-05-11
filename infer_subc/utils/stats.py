@@ -354,6 +354,7 @@ def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep
         # center that is the closest to the center of mass.
         missing_mask = (labels != 0) & (cl == 0)
         missing_labels = np.unique(labels[missing_mask])
+        
         if len(missing_labels):
             print("WTF!!  how did we have missing labels?")
             all_centers = centrosome.cpmorphology.centers_of_labels(labels)
@@ -446,15 +447,17 @@ def get_radial_distribution(
 
     # other params
     bin_count = n_bins if n_bins is not None else 5
+    nobjects = 1
     scale_bins = True 
     keep_nuc_bins = True # this toggles whether to count things inside the nuclei mask.  
     center_on_nuc = False # choosing the edge of the nuclei or the center as the center to propogate from
 
     center_objects = nucleus_proj>0 
 
-    nobjects = 1
-    labels = label(cellmask_proj>0) #extent as 0,1 rather than bool    
-
+    # labels = label(cellmask_proj>0) #extent as 0,1 rather than bool    
+    labels = (cellmask_proj>0).astype(np.uint16)
+    # labels = np.zeros_like(cellmask_proj)
+    # labels[labels>0]=1
 
     ################   ################
     ## define masks for computing distances
@@ -469,17 +472,14 @@ def get_radial_distribution(
     ################   ################
     ngood_pixels = np.sum(good_mask)
     good_labels = labels[good_mask]
-    nobjects = 1
-
 
     # protect against None normaized_distances
-
-
     bin_indexes = (normalized_distance * bin_count).astype(int)
     bin_indexes[bin_indexes > bin_count] = bin_count # shouldn't do anything
 
     #                 (    i          ,         j              )
     labels_and_bins = (good_labels - 1, bin_indexes[good_mask])
+
     #                coo_matrix( (             data,             (i, j)    ), shape=                      )
     histogram_cmsk = coo_matrix( (cellmask_proj[good_mask], labels_and_bins), shape=(nobjects, bin_count) ).toarray()
     histogram_org = coo_matrix(  (org_proj[good_mask],      labels_and_bins), shape=(nobjects, bin_count) ).toarray()
@@ -526,6 +526,7 @@ def get_radial_distribution(
         imask.astype(int) + jmask.astype(int) * 2 + absmask.astype(int) * 4
     )
 
+    # return radial_index, labels, good_mask, bin_indexes
     statistics = []
     stat_names =[]
     cv_cmsk = []
