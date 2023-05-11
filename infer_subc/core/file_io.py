@@ -1,8 +1,8 @@
 import numpy as np
 
 from platform import system
-import os
-import pickle
+# import os
+# import pickle
 
 from pathlib import Path
 from collections import defaultdict
@@ -12,16 +12,16 @@ from typing import Dict, Union, List, Any, Tuple
 from aicsimageio.writers import OmeTiffWriter
 
 # from napari_aicsimageio.core import reader_function
-from ..utils._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
 from aicsimageio import AICSImage, exceptions
 
-import ome_types
-
+# import ome_types
 from tifffile import imwrite, tiffcomment, imread
 import time
 
 # todo depricate wrapper
 from dataclasses import dataclass
+
+from infer_subc.utils._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
 
 
 # TODO:  remove reader_function overhead for writting "intermediate" .tif files

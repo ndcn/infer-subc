@@ -1,30 +1,27 @@
 import numpy as np
 
-from tifffile import imwrite, tiffcomment, imread
+from tifffile import imwrite #, tiffcomment, imread
 
 
 from datetime import datetime
 from typing import List, Union
-from aicsimageio import AICSImage
-from aicsimageio.writers import OmeTiffWriter
+# from aicsimageio import AICSImage
+# from aicsimageio.writers import OmeTiffWriter
 from pathlib import Path
+
 
 # from aicssegmentation.util.filesystem import FileSystemUtilities
 # from aicssegmentation.exceptions import ArgumentNullError
-from ..utils.filesystem import FileSystemUtilities
-from ..exceptions import ArgumentNullError
-from .workflow import Workflow
-from .workflow_definition import WorkflowDefinition
-
-SUPPORTED_FILE_EXTENSIONS = ["tiff", "tif", "czi"]
+from infer_subc.utils.filesystem import FileSystemUtilities
+from infer_subc.exceptions import ArgumentNullError
+from infer_subc.workflow.workflow import Workflow
+from infer_subc.workflow.workflow_definition import WorkflowDefinition
 
 # from infer_subc.core.file_io import reader_function
-from ..core.file_io import reader_function
-
-from typing import Union
-from pathlib import Path
+from infer_subc.core.file_io import reader_function
 
 PathLike = Union[str, Path]
+SUPPORTED_FILE_EXTENSIONS = ["tiff", "tif", "czi"]
 
 
 # TODO: fix channel index.

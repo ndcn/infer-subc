@@ -2,10 +2,10 @@ import json
 
 from pathlib import Path
 from typing import Dict, List
-from ..utils.directories import Directories
-from .segmenter_function import SegmenterFunction, FunctionParameter, WidgetType
-from .workflow_definition import WorkflowDefinition  # , PrebuiltWorkflowDefinition
-from .workflow_step import WorkflowStep, WorkflowStepCategory
+from infer_subc.utils.directories import Directories
+from infer_subc.workflow.segmenter_function import SegmenterFunction, FunctionParameter, WidgetType
+from infer_subc.workflow.workflow_definition import WorkflowDefinition  # , PrebuiltWorkflowDefinition
+from infer_subc.workflow.workflow_step import WorkflowStep, WorkflowStepCategory
 
 
 class ConfigurationException(Exception):

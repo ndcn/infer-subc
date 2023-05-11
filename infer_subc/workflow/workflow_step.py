@@ -4,7 +4,7 @@ import numpy as np
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Any
-from .segmenter_function import SegmenterFunction
+from infer_subc.workflow.segmenter_function import SegmenterFunction
 
 
 class WorkflowStepCategory(Enum):

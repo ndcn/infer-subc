@@ -4,7 +4,7 @@ from skimage.morphology import binary_erosion
 from skimage.measure._regionprops import _props_to_dict
 from typing import Tuple, Any, Union
 
-from scipy.ndimage import maximum_position, center_of_mass
+# from scipy.ndimage import maximum_position, center_of_mass
 from scipy.ndimage import sum as ndi_sum
 from scipy.sparse import coo_matrix
 

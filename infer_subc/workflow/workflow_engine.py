@@ -1,11 +1,11 @@
 import numpy as np
 
 from typing import List, Union
-from ..exceptions import ArgumentNullError
-from .workflow import Workflow
-from .batch_workflow import BatchWorkflow
-from .workflow_definition import WorkflowDefinition
-from .workflow_config import WorkflowConfig
+from infer_subc.exceptions import ArgumentNullError
+from infer_subc.workflow.workflow import Workflow
+from infer_subc.workflow.batch_workflow import BatchWorkflow
+from infer_subc.workflow.workflow_definition import WorkflowDefinition
+from infer_subc.workflow.workflow_config import WorkflowConfig
 from pathlib import Path
 
 
