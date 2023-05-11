@@ -31,7 +31,7 @@ To measure shape, position, size, and interaction of eight organelles/cellular c
     -  #### 6️⃣. [Infer GOLGI complex](./infer_subc/organelles.md)
     -  #### 7️⃣. [Infer PEROXISOMES](./infer_subc/organelles.md)
     -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./infer_subc/organelles.md)
-    -   #### 9️⃣. [Infer LB](./nbs/overview.md) 
+    -  #### 9️⃣. [Infer LB](./nbs/overview.md) 
 
 
 ----------------------------
