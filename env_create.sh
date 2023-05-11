@@ -50,6 +50,56 @@ pip install aicsimageio tifffile aicspylibczi aicssegmentation napari-aicsimagei
 pip install git+https://github.com/ergonyc/centrosome.git
 
 
+
+
+############
+
+conda create -n napari11 python=3.11
+conda activate napari11
+conda install -c conda-forge ipython ipykernel pip notebook 
+conda install -c conda-forge scipy scikit-learn matplotlib tifffile
+# conda install matplotlib
+# conda install -c conda-forge napari
+
+pip install 'napari[all]'
+python -m pip install "git+https://github.com/napari/napari.git"
+pip install PyQt6
+
+pip install aicsimageio 
+pip install aicspylibczi 
+pip install git+https://github.com/ergonyc/centrosome.git
+
+# BROKEN FROM HERE DOWN 
+pip install napari-aicsimageio
+
+# Collecting scikit-image[data]>=0.19.1 (from napari->aicssegmentation)
+#   Using cached scikit-image-0.19.3.tar.gz (22.2 MB)
+#   Installing build dependencies ... done
+#   Getting requirements to build wheel ... error
+#   error: subprocess-exited-with-error
+  
+#   × Getting requirements to build wheel did not run successfully.
+#   │ exit code: 1
+#   ╰─> [44 lines of output]
+#       setup.py:9: DeprecationWarning:
+      
+#         `numpy.distutils` is deprecated since NumPy 1.23.0, as a result
+#         of the deprecation of `distutils` itself. It will be removed for
+#         Python >= 3.12. For older Python versions it will remain present.
+#         It is recommended to use `setuptools < 60.0` for those Python versions.
+#         For more details, see:
+#           https://numpy.org/devdocs/reference/distutils_status_migration.html
+      
+      
+#         from numpy.distutils.command.build_ext import build_ext as npy_build_ext
+#       Traceback (most recent call last):
+
+
+pip install aicssegmentation 
+
+
+
+
 # for windows substitute "python -m pip install" for "pip install"
 
 # conda create -n win_cento python=3.10 
