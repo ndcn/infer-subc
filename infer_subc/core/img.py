@@ -987,7 +987,7 @@ def spot_filter_3(
     dot_scale_3: float,
     dot_cut_3: float,
 ) -> np.ndarray:
-    """spot filter helper function for 3 levels (scale+cut).  if scale_i is < 1. its skipped
+    """spot filter helper function for 3 levels (scale+cut).  if scale_i is > 0.0001 its skipped
 
     Parameters
     ------------
@@ -1014,7 +1014,7 @@ def spot_filter_3(
     scales = [dot_scale_1, dot_scale_2, dot_scale_3]
     cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
 
-    s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc >= 1.0]
+    s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0.0001]
     # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
 
