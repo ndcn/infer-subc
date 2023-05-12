@@ -16,8 +16,6 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-
-
 def _my_props_to_dict(
     rp, label_image, intensity_image=None, properties=("label", "area", "centroid", "bbox"), extra_properties=None
 ):
