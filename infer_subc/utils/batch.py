@@ -38,8 +38,6 @@ from infer_subc.organelles import (
 )
 
 
-
-
 def explode_mask(mask_path: Union[Path,str], postfix: str= "masks", im_type: str = ".tiff") -> bool:
     """ 
     Split a 3 channel 'masks' file into 'nuc', 'cell', and 'cyto' images.  WARNING: requires the channels to be nuc = 0, cell = 1, and cyto = 2
@@ -136,7 +134,6 @@ def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str
     else:
         print(f"cellmask file not found in {int_path} returning")
         out_files["cell"] = None
-
 
     # organelles
     for org_n in organelles:
