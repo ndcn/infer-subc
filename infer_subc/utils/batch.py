@@ -137,6 +137,7 @@ def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str
         print(f"cellmask file not found in {int_path} returning")
         out_files["cell"] = None
 
+
     # organelles
     for org_n in organelles:
         org_name = Path(int_path) / f"{prototype.stem}-{org_n}.tiff"
