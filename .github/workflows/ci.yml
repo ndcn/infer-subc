@@ -2,20 +2,19 @@ name: ci
 on:
   push:
     branches:
-      - master 
       - main
 permissions:
   contents: write
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
-      - run: pip install mkdocs-material "mkdocstrings[python]" #mkdocs-jupyter
-      - run: mkdocs gh-deploy --force
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.x
+  #     - run: pip install mkdocs-material "mkdocstrings[python]" #mkdocs-jupyter
+  #     - run: mkdocs gh-deploy --force
   pypi: # version 2
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +24,7 @@ jobs:
           fetch-depth: 0
       - run: python3 -m pip install --upgrade build && python3 -m build
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@main
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
   # # version 1
