@@ -138,3 +138,6 @@ dmypy.json
 
 # mkdocs
 site
+
+# written by setuptools_scm
+*/_version.py
