@@ -44,6 +44,60 @@ A quick note on tools and resources used.
 - [`numpy`](https://numpy.org/) -- Under the hood computation
 - [`Alzheimer's Disease AD Workbench`](https://www.alzheimersdata.org/ad-workbench) -- We initially wanted to use the ADDI's ADWB as a method of data sharing and to serve as a computational resource.
 
+
+## Getting Started
+
+### Prerequisites
+
+
+
+### Installation
+`infer_subc` is  available on `PyPI` via: 
+
+```
+pip install infer_subc
+```
+
+If there are issues more details can be fouund in the [documentation](https://ndcn.github.io/infer-subc/config/)
+
+
+## Usage - quick start
+Its recommended that you use this repo along with the [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin) as in [Option A](#option-a-napari-organelle-segmenter-plugin) below.  Alternatively using the module functions directly as in [Option B](#option-b-python-script-or-notebook) would work just fine.
+
+
+### Option A: Napari `organelle-segmenter-plugin`
+
+1. Open a file in napari by dragging multi-channel .czi file onto napari which will import a multi-channel, multi-Z 'layer'. (Using the menu's defaults to `aicsIMAGEIO` reader which automatically splits mutliple channels into individual layers.  The plugin is able to support multi-dimensional data in .tiff, .tif. ome.tif, .ome.tiff, .czi)
+2. Start the plugin (open napari, go to "Plugins" --> "organelle-segmenter-plugin" --> "workflow editor")
+3. Select the image and channel to work on
+4. Select a workflow based on the example image and target segmentation based on user's data. Ideally, it is recommend to start with the example with very similar morphology as user's data.
+5. Click "Run All" to execute the whole workflow on the sample data.
+6. Adjust the parameters of steps, based on the intermediate results.  A complete list of all functions can be found [here](https://github.com/ndcn/infer-subc/blob/main/infer_subc/organelles_config/function_params.md)🚧 WIP 🚧
+7. Click "Run All" again after adjusting the parameters and repeat step 6 and 7 until the result is satisfactory.
+8. Save the workflow
+9. Close the plugin and open the **batch processing** part by (go to "Plugins" --> "organelle-segmenter-plugin" --> "batch processing")
+10. Load the customized workflow saved above 
+11. Load the folder with all the images to process
+12. Click "Run"
+13. Follow the [examples](https://github.com/ndcn/infer-subc/blob/main/notebooks/14_final_workflow.ipynb) in the `infer_subc` [repo](https://github.com/ndcn/infer-subc/) for postprocessing of the saved segmentations and generating the statistics.  
+
+### Option B: python script or notebook 
+
+A variety of example [notebooks](https://github.com/ndcn/infer-subc/blob/main/notebooks/) demonstrating how to use the are available in the repo.  Additional information can be found at https://ndcn.github.io/infer-subc/nbs/overview/.  
+
+
+## Development
+
+Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+## License
+Distributed under the terms of the [BSD-3] license,
+"organelle-segmenter-plugin" is free and open source software
+
+## Issues
+
+If you encounter any problems, please file an issue with a detailed description.
+
 ## ADWB hints
 
 Given that the github repos are not yet whitelisted, the source directory needs to be zipped and uploaded in order to make an "editable" pip install.
@@ -51,76 +105,3 @@ Given that the github repos are not yet whitelisted, the source directory needs 
 [uploading guide ](https://knowledgebase.aridhia.io/article/guidance-for-uploading-files/)
 [uploading files via the workspace article](https://knowledgebase.aridhia.io/article/uploading-files-via-the-workspace/).
 [Using BLOB storage](https://knowledgebase.aridhia.io/article/using-blob-storage/)
-
-## Getting Started
-
-### Prerequisites
-
-The following are prerequisites and should be installed prior to using the workflow.
-
-- `napari` 
-  ```
-  pip install "napari[all]"
-  ```
-
-- `scipy`
-  ```
-  python -m pip install scipy
-  ```
-
-- `scikit-image`
-  ```
-  pip install scikit-image
-  ```
-
-- `itk`
-  ```
-  pip install itk
-  ```
-- `numpy`
-  ```
-  pip install numpy
-  ```
-
-### Installation
-
-`infer_subc` is not yet available on `PyPI` so must be  be `pip` ionstalled from source
-```
-pip install git+https://github.com/ndcn/infer-subc.git
-```
-
-## Usage
-
-```py
-from infer_subc.organelles import infer_lyso
-from infer_subc.core.file_io import read_czi_image
-
-img_data,meta_dict = read_czi_image("path/to/image.czi")
-lyso_obj =  infer_lyso(img_data) 
-
-```
-
- 🚧 WIP 🚧 (🚨🚨🚨🚨 )
-> NOTE: command line capabilities not implimented
-```bash
-$ python -m infer_subc
-#or
-$ infer_subc
-```
-
-## Roadmap
-
- - [ ] Create `PyPI` package
- - [ ] Update installation instructions to reflect optimal use of `conda` environments
-
-## Development
-
-Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-## License
-
-Distributed under the Unlicense license. See `LICENSE` for more information.  
-
-## Issues
-
-If you encounter any problems, please file an issue with a detailed description.
