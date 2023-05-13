@@ -91,8 +91,8 @@ A variety of example [notebooks](https://github.com/ndcn/infer-subc/blob/main/no
 Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## License
-
-Distributed under the Unlicense license. See `LICENSE` for more information.  
+Distributed under the terms of the [BSD-3] license,
+"organelle-segmenter-plugin" is free and open source software
 
 ## Issues
 
