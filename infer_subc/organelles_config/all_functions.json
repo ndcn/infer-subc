@@ -1696,47 +1696,55 @@
         "python::module": "infer_subc.core.img",
         "python::function": "spot_filter_3",
         "parameters": {
-            "dot_scale_1": {
+            "spot_scale_1": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_1": {
+            "spot_cutoff_1": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_scale_2": {
+            "spot_scale_2": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_2": {
+            "spot_cutoff_2": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_scale_3": {
+            "spot_scale_3": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_3": {
+            "spot_cutoff_3": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
             }
         }
     },
@@ -1769,5 +1777,62 @@
         "python::module": "infer_subc.core.img",
         "python::function": "label_bool_as_uint16",
         "parameters": null
+    },
+    "filament_filter_3": {
+        "name": "filament filter thresholding",
+        "python::module": "infer_subc.core.img",
+        "python::function": "filament_filter",
+        "parameters": {
+            "filament_scale_1": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_1": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 2,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_scale_2": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_2": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_scale_3": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_3": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
+            }
+        }
     }
 }

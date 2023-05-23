@@ -8,12 +8,12 @@ from aicssegmentation.core.utils import size_filter, hole_filling
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
-from aicssegmentation.core.vessel import filament_2d_wrapper
+from aicssegmentation.core.vessel import filament_2d_wrapper, filament_3d_wrapper
 from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
     # edge_preserving_smoothing_3d,
 )
-from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
+from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper, dot_3d_wrapper
 
 from typing import Tuple, List, Union, Any
 
@@ -955,6 +955,56 @@ def enhance_neurites(image: np.ndarray, radius: int, volumetric: bool = False) -
     return result
 
 
+def filament_filter_3(in_img: np.ndarray, 
+                       filament_scale_1: float, 
+                       filament_cutoff_1: float,
+                       filament_scale_2: float, 
+                       filament_cutoff_2: float,
+                       filament_scale_3: float, 
+                       filament_cutoff_3: float,
+                       method: str
+                       ) -> np.ndarray:
+    """filament filter helper function for 3 levels (scale+cut). filter pairs are run if scale is > 0.
+
+    Parameters
+    ------------
+    in_img:
+        the image to filter on np.ndarray
+    filament_scale_1:
+        scale or size of the "filter" float
+    filament_cutoff_1:
+        cutoff for thresholding float
+    filament_scale_2:
+        scale or size of the "filter" float
+    filament_cutoff_2:
+        cutoff for thresholding float
+    filament_scale_3:
+        scale or size of the "filter" float
+    filament_cutoff_3:
+        cutoff for thresholding float
+    method:
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
+
+    Returns
+    -----------
+    result:
+        filtered boolean np.ndarray
+
+    """
+    scales = [filament_scale_1, filament_scale_2, filament_scale_3]
+    cuts = [filament_cutoff_1, filament_cutoff_2, filament_cutoff_3]
+    f_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0]
+
+    if method == "3D":
+        seg = filament_3d_wrapper(in_img, f_param)
+    elif method == "slice_by_slice":
+        seg = filament_2d_wrapper(in_img, f_param)
+    else:
+        print(f"undefined method: {method}")
+
+    return seg
+
+
 def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: float) -> np.ndarray:
     """filament wrapper to properly pack parameters into filament_2d_wrapper
 
@@ -978,46 +1028,95 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
     return filament_2d_wrapper(in_img, f2_param)
 
 
+# def spot_filter_3(
+#     in_img: np.ndarray,
+#     dot_scale_1: float,
+#     dot_cut_1: float,
+#     dot_scale_2: float,
+#     dot_cut_2: float,
+#     dot_scale_3: float,
+#     dot_cut_3: float,
+# ) -> np.ndarray:
+#     """spot filter helper function for 3 levels (scale+cut).  if scale_i is > 0.0001 its skipped
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     dot_scale_1:
+#         scale or size of the "filter" float
+#     dot_cut_1:
+#         cutoff for thresholding float
+#     dot_scale_2:
+#         scale or size of the "filter" float
+#     dot_cut_2:
+#         cutoff for thresholding float
+#     dot_scale_3:
+#         scale or size of the "filter" float
+#     dot_cut_3:
+#         cutoff for thresholding float
+
+#     Returns
+#     -------------
+#     segmented dots over 3 scales
+
+#     """
+#     scales = [dot_scale_1, dot_scale_2, dot_scale_3]
+#     cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
+
+#     s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0.0001]
+#     # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
+#     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
+
+
 def spot_filter_3(
     in_img: np.ndarray,
-    dot_scale_1: float,
-    dot_cut_1: float,
-    dot_scale_2: float,
-    dot_cut_2: float,
-    dot_scale_3: float,
-    dot_cut_3: float,
+    spot_scale_1: float,
+    spot_cutoff_1: float,
+    spot_scale_2: float,
+    spot_cutoff_2: float,
+    spot_scale_3: float,
+    spot_cutoff_3: float,
+    method: str = "slice_by_slice"
 ) -> np.ndarray:
-    """spot filter helper function for 3 levels (scale+cut).  if scale_i is > 0.0001 its skipped
+    """spot filter helper function for 3 levels (scale+cut). filter pairs are run if scale is > 0.
 
     Parameters
     ------------
     in_img:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    dot_scale_1:
+    spot_scale_1:
         scale or size of the "filter" float
-    dot_cut_1:
+    spot_cutoff_1:
         cutoff for thresholding float
-    dot_scale_2:
+    spot_scale_2:
         scale or size of the "filter" float
-    dot_cut_2:
+    spot_cutoff_2:
         cutoff for thresholding float
-    dot_scale_3:
+    spot_scale_3:
         scale or size of the "filter" float
-    dot_cut_3:
+    spot_cut_3:
         cutoff for thresholding float
+    method:
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
 
     Returns
     -------------
     segmented dots over 3 scales
 
     """
-    scales = [dot_scale_1, dot_scale_2, dot_scale_3]
-    cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
+    scales = [spot_scale_1, spot_scale_2, spot_scale_3]
+    cuts = [spot_cutoff_1, spot_cutoff_2, spot_cutoff_3]
+    s_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0]
 
-    s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0.0001]
-    # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
-    return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
+    if method == "3D":
+        seg = dot_3d_wrapper(in_img, s_param)
+    elif method == "slice_by_slice":
+        seg = dot_2d_slice_by_slice_wrapper(in_img, s_param)
+    else:
+        print(f"undefined method: {method}")
 
+    return seg
 
 # centrosome routines
 
