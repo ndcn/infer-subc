@@ -247,7 +247,7 @@ def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, o
     # HACK: skip the ome
     # out_file_n = export_ome_tiff(img_out, meta_dict, img_name_out, str(out_data_path) + "/", name)
     out_file_n = export_tiff(img_out, img_name_out, out_data_path, name, meta_dict)
-    print(f"saved file: {out_file_n}")
+    print(f"saved file: {img_name_out}")
     return out_file_n
 
 

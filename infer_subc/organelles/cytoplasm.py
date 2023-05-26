@@ -37,7 +37,7 @@ def infer_cytoplasm(nuclei_object: np.ndarray, cellmask: np.ndarray, erode_nucle
     else:
         cytoplasm_mask = np.logical_xor(cellmask, nucleus_obj)
 
-    return cytoplasm_mask
+    return cytoplasm_mask.astype(bool)
 
 
 def infer_and_export_cytoplasm(

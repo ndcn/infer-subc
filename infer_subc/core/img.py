@@ -215,7 +215,7 @@ def threshold_multiotsu_log(image_in):
 
 
 def masked_object_thresh(
-    structure_img_smooth: np.ndarray, th_method: str, cutoff_size: int, th_adjust: float
+    structure_img_smooth: np.ndarray, global_method: str, cutoff_size: int, local_adjust: float
 ) -> np.ndarray:
     """
     wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
@@ -241,9 +241,9 @@ def masked_object_thresh(
     struct_obj = MO(
         structure_img_smooth,
         object_minArea=cutoff_size,
-        global_thresh_method=th_method,
+        global_thresh_method=global_method,
         extra_criteria=True,
-        local_adjust=th_adjust,
+        local_adjust=local_adjust,
         return_object=False,
         dilate=False,  # WARNING: dilate=True causes a bug if there is only one Z
     )
@@ -406,17 +406,17 @@ def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
 
 def make_aggregate(
     img_in: np.ndarray,
-    w0: int = 0,
-    w1: int = 0,
-    w2: int = 0,
-    w3: int = 0,
-    w4: int = 0,
-    w5: int = 0,
-    w6: int = 0,
-    w7: int = 0,
-    w8: int = 0,
-    w9: int = 0,
-    scale_min_max: bool = True,
+    weight_ch0: int = 0,
+    weight_ch1: int = 0,
+    weight_ch2: int = 0,
+    weight_ch3: int = 0,
+    weight_ch4: int = 0,
+    weight_ch5: int = 0,
+    weight_ch6: int = 0,
+    weight_ch7: int = 0,
+    weight_ch8: int = 0,
+    weight_ch9: int = 0,
+    rescale: bool = True,
 ) -> np.ndarray:
     """define multi_channel aggregate.  weighted sum wrapper (plugin)
 
@@ -424,7 +424,7 @@ def make_aggregate(
     ------------
     w0,w1,w2,w3,w4,w5,w6,w7,w8,w9
         channel weights
-    scale_min_max:
+    rescale:
         scale to [0,1] if True. default True
 
     Returns
@@ -432,8 +432,9 @@ def make_aggregate(
         np.ndarray scaled aggregate
 
     """
-    weights = (w0, w1, w2, w3, w4, w5, w6, w7, w8, w9)
-    if scale_min_max:
+    weights = (weight_ch0, weight_ch1, weight_ch2, weight_ch3, weight_ch4,
+               weight_ch5, weight_ch6, weight_ch7, weight_ch8, weight_ch9)
+    if rescale:
         # TODO: might NOT overflow here... maybe NOT do the normaization first?
         return min_max_intensity_normalization(weighted_aggregate(min_max_intensity_normalization(img_in), *weights))
     else:
@@ -607,7 +608,7 @@ def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np
 
 
 def scale_and_smooth(
-    img_in: np.ndarray, median_sz: int = 1, gauss_sig: float = 1.34, slice_by_slice: bool = True
+    img_in: np.ndarray, median_size: int = 1, gauss_sigma: float = 1.34, slice_by_slice: bool = True
 ) -> np.ndarray:
     """
     helper to perform min-max scaling, and median+gaussian smoothign all at once
@@ -632,9 +633,9 @@ def scale_and_smooth(
     # TODO:  make non-slice-by-slice work
     slice_by_slice = True
     if slice_by_slice:
-        if median_sz > 1:
-            img = median_filter_slice_by_slice(img, size=median_sz)
-        img = image_smoothing_gaussian_slice_by_slice(img, sigma=gauss_sig)
+        if median_size > 1:
+            img = median_filter_slice_by_slice(img, size=median_size)
+        img = image_smoothing_gaussian_slice_by_slice(img, sigma=gauss_sigma)
     else:
         print(" PLEASE CHOOOSE 'slice-by-slice', 3D is not yet implimented")
 
@@ -699,22 +700,41 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
 
-def masked_inverted_watershed(img_in, markers, mask):
+def masked_inverted_watershed(img_in: np.ndarray, 
+                                     markers: np.ndarray, 
+                                     mask: np.ndarray, 
+                                     method: str='slice-by-slice'):
     """wrapper for watershed on inverted image and masked
 
     Parameters
     ------------
     in_img:
-        a 3d image containing all the channels
+        a 3d image
+    markers: 
+        objects used to seed the watershed
+    mask:
+        instance segmentation of the in_img
+    method:
+        'slice-by-slice' results in a connectivity of np.ones((1,3,3), bool); '3D' results in a connectivity of np.ones((3,3,3), bool)
 
     """
-    labels_out = watershed(
+    if method == 'slice-by-slice':    
+        labels_out = watershed(
+            1.0 - img_in,
+            markers=markers,
+            connectivity=np.ones((1, 3, 3), bool),
+            mask=mask)
+    elif method == '3D':
+        labels_out = watershed(
         1.0 - img_in,
         markers=markers,
-        connectivity=np.ones((1, 3, 3), bool),
-        mask=mask,
-    )
+        connectivity=np.ones((3, 3, 3), bool),
+        mask=mask)
+    else:
+        print(f"incompatable method: {method}")
+
     return labels_out
+
 
 
 def choose_max_label(
