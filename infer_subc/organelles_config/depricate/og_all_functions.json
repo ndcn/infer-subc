@@ -161,7 +161,7 @@
             }
         }
     },
-    "spot_filter_3D": {
+    "dot_filter_3D": {
         "name": "Spot Filter 3D",
         "python::module": "aicssegmentation.core.seg_dot",
         "python::function": "dot_3d",

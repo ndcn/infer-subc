@@ -161,7 +161,7 @@
             }
         }
     },
-    "spot_filter_3D": {
+    "dot_filter_3D": {
         "name": "Spot Filter 3D",
         "python::module": "aicssegmentation.core.seg_dot",
         "python::function": "dot_3d",
@@ -694,7 +694,7 @@
         "parameters": null
     },
     "logical_or": {
-        "name": "logical or",
+        "name": "Combine segmentations (logical or)",
         "python::module": "numpy",
         "python::function": "logical_or",
         "parameters": null
@@ -824,7 +824,7 @@
         "parameters": null
     },
     "select_channel_from_raw": {
-        "name": "select a channel ",
+        "name": "Select a channel for segmentation",
         "python::module": "infer_subc.core.img",
         "python::function": "select_channel_from_raw",
         "parameters": {
@@ -1706,47 +1706,47 @@
             }
         }
     },
-    "spot_filter_3": {
-        "name": "spot filter thresholding (3 scales)",
+    "dot_filter_3": {
+        "name": "'Dot' thresholding method (AICSSeg)",
         "python::module": "infer_subc.core.img",
-        "python::function": "spot_filter_3",
+        "python::function": "dot_filter_3",
         "parameters": {
-            "spot_scale_1": {
+            "dot_scale_1": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "spot_cutoff_1": {
+            "dot_cutoff_1": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "spot_scale_2": {
+            "dot_scale_2": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "spot_cutoff_2": {
+            "dot_cutoff_2": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "spot_scale_3": {
+            "dot_scale_3": {
                 "data_type": "float",
                 "increment": 0.05,
                 "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             },
-            "spot_cutoff_3": {
+            "dot_cutoff_3": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
@@ -1776,7 +1776,7 @@
         "parameters": null
     },
     "label_uint16": {
-        "name": "label objects to uint16",
+        "name": "Label objects",
         "python::module": "infer_subc.core.img",
         "python::function": "label_uint16",
         "parameters": null
@@ -1794,9 +1794,9 @@
         "parameters": null
     },
     "filament_filter_3": {
-        "name": "filament filter thresholding",
+        "name": "'Filament' thresholding method (AICSSeg)",
         "python::module": "infer_subc.core.img",
-        "python::function": "filament_filter",
+        "python::function": "filament_filter_3",
         "parameters": {
             "filament_scale_1": {
                 "data_type": "float",

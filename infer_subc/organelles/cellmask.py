@@ -178,8 +178,8 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
     # PRE_PROCESSING
     ###################                         
     struct_img =  scale_and_smooth(struct_img,
-                                   median_sz = median_sz, 
-                                   gauss_sig = gauss_sig)
+                                   median_size = median_sz, 
+                                   gauss_sigma = gauss_sig)
     
 
     struct_img_non_lin = non_linear_cellmask_transform(struct_img)
@@ -188,9 +188,9 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
     # CORE_PROCESSING
     ###################
     struct_obj = masked_object_thresh(struct_img_non_lin, 
-                                      th_method=mo_method, 
+                                      global_method=mo_method, 
                                       cutoff_size=mo_cutoff_size, 
-                                      th_adjust=mo_adjust)               
+                                      local_adjust=mo_adjust)               
 
     ###################
     # POST_PROCESSING
@@ -232,11 +232,11 @@ def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.nda
     ###################
     # PARAMETERS
     ###################   
-    weights = [0,6,0,2,0,1]
-    median_sz = 15
+    weights = [0,0,0,3,3,2]
+    median_sz = 10
     gauss_sig = 1.34
-    mo_method = "ave"
-    mo_adjust = 0.5
+    mo_method = "med"
+    mo_adjust = 0.3
     mo_cutoff_size = 150
     hole_min_width = 0
     hole_max_width = 50

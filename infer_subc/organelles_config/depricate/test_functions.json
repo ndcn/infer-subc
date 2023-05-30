@@ -507,7 +507,7 @@
         "python::function": "size_filter_2D",
         "python::module": "infer_subc.core.img"
     },
-    "spot_filter_3D": {
+    "dot_filter_3D": {
         "name": "Spot Filter 3D",
         "parameters": {
             "cutoff": {

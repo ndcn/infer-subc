@@ -1048,7 +1048,7 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
     return filament_2d_wrapper(in_img, f2_param)
 
 
-# def spot_filter_3(
+# def dot_filter_3(
 #     in_img: np.ndarray,
 #     dot_scale_1: float,
 #     dot_cut_1: float,
@@ -1089,14 +1089,14 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
 #     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
 
 
-def spot_filter_3(
+def dot_filter_3(
     in_img: np.ndarray,
-    spot_scale_1: float,
-    spot_cutoff_1: float,
-    spot_scale_2: float,
-    spot_cutoff_2: float,
-    spot_scale_3: float,
-    spot_cutoff_3: float,
+    dot_scale_1: float,
+    dot_cutoff_1: float,
+    dot_scale_2: float,
+    dot_cutoff_2: float,
+    dot_scale_3: float,
+    dot_cutoff_3: float,
     method: str = "slice_by_slice"
 ) -> np.ndarray:
     """spot filter helper function for 3 levels (scale+cut). filter pairs are run if scale is > 0.
@@ -1125,8 +1125,8 @@ def spot_filter_3(
     segmented dots over 3 scales
 
     """
-    scales = [spot_scale_1, spot_scale_2, spot_scale_3]
-    cuts = [spot_cutoff_1, spot_cutoff_2, spot_cutoff_3]
+    scales = [dot_scale_1, dot_scale_2, dot_scale_3]
+    cuts = [dot_cutoff_1, dot_cutoff_2, dot_cutoff_3]
     s_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0]
 
     if method == "3D":

@@ -20,7 +20,7 @@
     },
     "3": {
         "category": "core",
-        "function": "spot_filter_3",
+        "function": "dot_filter_3",
         "parameter_values": {
             "dot_scale_1": 1.0,
             "dot_cut_1": 0.01,
