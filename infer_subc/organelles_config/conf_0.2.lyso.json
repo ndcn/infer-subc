@@ -70,7 +70,7 @@
         "annotation": "basic lyso - fill/filter: 6"
     },
     "7": {
-        "category": "postprocessing",
+        "category": "postpostprocessing",
         "function": "label_uint16",
         "parent": 6,
         "annotation": "label to uint16 for export 7"

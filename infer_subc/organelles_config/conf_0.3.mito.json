@@ -12,38 +12,67 @@
         "category": "preprocessing",
         "function": "scale_and_smooth",
         "parameter_values": {
-            "median_sz": 3,
-            "gauss_sig": 2.6
+            "median_size": 3,
+            "gauss_sigma": 1.34
         },
         "parent": 1,
         "annotation": "basic mito segmentation: 2"
     },
     "3": {
         "category": "core",
-        "function": "vesselness_slice_by_slice",
+        "function": "dot_filter_3",
         "parameter_values": {
-            "sigma": 1.5,
-            "cutoff": 0.05
+            "dot_scale_1": 1.5,
+            "dot_cutoff_1": 0.05,
+            "dot_scale_2": 0,
+            "dot_cutoff_2": 0,
+            "dot_scale_3": 0,
+            "dot_cutoff_3": 0,
+            "method": "3D"
         },
         "parent": 2,
-        "annotation": "basic mito - vesselness filter: 3"
+        "annotation": "basic mito - spot filter: 3"
     },
     "4": {
+        "category": "core",
+        "function": "filament_filter_3",
+        "parameter_values": {
+            "filament_scale_1": 1.0,
+            "filament_cutoff_1": 0.15,
+            "filament_scale_2": 0,
+            "filament_cutoff_2": 0,
+            "filament_scale_3": 0,
+            "filament_cutoff_3": 0,
+            "method": "3D"
+        },
+        "parent": 2,
+        "annotation": "basic mito - filament filter: 4"
+    },
+    "5": {
+        "category": "core",
+        "function": "logical_or",
+        "parent": [
+            3,
+            4
+        ],
+        "annotation": "basic mito - combine spot+filament: 5"
+    },
+    "6": {
         "category": "postprocessing",
         "function": "fill_and_filter_linear_size",
         "parameter_values": {
             "hole_min": 0,
-            "hole_max": 25,
-            "min_size": 11,
+            "hole_max": 0,
+            "min_size": 3,
             "method": "3D"
         },
-        "parent": 3,
-        "annotation": "basic mito - fill/filter: 4"
+        "parent": 5,
+        "annotation": "basic mito - fill/filter: 6"
     },
-    "5": {
-        "category": "postprocessing",
+    "7": {
+        "category": "postpostprocessing",
         "function": "label_uint16",
-        "parent": 4,
+        "parent": 6,
         "annotation": "label to uint16 for export 5"
     }
 }

@@ -7,6 +7,7 @@ from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_
 from skimage.filters import scharr
 from skimage.measure import label
 
+from infer_subc.core.img import label_bool_as_uint16
 from infer_subc.constants import (
     TEST_IMG_N,
     NUC_CH,
@@ -208,7 +209,7 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
                                                            nuclei_labels, 
                                                            watershed_method=watershed_method) 
 
-    return cellmask_out.astype(bool)
+    return label_bool_as_uint16(cellmask_out)
 
 
 def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.ndarray) -> np.ndarray:

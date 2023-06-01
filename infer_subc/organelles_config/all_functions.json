@@ -280,7 +280,7 @@
         "parameters": null
     },
     "topology_preserving_thinning": {
-        "name": "Topology Preserving Thinning",
+        "name": "Thin segmentation (Topology preserving)",
         "python::module": "aicssegmentation.core.utils",
         "python::function": "topology_preserving_thinning",
         "parameters": {
@@ -1668,7 +1668,7 @@
         }
     },
     "apply_threshold": {
-        "name": "Apply Threshold",
+        "name": "Apply basic threshold",
         "python::module": "infer_subc.core.img",
         "python::function": "apply_threshold",
         "parameters": {
@@ -1788,7 +1788,7 @@
         "parameters": null
     },
     "label_bool_as_uint16": {
-        "name": "label single bool object as uint16",
+        "name": "Create one object (as uint16)",
         "python::module": "infer_subc.core.img",
         "python::function": "label_bool_as_uint16",
         "parameters": null
