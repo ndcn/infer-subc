@@ -19,47 +19,72 @@ from infer_subc.core.img import (
 ##########################
 #  infer_ER
 ##########################
-def infer_ER(
-              in_img: np.ndarray,
-              ER_ch: int,
-              median_sz: int,
-              gauss_sig: float,
-              MO_thresh_method: str,
-              MO_cutoff_size: float,
-              MO_thresh_adj: float,
-              fil_scale_1: float,
-              fil_cut_1: float,
-              fil_scale_2: float, 
-              fil_cut_2: float, 
-              fil_scale_3: float, 
-              fil_cut_3: float,
-              fil_method: str,
-              min_hole_w: int,
-              max_hole_w: int,
-              small_obj_w: int,
-              fill_filter_method: str
-              ) -> np.ndarray:
+def infer_ER(in_img: np.ndarray,
+             ER_ch: int,
+             median_sz: int,
+             gauss_sig: float,
+             MO_thresh_method: str,
+             MO_cutoff_size: float,
+             MO_thresh_adj: float,
+             fil_scale_1: float,
+             fil_cut_1: float,
+             fil_scale_2: float, 
+             fil_cut_2: float, 
+             fil_scale_3: float, 
+             fil_cut_3: float,
+             fil_method: str,
+             min_hole_w: int,
+             max_hole_w: int,
+             small_obj_w: int,
+             fill_filter_method: str
+             ) -> np.ndarray:
     """
-    Procedure to infer peroxisome from linearly unmixed input.
+    Procedure to infer ER from linearly unmixed input.
 
     Parameters
     ------------
     in_img: 
-        a 3d image containing all the channels
+        a 3d image containing all the channels (CZYX)
+    ER_ch:
+        index of the ER channel in the input image
     median_sz: 
         width of median filter for signal
     gauss_sig: 
         sigma for gaussian smoothing of  signal
-    filament_scale: 
+    mo_thresh_method: 
+         which method to use for calculating global threshold. Options include:
+         "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
+         "ave" refers the average of "triangle" threshold and "mean" threshold.
+    mo_cutoff_size: 
+        Masked Object threshold `size_min`
+    mo_thresh_adjust: 
+        Masked Object threshold `local_adjust`
+    fil_scale_1: 
         scale (log_sigma) for filament filter
-    filament_cut: 
-        threshold for filament fitered threshold
+    fil_cutoff_1: 
+        threshold for filament fitered threshold, associated to fil_scale_1
+    fil_scale_2: 
+        scale (log_sigma) for filament filter
+    fil_cutoff_2: 
+        threshold for filament fitered threshold, associated to fil_scale_2
+    fil_scale_3: 
+        scale (log_sigma) for filament filter
+    fil_cutoff_3: 
+        threshold for filament fitered threshold, associated to fil_scale_3
+    fil_method:
+        decision to process the filaments "slice-by-slice" or in "3D"
+    min_hole_w: 
+        minimum size for hole filling for cellmask signal post-processing
+    max_hole_w: 
+        hole filling cutoff for ER signal post-processing
     small_obj_w: 
-        minimu object size cutoff for nuclei post-processing
+        minimum object size cutoff for ER signal post-processing
+    fill_filter_method:
+        determines if small hole filling and small object removal should be run 'sice-by-slice' or in '3D'
     Returns
     -------------
-    peroxi_object
-        mask defined extent of peroxisome object
+    ER_object
+        mask defined extent of ER object
     """
 
     ###################
@@ -105,63 +130,6 @@ def infer_ER(
 
     return struct_obj 
 
-# def infer_ER(
-#     in_img: np.ndarray,
-#     median_sz: int,
-#     gauss_sig: float,
-#     filament_scale: float,
-#     filament_cut: float,
-#     small_obj_w: int,
-# ) -> np.ndarray:
-#     """
-#     Procedure to infer peroxisome from linearly unmixed input.
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-#     median_sz:
-#         width of median filter for signal
-#     gauss_sig:
-#         sigma for gaussian smoothing of  signal
-#     filament_scale:
-#         scale (log_sigma) for filament filter
-#     filament_cut:
-#         threshold for filament fitered threshold
-#     small_obj_w:
-#         minimu object size cutoff for nuclei post-processing
-#     Returns
-#     -------------
-#     peroxi_object
-#         mask defined extent of peroxisome object
-#     """
-#     er_ch = ER_CH
-#     ###################
-#     # EXTRACT
-#     ###################
-#     er = select_channel_from_raw(in_img, er_ch)
-
-#     ###################
-#     # PRE_PROCESSING
-#     ###################
-#     # er = normalized_edge_preserving_smoothing(er)
-#     struct_img = scale_and_smooth(er, median_sz=median_sz, gauss_sig=gauss_sig)
-
-#     ###################
-#     # CORE_PROCESSING
-#     ###################
-#     # f2_param = [[filament_scale, filament_cut]]
-#     # # f2_param = [[1, 0.15]]  # [scale_1, cutoff_1]
-#     # struct_obj = filament_2d_wrapper(er, f2_param)
-#     struct_obj = filament_filter(struct_img, filament_scale, filament_cut)
-
-#     ###################
-#     # POST_PROCESSING
-#     ###################
-#     struct_obj = size_filter_linear_size(struct_obj, min_size=small_obj_w)
-
-#     return label_bool_as_uint16(struct_obj)
-
 
 ##########################
 #  fixed_infer_ER
@@ -177,8 +145,8 @@ def fixed_infer_ER(in_img: np.ndarray ) -> np.ndarray:
 
     Returns
     -------------
-    peroxi_object
-        mask defined extent of peroxisome object
+    ER_object
+        mask defined extent of ER object
     """
     ER_ch = 5
     median_sz = 3
@@ -217,27 +185,6 @@ def fixed_infer_ER(in_img: np.ndarray ) -> np.ndarray:
         max_hole_w,
         small_obj_w,
         method)
-
-#  def fixed_infer_ER(in_img: np.ndarray) -> np.ndarray:
-#     """
-#     Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-
-#     Returns
-#     -------------
-#     peroxi_object
-#         mask defined extent of peroxisome object
-#     """
-#     median_sz = 3
-#     gauss_sig = 2.0
-#     filament_scale = 1
-#     filament_cut = 0.015
-#     small_obj_w = 2
-#     return infer_ER(in_img, median_sz, gauss_sig, filament_scale, filament_cut, small_obj_w)
 
 
 def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

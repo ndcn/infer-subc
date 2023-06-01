@@ -22,7 +22,7 @@ from infer_subc.core.img import (
 ##########################
 def infer_perox( 
         in_img: np.ndarray,
-        peroxi_ch: int,
+        perox_ch: int,
         median_sz: int,
         gauss_sig: float,
         dot_scale_1: float,
@@ -43,17 +43,35 @@ def infer_perox(
    Parameters
     ------------
     in_img: 
-        a 3d image containing all the channels
+        a 3d image containing all the channels (CZYX)
+    perox_ch:
+        index of the perox channel in the input image
     median_sz: 
         width of median filter for signal
     gauss_sig: 
         sigma for gaussian smoothing of  signal
-    dot_scale: 
-        scales (log_sigma) for dot filter (1,2, and 3)
-    dot_cut: 
-        threshold for dot filter thresholds (1,2,and 3)
+    dot_scale_1: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_1: 
+        threshold for dot filter thresholds associated to dot_scale_1
+    dot_scale_2: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_2: 
+        threshold for dot filter thresholds associated to dot_scale_2
+    dot_scale_3: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_3: 
+        threshold for dot filter thresholds associated to dot_scale_3
+    dot_method:
+        decision to process the dots "slice-by-slice" or in "3D"
+    min_hole_w: 
+        hole filling min for mito post-processing
+    max_hole_w: 
+        hole filling cutoff for mito post-processing
     small_obj_w: 
-        minimu object size cutoff for nuclei post-processing
+        minimum object size cutoff for mito post-processing
+    fill_filter_method:
+        to fill small holes and remove small objects in "3D" or "slice-by-slice"
  
     Returns
     -------------
@@ -64,7 +82,7 @@ def infer_perox(
     ###################
     # EXTRACT
     ###################    
-    peroxi = select_channel_from_raw(in_img, peroxi_ch)
+    peroxi = select_channel_from_raw(in_img, perox_ch)
 
     ###################
     # PRE_PROCESSING
@@ -94,61 +112,6 @@ def infer_perox(
 
     return struct_obj1
 
-# def infer_perox(
-#     in_img: np.ndarray,
-#     median_sz: int,
-#     gauss_sig: float,
-#     dot_scale: float,
-#     dot_cut: float,
-#     small_obj_w: int,
-# ) -> np.ndarray:
-#     """
-#     Procedure to infer peroxisome from linearly unmixed input.
-
-#     Parameters
-#      ------------
-#      in_img:
-#          a 3d image containing all the channels
-#     median_sz:
-#         width of median filter for signal
-#      gauss_sig:
-#          sigma for gaussian smoothing of  signal
-#      dot_scale:
-#          scales (log_sigma) for dot filter (1,2, and 3)
-#      dot_cut:
-#          threshold for dot filter thresholds (1,2,and 3)
-#      small_obj_w:
-#          minimu object size cutoff for nuclei post-processing
-
-#      Returns
-#      -------------
-#      peroxi_object
-#          mask defined extent of peroxisome object
-#     """
-#     peroxi_ch = PEROX_CH
-#     ###################
-#     # EXTRACT
-#     ###################
-#     peroxi = select_channel_from_raw(in_img, peroxi_ch)
-
-#     ###################
-#     # PRE_PROCESSING
-#     ###################
-#     peroxi = scale_and_smooth(peroxi, median_sz=median_sz, gauss_sig=gauss_sig)  # skips for median_sz < 2
-
-#     ###################
-#     # CORE_PROCESSING
-#     ###################
-#     s3_param = [[dot_scale, dot_cut]]
-#     bw = dot_2d_slice_by_slice_wrapper(peroxi, s3_param)
-
-#     ###################
-#     # POST_PROCESSING
-#     ###################
-#     # struct_obj = size_filter_linear_size(bw, min_size=small_obj_w, connectivity=1)
-#     struct_obj = fill_and_filter_linear_size(bw, hole_min=0, hole_max=0, min_size=small_obj_w)
-
-#     return label_uint16(struct_obj)
 
 
 ### CONVENIENCE / TESTING PROCEDURES
@@ -203,34 +166,6 @@ def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
         small_object_width,
         fill_filter_method)
 
-# def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
-#     """
-#       Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
-
-#     Parameters
-#      ------------
-#      in_img: np.ndarray
-#          a 3d image containing all the channels
-
-#      Returns
-#      -------------
-#      peroxi_object
-#          mask defined extent of peroxisome object
-#     """
-#     median_sz = 0
-#     gauss_sig = 3.0
-#     dot_scale = 1.0
-#     dot_cut = 0.01
-#     small_obj_w = 2
-
-#     return infer_perox(
-#         in_img,
-#         median_sz,
-#         gauss_sig,
-#         dot_scale,
-#         dot_cut,
-#         small_obj_w,
-#     )
 
 
 def infer_and_export_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

@@ -47,17 +47,49 @@ def infer_mito(
     Parameters
     ------------
     in_img:
-        a 3d image containing all the channels
+        a 3d image containing all the channels (CZYX)
+    mito_ch:
+        index of mito channel in the input image
     median_sz: 
         width of median filter for signal
     gauss_sig: 
         sigma for gaussian smoothing of  signal
-    vesselness_scale: 
-        scale (log_sigma) for vesselness filter
-    vesselness_cut: 
-        threshold for vesselness fitered threshold
+    dot_scale_1: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_1: 
+        threshold for dot filter thresholds associated to dot_scale_1
+    dot_scale_2: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_2: 
+        threshold for dot filter thresholds associated to dot_scale_2
+    dot_scale_3: 
+        scales (log_sigma) for dot filter 1
+    dot_cutoff_3: 
+        threshold for dot filter thresholds associated to dot_scale_3
+    dot_method:
+        decision to process the dots "slice-by-slice" or in "3D"
+    fil_scale_1: 
+        scale (log_sigma) for filament filter
+    fil_cutoff_1: 
+        threshold for filament fitered threshold, associated to fil_scale_1
+    fil_scale_2: 
+        scale (log_sigma) for filament filter
+    fil_cutoff_2: 
+        threshold for filament fitered threshold, associated to fil_scale_2
+    fil_scale_3: 
+        scale (log_sigma) for filament filter
+    fil_cutoff_3: 
+        threshold for filament fitered threshold, associated to fil_scale_3
+    fil_method:
+        decision to process the filaments "slice-by-slice" or in "3D"
+    min_hole_w: 
+        hole filling min for mito post-processing
+    max_hole_w: 
+        hole filling cutoff for mito post-processing
     small_obj_w: 
-        minimu object size cutoff for nuclei post-processing
+        minimum object size cutoff for mito post-processing
+    fill_filter_method:
+        to fill small holes and remove small objects in "3D" or "slice-by-slice"
 
     Returns
     -------------
@@ -102,59 +134,6 @@ def infer_mito(
 
     return struct_obj1
 
-# def infer_mito(
-#     in_img: np.ndarray,
-#     median_sz: int,
-#     gauss_sig: float,
-#     vesselness_scale: float,
-#     vesselness_cut: float,
-#     small_obj_w: int,
-# ) -> np.ndarray:
-#     """
-#     Procedure to infer mitochondria from linearly unmixed input.
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-#     median_sz:
-#         width of median filter for signal
-#     gauss_sig:
-#         sigma for gaussian smoothing of  signal
-#     vesselness_scale:
-#         scale (log_sigma) for vesselness filter
-#     vesselness_cut:
-#         threshold for vesselness fitered threshold
-#     small_obj_w:
-#         minimu object size cutoff for nuclei post-processing
-
-#     Returns
-#     -------------
-#     mito_object
-#         mask defined extent of mitochondria
-#     """
-#     mito_ch = MITO_CH
-#     ###################
-#     # EXTRACT
-#     ###################
-#     mito = select_channel_from_raw(in_img, MITO_CH)
-
-#     ###################
-#     # PRE_PROCESSING
-#     ###################
-#     struct_img = scale_and_smooth(mito, median_sz=median_sz, gauss_sig=gauss_sig)
-
-#     ###################
-#     # CORE_PROCESSING
-#     ###################
-#     struct_img = vesselness_slice_by_slice(struct_img, sigma=vesselness_scale, cutoff=vesselness_cut, tau=0.75)
-
-#     ###################
-#     # POST_PROCESSING
-#     ###################
-#     struct_obj = size_filter_linear_size(struct_img, min_size=small_obj_w)
-
-#     return label_uint16(struct_obj)
 
 
 ##########################
@@ -220,28 +199,6 @@ def fixed_infer_mito(in_img: np.ndarray ) -> np.ndarray:
         small_obj_w,
         method)
 
-
-# def fixed_infer_mito(in_img: np.ndarray) -> np.ndarray:
-#     """
-#     Procedure to infer mitochondria from linearly unmixed input
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-
-#     Returns
-#     -------------
-#     mito_object
-#         mask defined extent of mitochondria
-#     """
-#     median_sz = 3
-#     gauss_sig = 1.4
-#     vesselness_scale = 1.5
-#     vesselness_cut = 0.05
-#     small_obj_w = 3
-
-#     return infer_mito(in_img, median_sz, gauss_sig, vesselness_scale, vesselness_cut, small_obj_w)
 
 
 def infer_and_export_mito(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

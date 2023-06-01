@@ -32,12 +32,14 @@ def infer_LD(
             fill_filter_method: str
             ) -> np.ndarray:
     """
-    Procedure to infer peroxisome from linearly unmixed input.
+    Procedure to infer LD from linearly unmixed input.
 
     Parameters
     ------------
     in_img: 
-        a 3d image containing all the channels
+        a 3D image containing all the channels (CZYX)
+    LD_ch:
+        index of the LD channel in the input image
     median_sz: 
         width of median filter for signal
     gauss_sig: 
@@ -51,13 +53,15 @@ def infer_LD(
     thresh_max:
         absolute maximum for threshold
     max_hole_w: 
-        hole filling cutoff for lipid post-processing
+        hole filling cutoff for LD post-processing
     small_obj_w: 
-        minimu object size cutoff for lipid post-processing
+        minimu object size cutoff for LD post-processing
+    fill_filter_method:
+        determines if small hole filling and small object removal should be run 'sice-by-slice' or in '3D'
     Returns
     -------------
-    peroxi_object
-        mask defined extent of peroxisome object
+    LD_object
+        mask defined extent of LD object
     """
 
     ###################
@@ -100,77 +104,13 @@ def infer_LD(
 
     return struct_obj1
 
-# def infer_LD(
-#     in_img: np.ndarray,
-#     median_sz: int,
-#     gauss_sig: float,
-#     method: str,
-#     thresh_factor: float,
-#     thresh_min: float,
-#     thresh_max: float,
-#     max_hole_w: int,
-#     small_obj_w: int,
-# ) -> np.ndarray:
-#     """
-#     Procedure to infer peroxisome from linearly unmixed input.
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-#     median_sz:
-#         width of median filter for signal
-#     gauss_sig:
-#         sigma for gaussian smoothing of  signal
-#     method:
-#         method for applying threshold.  "otsu"  or "li", "triangle", "median", "ave", "sauvola","multi_otsu","muiltiotsu"
-#     thresh_factor:
-#         scaling value for threshold
-#     thresh_min:
-#         absolute minumum for threshold
-#     thresh_max:
-#         absolute maximum for threshold
-#     max_hole_w:
-#         hole filling cutoff for lipid post-processing
-#     small_obj_w:
-#         minimu object size cutoff for lipid post-processing
-#     Returns
-#     -------------
-#     peroxi_object
-#         mask defined extent of peroxisome object
-#     """
-#     LD_ch = LD_CH
-#     ###################
-#     # EXTRACT
-#     ###################
-#     lipid = select_channel_from_raw(in_img, LD_ch)
-#     ###################
-#     # PRE_PROCESSING
-#     ###################
-#     lipid = scale_and_smooth(lipid, median_sz=median_sz, gauss_sig=gauss_sig)
-
-#     ###################
-#     # CORE_PROCESSING
-#     ###################
-#     bw = apply_threshold(
-#         lipid, method=method, thresh_factor=thresh_factor, thresh_min=thresh_min, thresh_max=thresh_max
-#     )
-
-#     ###################
-#     # POST_PROCESSING
-#     ###################
-#     # min_hole_w = 0
-#     struct_obj = fill_and_filter_linear_size(bw, hole_min=0, hole_max=max_hole_w, min_size=small_obj_w)
-
-#     return label_uint16(struct_obj)
-
 
 ##########################
 #  fixed_infer_LD
 ##########################
 def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
     """
-    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+    Procedure to infer LD from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
     Parameters
     ------------
@@ -179,8 +119,8 @@ def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
 
     Returns
     -------------
-    LD_body_object
-        mask defined extent of liipid body
+    LD_object
+        mask defined extent of lipid droplets
 
     """
     LD_ch = 6
@@ -209,33 +149,6 @@ def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
         small_obj_w,
         fill_filter_method)
 
-# def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
-#     """
-#     Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
-
-#     Parameters
-#     ------------
-#     in_img:
-#         a 3d image containing all the channels
-
-#     Returns
-#     -------------
-#     LD_body_object
-#         mask defined extent of liipid body
-
-#     """
-#     median_sz = 0
-#     gauss_sig = 2.34
-#     method = "otsu"
-#     threshold_factor = 0.99  # from cellProfiler
-#     thresh_min = 0.5
-#     thresh_max = 1.0
-#     max_hole_w = 2.5
-#     small_obj_w = 4
-
-#     return infer_LD(
-#         in_img, median_sz, gauss_sig, method, threshold_factor, thresh_min, thresh_max, max_hole_w, small_obj_w
-#     )
 
 
 def infer_and_export_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:

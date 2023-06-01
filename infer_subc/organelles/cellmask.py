@@ -122,25 +122,26 @@ def choose_max_label_cellmask_union_nucleus(cellmask_img: np.ndarray,
 # 1. infer_cellmask
 ##########################
 def infer_cellmask_fromcomposite(in_img: np.ndarray,
-                                  weights: list[int],
-                                  nuclei_labels: np.ndarray,
-                                  median_sz: int,
-                                  gauss_sig: float,
-                                  mo_method: str,
-                                  mo_adjust: float,
-                                  mo_cutoff_size: int,
-                                  min_hole_w: int,
-                                  max_hole_w: int,
-                                  small_obj_w: int,
-                                  watershed_method: str
-                                  ) -> np.ndarray:
+                                 weights: list[int],
+                                 nuclei_labels: np.ndarray,
+                                 median_sz: int,
+                                 gauss_sig: float,
+                                 mo_method: str,
+                                 mo_adjust: float,
+                                 mo_cutoff_size: int,
+                                 min_hole_w: int,
+                                 max_hole_w: int,
+                                 small_obj_w: int,
+                                 fill_filter_method: str,
+                                 watershed_method: str
+                                 ) -> np.ndarray:
     """
     Procedure to infer cellmask from linear unmixed input.
 
     Parameters
     ------------
     in_img: 
-        a 3d image containing all the channels
+        a 3d image containing all the channels (CZYX)
     weights:
         a list of int that corresond to the weights for each channel in the composite; use 0 if a channel should not be included in the composite image
     nuclei_labels: 
@@ -157,10 +158,14 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
         Masked Object threshold `local_adjust`
     mo_cutoff_size: 
         Masked Object threshold `size_min`
+    min_hole_w: 
+        minimum size for hole filling for cellmask signal post-processing
     max_hole_w: 
         hole filling cutoff for cellmask signal post-processing
     small_obj_w: 
-        minimu object size cutoff for cellmask signal post-processing
+        minimum object size cutoff for cellmask signal post-processing
+    fill_filter_method:
+        determines if small hole filling and small object removal should be run 'sice-by-slice' or in '3D'
     watershed_method:
         determines if the watershed should be run 'sice-by-slice' or in '3D' 
 
@@ -199,7 +204,8 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
     struct_obj = fill_and_filter_linear_size(struct_obj, 
                                              hole_min=min_hole_w, 
                                              hole_max=max_hole_w, 
-                                             min_size= small_obj_w)
+                                             min_size= small_obj_w,
+                                             method=fill_filter_method)
 
     ###################
     # POST- POST_PROCESSING
@@ -242,6 +248,7 @@ def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.nda
     hole_min_width = 0
     hole_max_width = 50
     small_obj_w = 45
+    fill_filter_method = '3D'
     watershed_method = '3D'
 
     cellmask_out = infer_cellmask_fromcomposite(in_img,
@@ -255,6 +262,7 @@ def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.nda
                                                 hole_min_width,
                                                 hole_max_width,
                                                 small_obj_w,
+                                                fill_filter_method,
                                                 watershed_method) 
     
     return cellmask_out.astype(np.uint8)

@@ -224,13 +224,13 @@ def masked_object_thresh(
     ------------
     structure_img_smooth:
         a 3d image
-    th_method:
+    global_method:
          which method to use for calculating global threshold. Options include:
          "triangle", "median", and "ave_tri_med".
          "ave_tri_med" refers the average of "triangle" threshold and "mean" threshold.
     cutoff_size:
         Masked Object threshold `size_min`
-    th_adjust:
+    local_adjust:
         Masked Object threshold `local_adjust`
 
     Returns
@@ -616,9 +616,9 @@ def scale_and_smooth(
     ------------
     img_in: np.ndarray
         a 3d image
-    median_sz: int
+    median_size: int
         width of median filter for signal
-    gauss_sig: float
+    gauss_sigma: float
         sigma for gaussian smoothing of  signal
     slice_by_slice:
         NOT IMPLIMENTED.  toggles whether to do 3D operations or slice by slice in Z
@@ -1105,17 +1105,17 @@ def dot_filter_3(
     ------------
     in_img:
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    spot_scale_1:
+    dot_scale_1:
         scale or size of the "filter" float
-    spot_cutoff_1:
+    dot_cutoff_1:
         cutoff for thresholding float
-    spot_scale_2:
+    dot_scale_2:
         scale or size of the "filter" float
-    spot_cutoff_2:
+    dot_cutoff_2:
         cutoff for thresholding float
-    spot_scale_3:
+    dot_scale_3:
         scale or size of the "filter" float
-    spot_cut_3:
+    dot_cut_3:
         cutoff for thresholding float
     method:
         either "3D" or "slice_by_slice", default is "slice_by_slice"

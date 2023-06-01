@@ -32,7 +32,8 @@ def infer_nuclei_fromlabel(in_img: np.ndarray,
                            thresh_max: float,
                            min_hole_width: int,
                            max_hole_width: int,
-                           small_obj_width: int
+                           small_obj_width: int,
+                           fill_filter_method: str
                            ) -> np.ndarray:
     """
     Procedure to infer nuclei from linearly unmixed input.
@@ -40,7 +41,9 @@ def infer_nuclei_fromlabel(in_img: np.ndarray,
     Parameters
     ------------
     in_img: np.ndarray
-        a 3d image containing all the channels
+        a 3d image containing all the channels (CZYX)
+    nuc_ch:
+        index of the nuc channel in the input image
     median_size: int
         width of median filter for signal
     gauss_sigma: float
@@ -51,10 +54,14 @@ def infer_nuclei_fromlabel(in_img: np.ndarray,
         abs min threhold for log Li threholding
     thresh_max: float
         abs max threhold for log Li threholding
-    max_hole_width: int
-        hole filling cutoff for nuclei post-processing
-    small_obj_width: int
-        minimu object size cutoff for nuclei post-processing
+    min_hole_w: 
+        minimum size for hole filling for cellmask signal post-processing
+    max_hole_w: 
+        hole filling cutoff for nuclei signal post-processing
+    small_obj_w: 
+        minimum object size cutoff for nuclei signal post-processing
+    fill_filter_method:
+        determines if small hole filling and small object removal should be run 'sice-by-slice' or in '3D'
 
     Returns
     -------------
@@ -88,7 +95,8 @@ def infer_nuclei_fromlabel(in_img: np.ndarray,
     nuclei_object = fill_and_filter_linear_size(nuclei_object, 
                                                 hole_min=min_hole_width, 
                                                 hole_max=max_hole_width, 
-                                                min_size=small_obj_width)
+                                                min_size=small_obj_width,
+                                                method=fill_filter_method)
 
     nuclei_labels = label_uint16(nuclei_object)
  
@@ -122,6 +130,7 @@ def fixed_infer_nuclei_fromlabel(in_img: np.ndarray) -> np.ndarray:
     min_hole_width = 0
     max_hole_width = 25
     small_obj_width = 15
+    fill_filter_method = '3D'
 
     return infer_nuclei_fromlabel( in_img,
                                     nuc_ch,
@@ -132,7 +141,8 @@ def fixed_infer_nuclei_fromlabel(in_img: np.ndarray) -> np.ndarray:
                                     thresh_max,
                                     min_hole_width,
                                     max_hole_width,
-                                    small_obj_width)
+                                    small_obj_width,
+                                    fill_filter_method)
 
 
 
