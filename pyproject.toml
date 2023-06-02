@@ -2,6 +2,12 @@
 requires = ["setuptools", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+# ...
+# By default, include-package-data is true in pyproject.toml, so you do
+# NOT have to specify this line.
+include-package-data = true
+
 [tool.setuptools_scm]
 write_to = "infer_subc/_version.py"
 version_scheme = "post-release"
