@@ -3,6 +3,8 @@ from typing import Union, Dict
 from pathlib import Path
 import time
 
+from skimage.morphology import binary_dilation, binary_erosion 
+
 from infer_subc.core.file_io import (
     export_inferred_organelle,
     import_inferred_organelle,
@@ -142,6 +144,101 @@ def fixed_infer_nuclei_fromlabel(in_img: np.ndarray) -> np.ndarray:
                                     min_hole_width,
                                     max_hole_width,
                                     small_obj_width,
+                                    fill_filter_method)
+
+
+##########################
+#  infer_nuclei_fromcytoplasm
+##########################
+def infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray, 
+                                nuc_min_hole_w: int,
+                                nuc_max_hole_w: int,
+                                nuc_fill_method: str,
+                                small_obj_w: int,
+                                fill_filter_method: str
+                                ) -> np.ndarray:
+    """
+    Procedure to infer nuclei from linear unmixed input.
+
+    Parameters
+    ------------
+    cytoplasm_mask: np.ndarray
+        a 3d image of the cytoplasm segmentation
+    max_hole_w: int
+        hole filling cutoff to fill the nuclei
+    small_obj_w: int
+        object size cutoff to remove artifacts from dilation/erosion steps
+    fill_filter_method: str
+        to filter artifacts in "3D" or "slice-by-slice"
+
+    Returns
+    -------------
+    nuclei_object
+        mask defined extent of NU
+    
+    """
+
+    ###################
+    # PRE_PROCESSING
+    ###################                
+    cytoplasm_dilated = binary_dilation(cytoplasm_mask)
+
+    cytoplasm_filled = fill_and_filter_linear_size(cytoplasm_dilated, 
+                                                   hole_min=nuc_min_hole_w, 
+                                                   hole_max=nuc_max_hole_w, 
+                                                   min_size=0, 
+                                                   method=nuc_fill_method)
+
+    cytoplasm_eroded = binary_erosion(cytoplasm_filled)
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    nuclei_xor = np.logical_xor(cytoplasm_mask, cytoplasm_eroded)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    nuclei_object = fill_and_filter_linear_size(nuclei_xor, 
+                                                hole_min=0, 
+                                                hole_max=0, 
+                                                min_size=small_obj_w,
+                                                method=fill_filter_method)
+
+    nuclei_labels = label_uint16(nuclei_object)
+
+    return nuclei_labels
+
+
+##########################
+#  fixed_infer_nuclei_fromcytoplasm
+##########################
+def fixed_infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing cytoplasm segmentation
+ 
+    Returns
+    -------------
+    nuclei_object
+        inferred nuclei
+    
+    """
+    nuc_min_hole_w = 0
+    nuc_max_hole_w = 500
+    nuc_fill_method = "3D"
+    small_obj_w = 20
+    fill_filter_method = "3D"
+
+    return infer_nuclei_fromcytoplasm(cytoplasm_mask,
+                                    nuc_min_hole_w,
+                                    nuc_max_hole_w,
+                                    nuc_fill_method,
+                                    small_obj_w,
                                     fill_filter_method)
 
 
