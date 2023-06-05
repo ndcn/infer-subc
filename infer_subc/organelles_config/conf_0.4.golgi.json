@@ -12,8 +12,8 @@
         "category": "preprocessing",
         "function": "scale_and_smooth",
         "parameter_values": {
-            "median_sz": 4,
-            "gauss_sig": 1.4
+            "median_size": 4,
+            "gauss_sigma": 1.4
         },
         "parent": 1,
         "annotation": "basic golgi segmentation: 2"
@@ -22,9 +22,9 @@
         "category": "core",
         "function": "masked_object_thresh",
         "parameter_values": {
-            "th_method": "triangle",
+            "global_method": "triangle",
             "cutoff_size": 1200,
-            "th_adjust": 0.5
+            "local_adjust": 1
         },
         "parent": 2,
         "annotation": "basic golgi - mo: 3"
@@ -41,14 +41,15 @@
     },
     "5": {
         "category": "core",
-        "function": "spot_filter_3",
+        "function": "dot_filter_3",
         "parameter_values": {
             "dot_scale_1": 1.6,
-            "dot_cut_1": 0.02,
+            "dot_cutoff_1": 0.02,
             "dot_scale_2": 0,
-            "dot_cut_2": 0.1,
+            "dot_cutoff_2": 0,
             "dot_scale_3": 0,
-            "dot_cut_3": 0.1
+            "dot_cutoff_3": 0,
+            "method": "3D"
         },
         "parent": 2,
         "annotation": "basic golgi - spot filter: 5"
@@ -67,15 +68,15 @@
         "function": "fill_and_filter_linear_size",
         "parameter_values": {
             "hole_min": 0,
-            "hole_max": 25,
-            "min_size": 11,
-            "method": "slice_by_slice"
+            "hole_max": 0,
+            "min_size": 3,
+            "method": "3D"
         },
         "parent": 6,
         "annotation": "basic mito - fill/filter: 7"
     },
     "8": {
-        "category": "postprocessing",
+        "category": "postpostprocessing",
         "function": "label_uint16",
         "parent": 7,
         "annotation": "label to uint16 for export 8"

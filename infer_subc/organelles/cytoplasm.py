@@ -5,7 +5,7 @@ import time
 
 from skimage.morphology import binary_erosion
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc.core.img import apply_mask
+from infer_subc.core.img import apply_mask, label_bool_as_uint16
 
 
 ##########################
@@ -37,7 +37,7 @@ def infer_cytoplasm(nuclei_object: np.ndarray, cellmask: np.ndarray, erode_nucle
     else:
         cytoplasm_mask = np.logical_xor(cellmask, nucleus_obj)
 
-    return cytoplasm_mask
+    return label_bool_as_uint16(cytoplasm_mask)
 
 
 def infer_and_export_cytoplasm(

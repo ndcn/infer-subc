@@ -8,12 +8,12 @@ from aicssegmentation.core.utils import size_filter, hole_filling
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
 
-from aicssegmentation.core.vessel import filament_2d_wrapper
+from aicssegmentation.core.vessel import filament_2d_wrapper, filament_3d_wrapper
 from aicssegmentation.core.pre_processing_utils import (
     image_smoothing_gaussian_slice_by_slice,
     # edge_preserving_smoothing_3d,
 )
-from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
+from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper, dot_3d_wrapper
 
 from typing import Tuple, List, Union, Any
 
@@ -215,7 +215,7 @@ def threshold_multiotsu_log(image_in):
 
 
 def masked_object_thresh(
-    structure_img_smooth: np.ndarray, th_method: str, cutoff_size: int, th_adjust: float
+    structure_img_smooth: np.ndarray, global_method: str, cutoff_size: int, local_adjust: float
 ) -> np.ndarray:
     """
     wrapper for applying Masked Object Thresholding with just two parameters via `MO` from `aicssegmentation`
@@ -224,13 +224,13 @@ def masked_object_thresh(
     ------------
     structure_img_smooth:
         a 3d image
-    th_method:
+    global_method:
          which method to use for calculating global threshold. Options include:
          "triangle", "median", and "ave_tri_med".
          "ave_tri_med" refers the average of "triangle" threshold and "mean" threshold.
     cutoff_size:
         Masked Object threshold `size_min`
-    th_adjust:
+    local_adjust:
         Masked Object threshold `local_adjust`
 
     Returns
@@ -241,9 +241,9 @@ def masked_object_thresh(
     struct_obj = MO(
         structure_img_smooth,
         object_minArea=cutoff_size,
-        global_thresh_method=th_method,
+        global_thresh_method=global_method,
         extra_criteria=True,
-        local_adjust=th_adjust,
+        local_adjust=local_adjust,
         return_object=False,
         dilate=False,  # WARNING: dilate=True causes a bug if there is only one Z
     )
@@ -406,17 +406,17 @@ def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
 
 def make_aggregate(
     img_in: np.ndarray,
-    w0: int = 0,
-    w1: int = 0,
-    w2: int = 0,
-    w3: int = 0,
-    w4: int = 0,
-    w5: int = 0,
-    w6: int = 0,
-    w7: int = 0,
-    w8: int = 0,
-    w9: int = 0,
-    scale_min_max: bool = True,
+    weight_ch0: int = 0,
+    weight_ch1: int = 0,
+    weight_ch2: int = 0,
+    weight_ch3: int = 0,
+    weight_ch4: int = 0,
+    weight_ch5: int = 0,
+    weight_ch6: int = 0,
+    weight_ch7: int = 0,
+    weight_ch8: int = 0,
+    weight_ch9: int = 0,
+    rescale: bool = True,
 ) -> np.ndarray:
     """define multi_channel aggregate.  weighted sum wrapper (plugin)
 
@@ -424,7 +424,7 @@ def make_aggregate(
     ------------
     w0,w1,w2,w3,w4,w5,w6,w7,w8,w9
         channel weights
-    scale_min_max:
+    rescale:
         scale to [0,1] if True. default True
 
     Returns
@@ -432,8 +432,9 @@ def make_aggregate(
         np.ndarray scaled aggregate
 
     """
-    weights = (w0, w1, w2, w3, w4, w5, w6, w7, w8, w9)
-    if scale_min_max:
+    weights = (weight_ch0, weight_ch1, weight_ch2, weight_ch3, weight_ch4,
+               weight_ch5, weight_ch6, weight_ch7, weight_ch8, weight_ch9)
+    if rescale:
         # TODO: might NOT overflow here... maybe NOT do the normaization first?
         return min_max_intensity_normalization(weighted_aggregate(min_max_intensity_normalization(img_in), *weights))
     else:
@@ -607,7 +608,7 @@ def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np
 
 
 def scale_and_smooth(
-    img_in: np.ndarray, median_sz: int = 1, gauss_sig: float = 1.34, slice_by_slice: bool = True
+    img_in: np.ndarray, median_size: int = 1, gauss_sigma: float = 1.34, slice_by_slice: bool = True
 ) -> np.ndarray:
     """
     helper to perform min-max scaling, and median+gaussian smoothign all at once
@@ -615,9 +616,9 @@ def scale_and_smooth(
     ------------
     img_in: np.ndarray
         a 3d image
-    median_sz: int
+    median_size: int
         width of median filter for signal
-    gauss_sig: float
+    gauss_sigma: float
         sigma for gaussian smoothing of  signal
     slice_by_slice:
         NOT IMPLIMENTED.  toggles whether to do 3D operations or slice by slice in Z
@@ -632,9 +633,9 @@ def scale_and_smooth(
     # TODO:  make non-slice-by-slice work
     slice_by_slice = True
     if slice_by_slice:
-        if median_sz > 1:
-            img = median_filter_slice_by_slice(img, size=median_sz)
-        img = image_smoothing_gaussian_slice_by_slice(img, sigma=gauss_sig)
+        if median_size > 1:
+            img = median_filter_slice_by_slice(img, size=median_size)
+        img = image_smoothing_gaussian_slice_by_slice(img, sigma=gauss_sigma)
     else:
         print(" PLEASE CHOOOSE 'slice-by-slice', 3D is not yet implimented")
 
@@ -699,22 +700,41 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
     return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
 
-def masked_inverted_watershed(img_in, markers, mask):
+def masked_inverted_watershed(img_in: np.ndarray, 
+                                     markers: np.ndarray, 
+                                     mask: np.ndarray, 
+                                     method: str='slice-by-slice'):
     """wrapper for watershed on inverted image and masked
 
     Parameters
     ------------
     in_img:
-        a 3d image containing all the channels
+        a 3d image
+    markers: 
+        objects used to seed the watershed
+    mask:
+        instance segmentation of the in_img
+    method:
+        'slice-by-slice' results in a connectivity of np.ones((1,3,3), bool); '3D' results in a connectivity of np.ones((3,3,3), bool)
 
     """
-    labels_out = watershed(
+    if method == 'slice-by-slice':    
+        labels_out = watershed(
+            1.0 - img_in,
+            markers=markers,
+            connectivity=np.ones((1, 3, 3), bool),
+            mask=mask)
+    elif method == '3D':
+        labels_out = watershed(
         1.0 - img_in,
         markers=markers,
-        connectivity=np.ones((1, 3, 3), bool),
-        mask=mask,
-    )
+        connectivity=np.ones((3, 3, 3), bool),
+        mask=mask)
+    else:
+        print(f"incompatable method: {method}")
+
     return labels_out
+
 
 
 def choose_max_label(
@@ -955,6 +975,56 @@ def enhance_neurites(image: np.ndarray, radius: int, volumetric: bool = False) -
     return result
 
 
+def filament_filter_3(in_img: np.ndarray, 
+                       filament_scale_1: float, 
+                       filament_cutoff_1: float,
+                       filament_scale_2: float, 
+                       filament_cutoff_2: float,
+                       filament_scale_3: float, 
+                       filament_cutoff_3: float,
+                       method: str
+                       ) -> np.ndarray:
+    """filament filter helper function for 3 levels (scale+cut). filter pairs are run if scale is > 0.
+
+    Parameters
+    ------------
+    in_img:
+        the image to filter on np.ndarray
+    filament_scale_1:
+        scale or size of the "filter" float
+    filament_cutoff_1:
+        cutoff for thresholding float
+    filament_scale_2:
+        scale or size of the "filter" float
+    filament_cutoff_2:
+        cutoff for thresholding float
+    filament_scale_3:
+        scale or size of the "filter" float
+    filament_cutoff_3:
+        cutoff for thresholding float
+    method:
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
+
+    Returns
+    -----------
+    result:
+        filtered boolean np.ndarray
+
+    """
+    scales = [filament_scale_1, filament_scale_2, filament_scale_3]
+    cuts = [filament_cutoff_1, filament_cutoff_2, filament_cutoff_3]
+    f_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0]
+
+    if method == "3D":
+        seg = filament_3d_wrapper(in_img, f_param)
+    elif method == "slice_by_slice":
+        seg = filament_2d_wrapper(in_img, f_param)
+    else:
+        print(f"undefined method: {method}")
+
+    return seg
+
+
 def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: float) -> np.ndarray:
     """filament wrapper to properly pack parameters into filament_2d_wrapper
 
@@ -978,16 +1048,58 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
     return filament_2d_wrapper(in_img, f2_param)
 
 
-def spot_filter_3(
+# def dot_filter_3(
+#     in_img: np.ndarray,
+#     dot_scale_1: float,
+#     dot_cut_1: float,
+#     dot_scale_2: float,
+#     dot_cut_2: float,
+#     dot_scale_3: float,
+#     dot_cut_3: float,
+# ) -> np.ndarray:
+#     """spot filter helper function for 3 levels (scale+cut).  if scale_i is > 0.0001 its skipped
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     dot_scale_1:
+#         scale or size of the "filter" float
+#     dot_cut_1:
+#         cutoff for thresholding float
+#     dot_scale_2:
+#         scale or size of the "filter" float
+#     dot_cut_2:
+#         cutoff for thresholding float
+#     dot_scale_3:
+#         scale or size of the "filter" float
+#     dot_cut_3:
+#         cutoff for thresholding float
+
+#     Returns
+#     -------------
+#     segmented dots over 3 scales
+
+#     """
+#     scales = [dot_scale_1, dot_scale_2, dot_scale_3]
+#     cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
+
+#     s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0.0001]
+#     # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
+#     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
+
+
+def dot_filter_3(
     in_img: np.ndarray,
     dot_scale_1: float,
-    dot_cut_1: float,
+    dot_cutoff_1: float,
     dot_scale_2: float,
-    dot_cut_2: float,
+    dot_cutoff_2: float,
     dot_scale_3: float,
-    dot_cut_3: float,
+    dot_cutoff_3: float,
+    method: str = "slice_by_slice"
 ) -> np.ndarray:
-    """spot filter helper function for 3 levels (scale+cut).  if scale_i is > 0.0001 its skipped
+    """spot filter helper function for 3 levels (scale+cut). filter pairs are run if scale is > 0.
 
     Parameters
     ------------
@@ -995,16 +1107,18 @@ def spot_filter_3(
         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
     dot_scale_1:
         scale or size of the "filter" float
-    dot_cut_1:
+    dot_cutoff_1:
         cutoff for thresholding float
     dot_scale_2:
         scale or size of the "filter" float
-    dot_cut_2:
+    dot_cutoff_2:
         cutoff for thresholding float
     dot_scale_3:
         scale or size of the "filter" float
     dot_cut_3:
         cutoff for thresholding float
+    method:
+        either "3D" or "slice_by_slice", default is "slice_by_slice"
 
     Returns
     -------------
@@ -1012,12 +1126,17 @@ def spot_filter_3(
 
     """
     scales = [dot_scale_1, dot_scale_2, dot_scale_3]
-    cuts = [dot_cut_1, dot_cut_2, dot_cut_3]
+    cuts = [dot_cutoff_1, dot_cutoff_2, dot_cutoff_3]
+    s_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0]
 
-    s2_param = [[sc, ct] for sc, ct in zip(scales, cuts) if sc > 0.0001]
-    # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
-    return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
+    if method == "3D":
+        seg = dot_3d_wrapper(in_img, s_param)
+    elif method == "slice_by_slice":
+        seg = dot_2d_slice_by_slice_wrapper(in_img, s_param)
+    else:
+        print(f"undefined method: {method}")
 
+    return seg
 
 # centrosome routines
 

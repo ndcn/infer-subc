@@ -161,7 +161,7 @@
             }
         }
     },
-    "spot_filter_3D": {
+    "dot_filter_3D": {
         "name": "Spot Filter 3D",
         "python::module": "aicssegmentation.core.seg_dot",
         "python::function": "dot_3d",
@@ -280,7 +280,7 @@
         "parameters": null
     },
     "topology_preserving_thinning": {
-        "name": "Topology Preserving Thinning",
+        "name": "Thin segmentation (Topology preserving)",
         "python::module": "aicssegmentation.core.utils",
         "python::function": "topology_preserving_thinning",
         "parameters": {
@@ -694,7 +694,7 @@
         "parameters": null
     },
     "logical_or": {
-        "name": "logical or",
+        "name": "Combine segmentations (logical or)",
         "python::module": "numpy",
         "python::function": "logical_or",
         "parameters": null
@@ -706,7 +706,7 @@
         "parameters": null
     },
     "infer_nuclei_fromlabel": {
-        "name": "infer nuclei",
+        "name": "Segment nuclei (from label)",
         "python::module": "infer_subc.organelles.nuclei",
         "python::function": "infer_nuclei_fromlabel",
         "parameters": {
@@ -717,14 +717,14 @@
                 "max": 10,
                 "increment": 1
             },
-            "median_sz": {
+            "median_size": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 1,
                 "max": 15,
                 "increment": 1
             },
-            "gauss_sig": {
+            "gauss_sigma": {
                 "data_type": "float",
                 "increment": 0.25,
                 "max": 15.0,
@@ -752,14 +752,21 @@
                 "min": 0.1,
                 "widget_type": "slider"
             },
-            "max_hole_w": {
+            "min_hole_width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "max_hole_width": {
                 "data_type": "int",
                 "increment": 1,
                 "max": 40,
                 "min": 4,
                 "widget_type": "slider"
             },
-            "small_obj_w": {
+            "small_obj_width": {
                 "data_type": "int",
                 "increment": 1,
                 "max": 50,
@@ -817,7 +824,7 @@
         "parameters": null
     },
     "select_channel_from_raw": {
-        "name": "select a channel ",
+        "name": "Select a channel for segmentation",
         "python::module": "infer_subc.core.img",
         "python::function": "select_channel_from_raw",
         "parameters": {
@@ -838,28 +845,28 @@
         }
     },
     "scale_and_smooth": {
-        "name": "scale and smooth",
+        "name": "Rescale and smooth image",
         "python::module": "infer_subc.core.img",
         "python::function": "scale_and_smooth",
         "parameters": {
-            "median_sz": {
+            "median_size": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 1,
+                "min": 0,
                 "max": 15,
                 "increment": 1
             },
-            "gauss_sig": {
+            "gauss_sigma": {
                 "data_type": "float",
                 "increment": 0.25,
                 "max": 15.0,
-                "min": 1.25,
+                "min": 0,
                 "widget_type": "slider"
             }
         }
     },
     "fill_and_filter_linear_size": {
-        "name": "fill holes and filter small objects - linear space constant",
+        "name": "Remove small holes and objects",
         "python::module": "infer_subc.core.img",
         "python::function": "fill_and_filter_linear_size",
         "parameters": {
@@ -1017,11 +1024,11 @@
         "parameters": null
     },
     "masked_object_thresh": {
-        "name": "Masked Object Threshold wrapper for widgets",
+        "name": "Global + local threshold (AICSSeg - MO)",
         "python::module": "infer_subc.core.img",
         "python::function": "masked_object_thresh",
         "parameters": {
-            "th_method": {
+            "global_method": {
                 "data_type": "str",
                 "widget_type": "drop-down",
                 "options": [
@@ -1037,7 +1044,7 @@
                 "max": 2000,
                 "increment": 50
             },
-            "th_adjust": {
+            "local_adjust": {
                 "data_type": "float",
                 "widget_type": "slider",
                 "min": 0,
@@ -1047,7 +1054,7 @@
         }
     },
     "infer_cytoplasm": {
-        "name": "infer infer_cytoplasm",
+        "name": "Segment cytoplasm",
         "python::module": "infer_subc.organelles.cytoplasm",
         "python::function": "infer_cytoplasm",
         "parameters": {
@@ -1161,103 +1168,111 @@
             }
         }
     },
-    "non_linear_cellmask_transform_MCZ": {
-        "name": "non-linear distortion to fill out cellmask",
+    "non_linear_cellmask_transform": {
+        "name": "Log transform + Scharr edge detection",
         "python::module": "infer_subc.organelles.cellmask",
-        "python::function": "non_linear_cellmask_transform_MCZ",
+        "python::function": "non_linear_cellmask_transform",
         "parameters": null
     },
     "choose_max_label_cellmask_union_nucleus": {
-        "name": "get cellmask + nuclei for largest signal label",
+        "name": "Select one cellmask/nuclei based on signal",
         "python::module": "infer_subc.organelles.cellmask",
         "python::function": "choose_max_label_cellmask_union_nucleus",
         "parameters": {
-            "interior_labels": {
+            "interior_labels_only": {
                 "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
                     true,
                     false
                 ]
+            }, 
+            "watershed_method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice-by-slice"
+                ]
             }
         }
     },
     "make_aggregate": {
-        "name": "weighted sum wrapper (plugin)",
+        "name": "Create composite image",
         "python::module": "infer_subc.core.img",
         "python::function": "make_aggregate",
         "parameters": {
-            "w0": {
+            "weight_ch0": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w1": {
+            "weight_ch1": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w2": {
+            "weight_ch2": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w3": {
+            "weight_ch3": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w4": {
+            "weight_ch4": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w5": {
+            "weight_ch5": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w6": {
+            "weight_ch6": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w7": {
+            "weight_ch7": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w8": {
+            "weight_ch8": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "w9": {
+            "weight_ch9": {
                 "widget_type": "slider",
                 "data_type": "int",
                 "min": 0,
                 "max": 10,
                 "increment": 1
             },
-            "scale_min_max": {
+            "rescale": {
                 "widget_type": "drop-down",
                 "data_type": "bool",
                 "options": [
@@ -1653,7 +1668,7 @@
         }
     },
     "apply_threshold": {
-        "name": "Apply Threshold",
+        "name": "Apply basic threshold",
         "python::module": "infer_subc.core.img",
         "python::function": "apply_threshold",
         "parameters": {
@@ -1691,10 +1706,10 @@
             }
         }
     },
-    "spot_filter_3": {
-        "name": "spot filter thresholding (3 scales)",
+    "dot_filter_3": {
+        "name": "'Dot' thresholding method (AICSSeg)",
         "python::module": "infer_subc.core.img",
-        "python::function": "spot_filter_3",
+        "python::function": "dot_filter_3",
         "parameters": {
             "dot_scale_1": {
                 "data_type": "float",
@@ -1703,7 +1718,7 @@
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_1": {
+            "dot_cutoff_1": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
@@ -1717,7 +1732,7 @@
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_2": {
+            "dot_cutoff_2": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
@@ -1731,12 +1746,20 @@
                 "min": 0,
                 "widget_type": "slider"
             },
-            "dot_cut_3": {
+            "dot_cutoff_3": {
                 "data_type": "float",
                 "increment": 0.001,
                 "max": 0.5,
                 "min": 0,
                 "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
             }
         }
     },
@@ -1753,7 +1776,7 @@
         "parameters": null
     },
     "label_uint16": {
-        "name": "label objects to uint16",
+        "name": "Label objects",
         "python::module": "infer_subc.core.img",
         "python::function": "label_uint16",
         "parameters": null
@@ -1765,9 +1788,66 @@
         "parameters": null
     },
     "label_bool_as_uint16": {
-        "name": "label single bool object as uint16",
+        "name": "Create one object (as uint16)",
         "python::module": "infer_subc.core.img",
         "python::function": "label_bool_as_uint16",
         "parameters": null
+    },
+    "filament_filter_3": {
+        "name": "'Filament' thresholding method (AICSSeg)",
+        "python::module": "infer_subc.core.img",
+        "python::function": "filament_filter_3",
+        "parameters": {
+            "filament_scale_1": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_1": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 2,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_scale_2": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_2": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_scale_3": {
+                "data_type": "float",
+                "increment": 0.05,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "filament_cutoff_3": {
+                "data_type": "float",
+                "increment": 0.001,
+                "max": 0.5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ],
+                "widget_type": "drop-down"
+            }
+        }
     }
 }
