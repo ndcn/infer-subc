@@ -720,7 +720,7 @@
             "median_size": {
                 "widget_type": "slider",
                 "data_type": "int",
-                "min": 1,
+                "min": 0,
                 "max": 15,
                 "increment": 1
             },
@@ -728,7 +728,7 @@
                 "data_type": "float",
                 "increment": 0.25,
                 "max": 15.0,
-                "min": 1.25,
+                "min": 0,
                 "widget_type": "slider"
             },
             "thresh_factor": {
@@ -772,6 +772,12 @@
                 "max": 50,
                 "min": 1,
                 "widget_type": "slider"
+            },
+            "fill_filter_method": {
+                "data_type": "str",
+                "options": ["slice-by-slice", 
+                            "3D"],
+                "widget_type": "drop-down"
             }
         }
     },

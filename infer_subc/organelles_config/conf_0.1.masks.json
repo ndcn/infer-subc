@@ -11,7 +11,8 @@
             "thresh_max": 1.0,
             "min_hole_width": 0.0,
             "max_hole_width": 25,
-            "small_obj_width": 15
+            "small_obj_width": 15,
+            "fill_filter_method": "3D"
         },
         "parent": 0,
         "annotation": "get  nuclei segmentation: 1"
