@@ -1855,5 +1855,77 @@
                 "widget_type": "drop-down"
             }
         }
+    },
+    "infer_nuclei_fromcytoplasm": {
+        "name": "Create nucleus mask from cytoplasm mask",
+        "python::module": "infer_subc.organelles.nuclei",
+        "python::function": "infer_nuclei_fromcytoplasm",
+        "parameters": {
+            "nuc_min_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            },
+            "nuc_max_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 1000,
+                "increment": 1
+            },
+            "fill_filter_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            },
+            "small_obj_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 80,
+                "increment": 1
+            }
+        }
+    },
+    "infer_cellmask_fromcytoplasm": {
+        "name": "Create cellmask from cytoplasm and nuclei masks",
+        "python::module": "infer_subc.organelles.cellmask",
+        "python::function": "infer_cellmask_fromcytoplasm",
+        "parameters": {
+            "min_hole_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 20,
+                "increment": 1
+            },
+            "max_hole_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 80,
+                "increment": 1
+            },
+            "small_obj_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 80,
+                "increment": 1
+            },
+            "fill_filter_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            }
+        }
     }
 }

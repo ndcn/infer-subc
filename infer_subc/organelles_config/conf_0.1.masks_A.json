@@ -1,0 +1,94 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "weight_ch0": 0,
+            "weight_ch1": 4,
+            "weight_ch2": 1,
+            "weight_ch3": 1,
+            "weight_ch4": 2,
+            "weight_ch5": 2,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0,
+            "rescale": true
+        },
+        "parent": 0,
+        "annotation": " this creates an aggregate signal for the cellmask"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "median_size": 0,
+            "gauss_sigma": 0
+        },
+        "parent": 1,
+        "annotation": "basic nuclei segmentation: 3"
+    },
+    "3": {
+        "category": "preprocessing",
+        "function": "non_linear_cellmask_transform",
+        "parent": 2,
+        "annotation": "basic nuclei segmentation: 4"
+    },
+    "4": {
+        "category": "core",
+        "function": "masked_object_thresh",
+        "parameter_values": {
+            "global_method": "ave_tri_med",
+            "cutoff_size": 50,
+            "local_adjust": 0.2
+        },
+        "parent": 3,
+        "annotation": "basic nuclei segmentation: 5"
+    },
+    "5": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 30,
+            "min_size": 10,
+            "method": "3D"
+        },
+        "parent": 4,
+        "annotation": "basic nuclei segmentation: 6"
+    },
+    "6": {
+        "category": "postpostprocessing",
+        "function": "infer_nuclei_fromcytoplasm",
+        "parameter_values": {
+            "nuc_min_width": 0,
+            "nuc_max_width": 500,
+            "fill_filter_method": "3D",
+            "small_obj_width": 20
+        },
+        "parent": 5,
+        "annotation": "nuclei segmentation from cytoplasm mask: 6"
+    },
+    "7": {
+        "category": "postpostprocessing",
+        "function": "infer_cellmask_fromcytoplasm",
+        "parameter_values": {
+            "min_hole_width": 0,
+            "max_hole_width": 30,
+            "small_obj_width": 0,
+            "fill_filter_method": "3D"
+        },
+        "parent": [5,6],
+        "annotation": "cell mask segmentation from cytoplasm: 7"
+    },
+    "8": {
+        "category": "export",
+        "function": "stack_masks",
+        "parent": [
+            5,
+            7,
+            6
+        ],
+        "annotation": "export  canonical masks (nuc,cellmask, cyto) 9"
+    }
+}

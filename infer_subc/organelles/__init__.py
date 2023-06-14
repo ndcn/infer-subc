@@ -18,7 +18,7 @@ from .cellmask import (
 )
 
 # from .cellmask import infer_cellmask, fixed_infer_cellmask
-from .cytoplasm import infer_cytoplasm, infer_and_export_cytoplasm, get_cytoplasm
+from .cytoplasm import infer_cytoplasm, infer_and_export_cytoplasm, get_cytoplasm, infer_cytoplasm_fromcomposite, fixed_infer_cytoplasm_fromcomposite
 from .lysosome import (
     infer_lyso,
     fixed_infer_lyso,

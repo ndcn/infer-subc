@@ -268,6 +268,97 @@ def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.nda
     return cellmask_out.astype(np.uint8)
 
 
+##########################
+#  infer_cellmask_fromcytoplasm
+##########################
+def infer_cellmask_fromcytoplasm(cytoplasm_mask: np.ndarray,
+                                  nucleus_mask: np.ndarray,
+                                  min_hole_width: int,
+                                  max_hole_width: int,
+                                  small_obj_width: int,
+                                  fill_filter_method: str
+                                  ) -> np.ndarray:
+    """
+    Procedure to infer 3D nuclei segmentation from multichannel z-stack input.
+
+    Parameters
+    ------------
+    cytoplasm_mask: np.ndarray
+        3D image containing the mask of the cytoplasm
+    nucleus_mask: np.ndarray
+        3D image containing the mask of the nucleus
+    min_hole_width: int
+        minimum size of holes to fill in final cell mask
+    max_hole_width: int,
+        maximum size of holes to fill in final cell mask
+    small_obj_w: int
+        minimum object size cutoff to remove from final cell mask; likely not required since small objects were removed from cytoplasm mask
+    fill_method: str
+        method for fill and filter; either "3D" or "slice_by_slice"
+
+    Returns
+    -------------
+    cell_mask
+        mask defined extent of the entire cell
+    
+    """
+
+    ###################
+    # CORE_PROCESSING
+    ###################
+    cell = np.logical_or(nucleus_mask, cytoplasm_mask)
+
+    ###################
+    # POST_PROCESSING
+    ###################
+    cleaned_img = fill_and_filter_linear_size(cell, 
+                                              hole_min=min_hole_width, 
+                                              hole_max=max_hole_width, 
+                                              min_size=small_obj_width, 
+                                              method=fill_filter_method)
+
+    ###################
+    # LABELING
+    ###################
+    cell_mask = label_bool_as_uint16(cleaned_img)
+
+    return cell_mask
+
+
+##########################
+#  fixed_infer_cellmask_fromcytoplasm
+##########################
+def fixed_infer_cellmask_fromcytoplasm(cytoplasm_mask: np.ndarray,
+                                        nucleus_mask:np.ndarray) -> np.ndarray:
+    """
+    Procedure to infer cellmask from the cytoplasm mask
+
+    Parameters
+    ------------
+    in_img: np.ndarray
+        a 3d image containing cytoplasm segmentation
+ 
+    Returns
+    -------------
+    nuclei_object
+        inferred nuclei
+    
+    """
+    min_hole_w = 0
+    max_hole_w = 30
+    small_obj_w = 0
+    fill_filter_method = "3D"
+
+    return infer_cellmask_fromcytoplasm(cytoplasm_mask,
+                                         nucleus_mask,
+                                         min_hole_w,
+                                         max_hole_w,
+                                         small_obj_w,
+                                         fill_filter_method)
+
+
+
+
 def infer_and_export_cellmask(
     in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, out_data_path: Path
 ) -> np.ndarray:
