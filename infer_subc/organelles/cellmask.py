@@ -276,7 +276,7 @@ def infer_cellmask_fromcytoplasm(cytoplasm_mask: np.ndarray,
                                   min_hole_width: int,
                                   max_hole_width: int,
                                   small_obj_width: int,
-                                  fill_method: str
+                                  fill_filter_method: str
                                   ) -> np.ndarray:
     """
     Procedure to infer 3D nuclei segmentation from multichannel z-stack input.
@@ -315,7 +315,7 @@ def infer_cellmask_fromcytoplasm(cytoplasm_mask: np.ndarray,
                                               hole_min=min_hole_width, 
                                               hole_max=max_hole_width, 
                                               min_size=small_obj_width, 
-                                              method=fill_method)
+                                              method=fill_filter_method)
 
     ###################
     # LABELING

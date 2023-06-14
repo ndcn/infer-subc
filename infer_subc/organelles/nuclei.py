@@ -151,12 +151,11 @@ def fixed_infer_nuclei_fromlabel(in_img: np.ndarray) -> np.ndarray:
 #  infer_nuclei_fromcytoplasm
 ##########################
 def infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray, 
-                                nuc_min_hole_w: int,
-                                nuc_max_hole_w: int,
-                                nuc_fill_method: str,
-                                small_obj_w: int,
-                                fill_filter_method: str
-                                ) -> np.ndarray:
+                               nuc_min_width: int,
+                               nuc_max_width: int,
+                               fill_filter_method: str,
+                               small_obj_width: int
+                               ) -> np.ndarray:
     """
     Procedure to infer nuclei from linear unmixed input.
 
@@ -184,10 +183,10 @@ def infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray,
     cytoplasm_dilated = binary_dilation(cytoplasm_mask)
 
     cytoplasm_filled = fill_and_filter_linear_size(cytoplasm_dilated, 
-                                                   hole_min=nuc_min_hole_w, 
-                                                   hole_max=nuc_max_hole_w, 
+                                                   hole_min=nuc_min_width, 
+                                                   hole_max=nuc_max_width, 
                                                    min_size=0, 
-                                                   method=nuc_fill_method)
+                                                   method=fill_filter_method)
 
     cytoplasm_eroded = binary_erosion(cytoplasm_filled)
 
@@ -202,7 +201,7 @@ def infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray,
     nuclei_object = fill_and_filter_linear_size(nuclei_xor, 
                                                 hole_min=0, 
                                                 hole_max=0, 
-                                                min_size=small_obj_w,
+                                                min_size=small_obj_width,
                                                 method=fill_filter_method)
 
     nuclei_labels = label_uint16(nuclei_object)
@@ -230,16 +229,14 @@ def fixed_infer_nuclei_fromcytoplasm(cytoplasm_mask: np.ndarray) -> np.ndarray:
     """
     nuc_min_hole_w = 0
     nuc_max_hole_w = 500
-    nuc_fill_method = "3D"
-    small_obj_w = 20
     fill_filter_method = "3D"
+    small_obj_w = 20
 
     return infer_nuclei_fromcytoplasm(cytoplasm_mask,
                                     nuc_min_hole_w,
                                     nuc_max_hole_w,
-                                    nuc_fill_method,
-                                    small_obj_w,
-                                    fill_filter_method)
+                                    fill_filter_method,
+                                    small_obj_w)
 
 
 
