@@ -26,8 +26,8 @@ from infer_subc.core.img import label_uint16
 
 
 from infer_subc.organelles import (
-    fixed_infer_cellmask_fromaggr,
-    fixed_infer_nuclei,
+    fixed_infer_cellmask_fromcomposite,
+    fixed_infer_nuclei_fromlabel,
     infer_cytoplasm,
     fixed_infer_lyso,
     fixed_infer_mito,
