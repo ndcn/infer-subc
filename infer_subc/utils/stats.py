@@ -40,65 +40,166 @@ def _my_props_to_dict(
     return _props_to_dict(rp, properties=properties, separator="-")
 
 
-def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
-    """collect volumentric stats from skimage.measure.regionprops
-        properties = ["label","max_intensity", "mean_intensity", "min_intensity" ,"area"->"volume" , "equivalent_diameter",
-        "centroid", "bbox","euler_number", "extent"
-        +   extra_properties = [standard_deviation_intensity]
-
+def get_regionprops_3D(segmentation_img: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
+    """
     Parameters
     ------------
-    input_labels:
-        a 3d  np.ndarray image of the inferred organelle labels
+    segmentation_img:
+        a 3d np.ndarray image of the segemented organelles
     intensity_img:
-        a 3d np.ndarray image of the florescence intensity
+        a 3d np.ndarray image of the "raw" florescence intensity the segmentation was based on
     mask:
-        a 3d image containing the cellmask object (mask)
+        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
 
     Returns
     -------------
-    pandas dataframe of stats and the regionprops object
-    """
+    pandas dataframe of containing regionprops measurements (columns) for each object in the segmentation image (rows) and the regionprops object
 
+    Regionprops measurements included:
+    ['label',
+    'centroid',
+    'bbox',
+    'area',
+    'equivalent_diameter',
+    'extent',
+    'feret_diameter_max',
+    'euler_number',
+    'convex_area',
+    'solidity',
+    'axis_major_length',
+    'axis_minor_length',
+    'max_intensity',
+    'mean_intensity',
+    'min_intensity']
+
+    Additional measurement include:
+    ['standard_deviation_intensity',
+    'surface_area']
+    """
+    ###################################################
+    ## MASK THE ORGANELLE OBJECTS THAT WILL BE MEASURED
+    ###################################################
     # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
-    input_labels = _assert_uint16_labels(input_labels)
+    input_labels = _assert_uint16_labels(segmentation_img)
 
     # mask
-    input_labels = apply_mask(input_labels, mask)
+    input_labels = apply_mask(segmentation_img, mask)
 
+    ##########################################
+    ## CREATE LIST OF REGIONPROPS MEASUREMENTS
+    ##########################################
     # start with LABEL
     properties = ["label"]
-    # add intensity:
+
+    # add position
+    properties = properties + ["centroid", "bbox"]
+
+    # add area
+    properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
+
+    # add shape measurements
+    properties = properties + ["extent", "feret_diameter_max", "euler_number", "convex_area", "solidity", "axis_major_length", "axis_minor_length"]
+
+    # add intensity values (used for quality checks)
     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
 
-    # arguments must be in the specified order, matching regionprops
+    #######################
+    ## ADD EXTRA PROPERTIES
+    #######################
     def standard_deviation_intensity(region, intensities):
         return np.std(intensities[region])
 
     extra_properties = [standard_deviation_intensity]
 
-    # add area
-    properties = properties + ["area", "equivalent_diameter"]
-    #  position:
-    properties = properties + ["centroid", "bbox"]  # , 'bbox', 'weighted_centroid']
-    # etc
-    properties = properties + ["euler_number", "extent"]  # only works for BIG organelles: 'convex_area','solidity',
-
-    rp = regionprops(input_labels, intensity_image=intensity_img, extra_properties=extra_properties)
+    ##################
+    ## RUN REGIONPROPS
+    ##################
+    rp = regionprops(segmentation_img, intensity_image=intensity_img, extra_properties=extra_properties)
 
     props = _my_props_to_dict(
-        rp, input_labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
+        rp, segmentation_img, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
     )
 
-    props["surface_area"] = surface_area_from_props(input_labels, props)
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
+
+    ##################################################################
+    ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
+    ##################################################################
+    surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props))
+
+    props_table.insert(11, "surface_area", surface_area_tab)
+
+    ################################################################
+    ## ADD SKELETONIZATION OPTION FOR MEASURING LENGTH AND BRANCHING
+    ################################################################
     #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
     #         if x.volumetric:
     #             y_data = skimage.morphology.skeletonize_3d(x_data)
     # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
 
     return props_table, rp
+
+
+# def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
+#     """collect volumentric stats from skimage.measure.regionprops
+#         properties = ["label","max_intensity", "mean_intensity", "min_intensity" ,"area"->"volume" , "equivalent_diameter",
+#         "centroid", "bbox","euler_number", "extent"
+#         +   extra_properties = [standard_deviation_intensity]
+
+#     Parameters
+#     ------------
+#     input_labels:
+#         a 3d  np.ndarray image of the inferred organelle labels
+#     intensity_img:
+#         a 3d np.ndarray image of the florescence intensity
+#     mask:
+#         a 3d image containing the cellmask object (mask)
+
+#     Returns
+#     -------------
+#     pandas dataframe of stats and the regionprops object
+#     """
+
+#     # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+#     input_labels = _assert_uint16_labels(input_labels)
+
+#     # mask
+#     input_labels = apply_mask(input_labels, mask)
+
+#     # start with LABEL
+#     properties = ["label"]
+#     # add intensity:
+#     properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
+
+#     # arguments must be in the specified order, matching regionprops
+#     def standard_deviation_intensity(region, intensities):
+#         return np.std(intensities[region])
+
+#     extra_properties = [standard_deviation_intensity]
+
+#     # add area
+#     properties = properties + ["area", "equivalent_diameter"]
+#     #  position:
+#     properties = properties + ["centroid", "bbox"]  # , 'bbox', 'weighted_centroid']
+#     # etc
+#     properties = properties + ["euler_number", "extent"]  # only works for BIG organelles: 'convex_area','solidity',
+
+#     rp = regionprops(input_labels, intensity_image=intensity_img, extra_properties=extra_properties)
+
+#     props = _my_props_to_dict(
+#         rp, input_labels, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
+#     )
+
+#     props["surface_area"] = surface_area_from_props(input_labels, props)
+#     props_table = pd.DataFrame(props)
+#     props_table.rename(columns={"area": "volume"}, inplace=True)
+#     #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
+#     #         if x.volumetric:
+#     #             y_data = skimage.morphology.skeletonize_3d(x_data)
+#     # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
+
+#     return props_table, rp
 
 
 def surface_area_from_props(labels, props):
@@ -187,7 +288,7 @@ def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
 
         label_a.append(all_as[0] )
         label_b.append(all_bs[0] )
-        index_ab.append(f"{all_as[0]}_{all_bs[0]}") 
+        index_ab.append(f"{all_as[0]}_{all_bs[0]}")
 
 
     props["label_a"] = label_a #[np.unique(a[s])[:1].tolist() for s in props["slice"]]

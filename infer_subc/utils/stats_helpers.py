@@ -7,7 +7,7 @@ from infer_subc.core.img import apply_mask
 import pandas as pd
 
 from infer_subc.utils.stats import ( get_aXb_stats_3D, 
-                    get_summary_stats_3D, 
+                    get_regionprops_3D, 
                     get_simple_stats_3D, 
                     get_radial_stats, 
                     get_depth_stats, 
@@ -32,7 +32,7 @@ def make_organelle_stat_tables(
 ) -> int:
     """
     get summary and all cross stats between organelles `a` and `b`
-    calls `get_summary_stats_3D`
+    calls `get_regionprops_3D`
     """
     count = 0
     org_stats_tabs = []
@@ -41,7 +41,7 @@ def make_organelle_stat_tables(
         org_obj = _assert_uint16_labels(organelles[j])
 
         # A_stats_tab, rp = get_simple_stats_3D(A,mask)
-        a_stats_tab, rp = get_summary_stats_3D(org_obj, org_img, organelle_mask)
+        a_stats_tab, rp = get_regionprops_3D(org_obj, org_img, organelle_mask)
         a_stats_tab.insert(loc=0,column='organelle',value=target )
         a_stats_tab.insert(loc=0,column='ID',value=source_file.stem )
 
@@ -558,7 +558,7 @@ def dump_organelle_summary_tables(
                     organelle_names: List[str]= ["nuclei","golgi","peroxi"] ) -> int:
     """
     get summary and all cross stats between organelles `a` and `b`
-    calls `get_summary_stats_3D`
+    calls `get_regionprops_3D`
     """
 
     if not Path.exists(out_path):
@@ -590,9 +590,9 @@ def dump_stats(
 ) -> pd.DataFrame:
     """
     get summary stats of organelle only
-    calls `get_summary_stats_3D`
+    calls `get_regionprops_3D`
     """
-    stats_table, _ = get_summary_stats_3D(segmentation, intensity_img, mask)
+    stats_table, _ = get_regionprops_3D(segmentation, intensity_img, mask)
     csv_path = out_data_path / f"{source_file.stem}-{name}-basic-stats.csv"
     stats_table.to_csv(csv_path)
     print(f"dumped {name} table to {csv_path}")
