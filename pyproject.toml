@@ -1,3 +1,45 @@
+[project]
+name = "infer-subc"
+dynamic = ["version"]
+requires-python = ">=3.7"
+description = "A plugin that enables organelle segmentation"
+readme = "README.md"
+authors = [
+    {name = "Andy Henrie", email = "ergonyc@gmail.com"},
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+]
+license = {file = "BSD-3-Clause"}
+
+
+dependencies = [
+    'napari',
+    'aicssegmentation',
+    'aicsimageio',
+    'numpy',
+    'aicsimageio >= 4.7.0',
+    'scipy',    #>=1.1.0
+    'numpy',    #>=1.15.1
+    'scikit-image', #>=0.18.0,<0.19.0 
+    'pandas',   #>=0.23.4 
+    'jupyter',
+    'centrosome',
+    `aicspylibczi>=3.1.1`
+]
+
 [build-system]
 requires = ["setuptools", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
@@ -8,7 +50,14 @@ version_scheme = "post-release"
 local_scheme = "dirty-tag"
 #git_describe_command = "git describe --dirty --tags --long --match v* --first-parent"
 
-[tool.setuptools.package_data]
+
+#[tool.setuptools]
+# packages = ["infer_subc"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
 infer_subc = ["organelles_config/*"]
 
 [tool.black]
