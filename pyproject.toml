@@ -8,6 +8,9 @@ version_scheme = "post-release"
 local_scheme = "dirty-tag"
 #git_describe_command = "git describe --dirty --tags --long --match v* --first-parent"
 
+[tool.setuptools.package_data]
+infer_subc = ["organelles_config/*"]
+
 [tool.black]
 line-length = 120
 
