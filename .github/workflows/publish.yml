@@ -6,6 +6,7 @@ on:
     # branches:
     #   - main
 jobs:
+jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ubuntu-latest
@@ -36,17 +37,12 @@ jobs:
           --sdist
           --wheel
           --outdir dist/
-          .
-      # - name: Publish package distributions to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     user: __token__
-      #     password: ${{ secrets.PYPI_TOKEN }}
-      - name: Publish distribution 📦 to PyPI
-        if: startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          . 
+    - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
 
 
 # name: Publish
