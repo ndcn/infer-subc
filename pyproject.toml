@@ -51,14 +51,21 @@ local_scheme = "dirty-tag"
 #git_describe_command = "git describe --dirty --tags --long --match v* --first-parent"
 
 
-#[tool.setuptools]
-# packages = ["infer_subc"]
-
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.setuptools]
+packages = ["infer_subc"]
+# By default, include-package-data is true in pyproject.toml, so you do
+# NOT have to specify this line.
+include-package-data = true
 
 [tool.setuptools.package-data]
-infer_subc = ["organelles_config/*"]
+infer_subc = [
+    "organelles_config/*.md",
+    "organelles_config/*.json"
+]
+"organelles_config" = [
+    "*.md",
+    "*.json"
+]
 
 [tool.black]
 line-length = 120
