@@ -7,3 +7,6 @@ pip install aicsimageio tifffile aicspylibczi aicssegmentation napari-aicsimagei
 pip install git+https://github.com/ergonyc/centrosome.git
 
 
+pip install centrosome
+pip install infer_subc
+pip install .
