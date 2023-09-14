@@ -6,8 +6,8 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import ( get_aXb_stats_3D, 
-                    get_regionprops_3D, 
+from infer_subc.utils.stats import ( get_contact_metrics_3D, 
+                    get_org_metrics_3D, 
                     get_simple_stats_3D, 
                     get_radial_stats, 
                     get_depth_stats, 
@@ -32,7 +32,7 @@ def make_organelle_stat_tables(
 ) -> int:
     """
     get summary and all cross stats between organelles `a` and `b`
-    calls `get_regionprops_3D`
+    calls `get_org_metrics_3D`
     """
     count = 0
     org_stats_tabs = []
@@ -41,7 +41,7 @@ def make_organelle_stat_tables(
         org_obj = _assert_uint16_labels(organelles[j])
 
         # A_stats_tab, rp = get_simple_stats_3D(A,mask)
-        a_stats_tab, rp = get_regionprops_3D(org_obj, org_img, organelle_mask)
+        a_stats_tab, rp = get_org_metrics_3D(org_obj, org_img, organelle_mask)
         a_stats_tab.insert(loc=0,column='organelle',value=target )
         a_stats_tab.insert(loc=0,column='ID',value=source_file.stem )
 
@@ -82,8 +82,8 @@ def make_organelle_stat_tables(
                 #####  2  ###########
                 # get cross_stats
 
-                cross_tab = get_aXb_stats_3D(org_obj, b, organelle_mask) 
-                shell_cross_tab = get_aXb_stats_3D(org_obj, b, organelle_mask, use_shell_a=True)
+                cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask) 
+                shell_cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask, use_shell_a=True)
                             
                 # cross_tab["organelle_b"]=nmi
                 # shell_cross_tab["organelle_b"]=nmi
@@ -210,7 +210,7 @@ def dump_shell_cross_stats(
 ) -> int:
     """
     get all cross stats between organelles `a` and `b`, and "shell of `a`" and `b`.   "shell" is the boundary of `a`
-    calls `get_aXb_stats_3D`
+    calls `get_contact_metrics_3D`
     """
     count = 0
     for j, target in enumerate(organelle_names):
@@ -222,11 +222,11 @@ def dump_shell_cross_stats(
                 # get overall stats of intersection
                 # print(f"  X {nmi}")
                 b = organelles[i]
-                stats_tab = get_aXb_stats_3D(org_obj, b, mask)
+                stats_tab = get_contact_metrics_3D(org_obj, b, mask)
                 csv_path = out_data_path / f"{source_file.stem}-{target}X{nmi}-stats.csv"
                 stats_tab.to_csv(csv_path)
 
-                e_stats_tab = get_aXb_stats_3D(org_obj, b, mask, use_shell_a=True)
+                e_stats_tab = get_contact_metrics_3D(org_obj, b, mask, use_shell_a=True)
                 csv_path = out_data_path / f"{source_file.stem}-{target}_shellX{nmi}-stats.csv"
                 e_stats_tab.to_csv(csv_path)
 
@@ -558,7 +558,7 @@ def dump_organelle_summary_tables(
                     organelle_names: List[str]= ["nuclei","golgi","peroxi"] ) -> int:
     """
     get summary and all cross stats between organelles `a` and `b`
-    calls `get_regionprops_3D`
+    calls `get_org_metrics_3D`
     """
 
     if not Path.exists(out_path):
@@ -590,9 +590,9 @@ def dump_stats(
 ) -> pd.DataFrame:
     """
     get summary stats of organelle only
-    calls `get_regionprops_3D`
+    calls `get_org_metrics_3D`
     """
-    stats_table, _ = get_regionprops_3D(segmentation, intensity_img, mask)
+    stats_table, _ = get_org_metrics_3D(segmentation, intensity_img, mask)
     csv_path = out_data_path / f"{source_file.stem}-{name}-basic-stats.csv"
     stats_table.to_csv(csv_path)
     print(f"dumped {name} table to {csv_path}")

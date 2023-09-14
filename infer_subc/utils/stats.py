@@ -40,7 +40,7 @@ def _my_props_to_dict(
     return _props_to_dict(rp, properties=properties, separator="-")
 
 
-def get_regionprops_3D(segmentation_img: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
+def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.ndarray, scale: Union[tuple, None]=None) -> Tuple[Any, Any]:
     """
     Parameters
     ------------
@@ -98,10 +98,10 @@ def get_regionprops_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
 
     # add shape measurements
-    properties = properties + ["extent", "feret_diameter_max", "euler_number", "convex_area", "solidity", "axis_major_length", "axis_minor_length"]
+    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length"] # ,"feret_diameter_max", "axis_minor_length"]
 
     # add intensity values (used for quality checks)
-    properties = properties + ["max_intensity", "mean_intensity", "min_intensity"]
+    properties = properties + ["min_intensity", "max_intensity", "mean_intensity"]
 
     #######################
     ## ADD EXTRA PROPERTIES
@@ -114,11 +114,16 @@ def get_regionprops_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     ##################
     ## RUN REGIONPROPS
     ##################
-    rp = regionprops(segmentation_img, intensity_image=intensity_img, extra_properties=extra_properties)
+    rp = regionprops(input_labels, 
+                     intensity_image=intensity_img, 
+                     extra_properties=extra_properties, 
+                     spacing=scale)
 
-    props = _my_props_to_dict(
-        rp, segmentation_img, intensity_image=intensity_img, properties=properties, extra_properties=extra_properties
-    )
+    props = _my_props_to_dict(rp, 
+                              label_image=input_labels, 
+                              intensity_image=intensity_img, 
+                              properties=properties, 
+                              extra_properties=extra_properties)
 
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
@@ -202,9 +207,9 @@ def get_regionprops_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
 #     return props_table, rp
 
 
-def surface_area_from_props(labels, props):
-    """helper function for getting surface area of volumetric segmentation"""
+# creating a function to measure the surface area of each object. This function utilizes "marching_cubes" to generate a mesh (non-pixelated object)
 
+def surface_area_from_props(labels, props):
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
     # TODO: spacing = [1, 1, 1] # this is where we could deal with anisotropy in Z
@@ -237,20 +242,46 @@ def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
         return label(inp > 0).astype(np.uint16)
     return inp
 
-
-def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
+def get_contact_metrics_3D(a, b, mask, use_shell_a=False):
     """
-    collect volumentric stats of `a` intersect `b`
-    """
-    properties = ["label"]  # our index to organelles
-    # add area
-    properties = properties + ["area", "equivalent_diameter"]
-    #  position:
-    properties = properties + ["centroid", "bbox"]  # ,  'weighted_centroid']
-    # etc
-    properties = properties + ["slice"]
+    collect volumentric measurements of organelle `a` intersect organelle `b`
 
-    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    Parameters
+    ------------
+    a:
+        a 3D np.ndarray image of one segemented organelle
+    b:
+        a 3D np.ndarray image of a second segemented organelle
+    mask:
+        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
+    use_shell_a:
+        creates a "shell" of organelle a to simulate just the membrane area of the organelle and the performs the overlaps; all the same measurements are carried out of the shell region
+
+    Returns
+    -------------
+    pandas dataframe of containing regionprops measurements (columns) for each overlap region between a and b (rows)
+
+    Regionprops measurements included:
+    ['label',
+    'centroid',
+    'bbox',
+    'area',
+    'equivalent_diameter',
+    'extent',
+    'feret_diameter_max',
+    'euler_number',
+    'convex_area',
+    'solidity',
+    'axis_major_length',
+    'axis_minor_length']
+
+    Additional measurement include:
+    ['surface_area']
+ 
+    """
+    #########################
+    ## CREATE OVERLAP REGIONS
+    #########################
     a = _assert_uint16_labels(a)
     b = _assert_uint16_labels(b)
 
@@ -261,11 +292,34 @@ def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
 
     labels = label(apply_mask(a_int_b, mask)).astype("int")
 
+    ##########################################
+    ## CREATE LIST OF REGIONPROPS MEASUREMENTS
+    ##########################################
+    # start with LABEL
+    properties = ["label"]
+
+    # add position
+    properties = properties + ["centroid", "bbox"]
+
+    # add area
+    properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
+
+    # add shape measurements
+    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length", "slice"] # "feret_diameter_max", "axis_minor_length", 
+
+    ##################
+    ## RUN REGIONPROPS
+    ##################
     props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None)
 
-    props["surface_area"] = surface_area_from_props(labels, props)
-    # there could be a bug here if there are spurious labels in the corners of the slices
+    ##################################################################
+    ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
+    ##################################################################
+    surface_area_tab = pd.DataFrame(surface_area_from_props(labels, props))
 
+    ######################################################
+    ## LIST WHICH ORGANELLES ARE INVOLVED IN THE CONTACTS
+    ######################################################
     label_a = []
     index_ab = []
     label_b = []
@@ -291,15 +345,79 @@ def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
         index_ab.append(f"{all_as[0]}_{all_bs[0]}")
 
 
-    props["label_a"] = label_a #[np.unique(a[s])[:1].tolist() for s in props["slice"]]
-    props["label_b"] = label_b #[np.unique(b[s])[:1].tolist() for s in props["slice"]]
+    props["label_A"] = label_a ## TODO: FIND A WAY TO INSERT ACTUAL ORGANELLE NAME, NOT "a" OR "b"
+    props["label_b"] = label_b
     props_table = pd.DataFrame(props)
+    props_table.insert(11, "surface_area", surface_area_tab)
     props_table.rename(columns={"area": "volume"}, inplace=True)
     props_table.drop(columns="slice", inplace=True)
     props_table.insert(loc=0,column='label_',value=index_ab)
     props_table.insert(loc=0,column='shell',value=use_shell_a)
 
     return props_table
+
+# def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
+#     """
+#     collect volumentric stats of `a` intersect `b`
+#     """
+#     properties = ["label"]  # our index to organelles
+#     # add area
+#     properties = properties + ["area", "equivalent_diameter"]
+#     #  position:
+#     properties = properties + ["centroid", "bbox"]  # ,  'weighted_centroid']
+#     # etc
+#     properties = properties + ["slice"]
+
+#     # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+#     a = _assert_uint16_labels(a)
+#     b = _assert_uint16_labels(b)
+
+#     if use_shell_a:
+#         a_int_b = np.logical_and(np.logical_xor(a > 0, binary_erosion(a > 0)), b > 0)
+#     else:
+#         a_int_b = np.logical_and(a > 0, b > 0)
+
+#     labels = label(apply_mask(a_int_b, mask)).astype("int")
+
+#     props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None)
+
+#     props["surface_area"] = surface_area_from_props(labels, props)
+#     # there could be a bug here if there are spurious labels in the corners of the slices
+
+#     label_a = []
+#     index_ab = []
+#     label_b = []
+#     for index, lab in enumerate(props["label"]):
+#         # this seems less elegant than you might wish, given that regionprops returns a slice,
+#         # but we need to expand the slice out by one voxel in each direction, or surface area freaks out
+#         volume = labels[props["slice"][index]]
+#         la = a[props["slice"][index]]
+#         lb = b[props["slice"][index]]
+#         volume = volume == lab
+#         la = la[volume]
+#         lb = lb[volume]
+
+#         all_as = np.unique(la[la>0]).tolist()
+#         all_bs = np.unique(lb[lb>0]).tolist()
+#         if len(all_as) != 1:
+#             print(f"we have an error.  as-> {all_as}")
+#         if len(all_bs) != 1:
+#             print(f"we have an error.  bs-> {all_bs}")
+
+#         label_a.append(all_as[0] )
+#         label_b.append(all_bs[0] )
+#         index_ab.append(f"{all_as[0]}_{all_bs[0]}")
+
+
+#     props["label_a"] = label_a #[np.unique(a[s])[:1].tolist() for s in props["slice"]]
+#     props["label_b"] = label_b #[np.unique(b[s])[:1].tolist() for s in props["slice"]]
+#     props_table = pd.DataFrame(props)
+#     props_table.rename(columns={"area": "volume"}, inplace=True)
+#     props_table.drop(columns="slice", inplace=True)
+#     props_table.insert(loc=0,column='label_',value=index_ab)
+#     props_table.insert(loc=0,column='shell',value=use_shell_a)
+
+#     return props_table
 
 
 def create_masked_Z_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=None, to_bool:bool=True) -> np.ndarray:
