@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 from pathlib import Path
 import time
 import numpy as np
@@ -419,3 +419,78 @@ def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, ou
         print(f"inferred (and exported) cellmask in ({(end - start):0.2f}) sec")
 
     return cellmask
+
+##########################
+#  create the cell mask by adding the nuclei and cytoplasm masks together
+##########################
+def combine_cytoplasm_and_nuclei(cyto_seg: np.ndarray,
+                                 nuc_seg: np.ndarray,
+                                 max_hole_width: int):
+    """
+    Function to combine the the cytoplasm and nuclei segmentations to produce the entire cell mask.
+
+    Parameters:
+    ----------
+    cyto_seg: np.ndarray,
+        image containing the cytoplasm segmentation
+    nuc_seg: np.ndarray,
+        image containing the nuclei segmentation
+    max_hole_width: int
+        size of the gaps between the nuclei and cytoplasm (usually small)
+    """ 
+    
+    cells = np.logical_or(cyto_seg.astype(bool), nuc_seg.astype(bool))
+
+    cell_multiple = fill_and_filter_linear_size(cells, 
+                                                hole_min=0,
+                                                hole_max=max_hole_width,
+                                                min_size=0,
+                                                method='3D')
+    
+    cell_area = cell_multiple.astype(bool)
+
+    return cell_area
+
+
+def select_highest_intensity_cell(raw_image: np.ndarray,
+                                   cell_seg: np.ndarray,
+                                   nuc_seg: np.ndarray):
+    """ 
+    Create an instance segmentation of the cell area using a watershed operation based on nuclei seeds.
+    Then, select the cell with the highest combined organelle intensity.
+
+    Parameters:
+    ----------
+    raw_image: np.ndarray,
+        gray scale 3D multi-channel numpy array (CZYX)
+    cell_seg: np.ndarray,
+        binary cell segmentation with multiple cells in the FOV
+    nuc_seg: np.ndarray,
+        labeled nuclei segmentation with each nuclei having a different ID number (e.g., the result of the skimage label() function)
+    labels_to_consider: Union(list, None)
+        a list of labels that should be considered when determining the highest intensity. Default is None which utilizes all possible labels in the cell image
+        
+    Output
+    ----------
+    good_cell: np.ndarray  
+        a binary image of the single cell with the highest total fluorescence intensity
+    """
+    # instance segmentation of cell area with watershed function
+    cell_labels = masked_inverted_watershed(cell_seg, markers=nuc_seg, mask=cell_seg, method='3D')
+
+    # create composite of all fluorescence channels after min-max normalization
+    norm_channels = [(min_max_intensity_normalization(raw_image[c])) for c in range(len(raw_image))]
+    normed_signal = np.stack(norm_channels, axis=0)
+    normed_composite = normed_signal.sum(axis=0)
+
+    # list of cell IDs to measure intensity of
+    all_labels = np.unique(cell_labels)[1:]
+
+    # measure total intensity in each cell from the ID list
+    total_signal = [normed_composite[cell_labels == label].sum() for label in all_labels]
+
+    # select the cell with the highest total intensity
+    keep_label = all_labels[np.argmax(total_signal)]
+    good_cell = cell_labels == keep_label
+
+    return good_cell

@@ -3,7 +3,9 @@ from typing import Union, Dict
 from pathlib import Path
 import time
 
-from skimage.morphology import binary_dilation, binary_erosion 
+from skimage.morphology import binary_dilation, binary_erosion, binary_opening
+from skimage.measure import label
+from skimage.segmentation import clear_border
 
 from infer_subc.core.file_io import (
     export_inferred_organelle,
@@ -18,6 +20,7 @@ from infer_subc.core.img import (
     apply_mask,
     get_interior_labels,
     label_uint16,
+    stack_masks
 )
 from infer_subc.constants import NUC_CH
 
@@ -359,3 +362,67 @@ def get_nucleus(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.
 #         print(f"inferred and saved nuclei AICS in ({(end - start):0.2f}) sec")
 
 #     return nuclei
+
+def segment_nuclei_seeds(cyto_seg: np.ndarray,
+                          max_nuclei_width: int,
+                          small_obj_width: int):
+    """ 
+    
+    
+    """
+    # create the inverse of the cytoplasm and increase likelihood for object separation with binary opening
+    cytoplasm_inverse = 1 - cyto_seg
+    cytoplasm_inv_opened = binary_opening(cytoplasm_inverse, footprint=np.ones([3,3,3]))
+
+    # isolate the nuclei objects that fill be used as seeds for watershed
+    # these aren't exactly the inverse of the cytoplasm because of the binary opening
+    nuc_removed = fill_and_filter_linear_size(cytoplasm_inv_opened, 
+                                            hole_max=0, 
+                                            hole_min=0, 
+                                            min_size=max_nuclei_width, 
+                                            method='3D')
+
+    nuc_objs = np.logical_xor(cytoplasm_inv_opened, nuc_removed)
+
+    # remove an small debris leftover that aren't the correct size for nuclei
+    nuc_cleaned = fill_and_filter_linear_size(nuc_objs, 
+                                            hole_max=0, 
+                                            hole_min=0, 
+                                            min_size=small_obj_width, 
+                                            method='3D')
+    
+
+    return label(nuc_cleaned).astype(np.uint16)
+
+def mask_cytoplasm_nuclei(cellmask: np.ndarray,
+                           cyto_seg: np.ndarray,
+                           small_obj_width: int):
+    """ 
+    mask the cytoplasm with the cell mask to isolate the cytoplasmic area of intereste.
+    create a single nuclei segmentation from the inverse of the cytoplas (no binary opening)
+
+    Parameters:
+    ----------
+    cellmask: 
+        binary segmentation of a single cell
+    cyto_seg:
+        semantic segmentation of cytoplasm from multiple cells in an image
+    small_obj_width:
+        size of small objects to be removed from the final nucleus segmentation image
+    """
+
+    good_cyto = apply_mask(cyto_seg, cellmask).astype(bool)
+
+    good_cyto_inverse = 1 - good_cyto
+
+    nuc_single = clear_border(good_cyto_inverse)
+
+    good_nuc = fill_and_filter_linear_size(nuc_single,
+                                        hole_min=0,
+                                        hole_max=0, 
+                                        min_size=small_obj_width,
+                                        method='3D')
+    
+    stack = stack_masks(nuc_mask=good_nuc, cellmask=cellmask, cyto_mask=good_cyto)
+    
+    return stack
