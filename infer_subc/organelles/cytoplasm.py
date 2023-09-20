@@ -249,3 +249,58 @@ def fixed_infer_cytoplasm_fromcomposite(in_img: np.ndarray) -> np.ndarray:
                                                 fill_filter_method) 
 
     return cellmask_out
+
+##########################
+# fixed_infer_cytoplasm_fromcomposite
+# alternative workflow "b" for images wihtout nuclei labels and multiple cells per view
+##########################
+
+def segment_cytoplasm_area(in_img: np.ndarray, 
+                           global_method: str,
+                           cutoff_size: int,
+                           local_adjust: float,
+                           min_hole_width: int,
+                           max_hole_width: int,
+                           small_obj_width: int,
+                           fill_filter_method: str):
+    """ 
+    Function for segmenting the cytoplasmic area from a fluorescent image
+
+    Parameters:
+    ----------
+    in_img: np.ndarray, 
+        fluorescence image (single channel, ZYX array) of the cytoplasm to get segmented
+    global_method: str,
+        masked object threshold method; options: 'med', 'tri', 'ave'
+    cutoff_size: int,
+        object cutoff size for the MO threshold method
+    local_adjust: float,
+        adjustment value for the MO threshold method
+    min_hole_width: int,
+        smallest sized hole to fill in the final mask
+    max_hole_width: int,
+        largest sized hole to fill in the final mask
+    small_obj_width: int,
+        size of the smallest object to be included in the mask; small objects are removed
+    fill_filter_method: str
+        fill holes and remove small objects in '3D' or 'slice_by_slice'
+
+
+    """
+    # create cytoplasm mask
+    bw_cyto = masked_object_thresh(in_img, 
+                            global_method=global_method, 
+                            cutoff_size=cutoff_size, 
+                            local_adjust=local_adjust)
+    
+    # fill holes and filter small objects from the raw mask
+    cleaned_cyto = fill_and_filter_linear_size(bw_cyto, 
+                                            hole_min=min_hole_width, 
+                                            hole_max=max_hole_width, 
+                                            min_size= small_obj_width,
+                                            method=fill_filter_method)
+    
+    # create a boolean mask
+    cyto_semantic_seg = cleaned_cyto.astype(bool)
+
+    return cyto_semantic_seg

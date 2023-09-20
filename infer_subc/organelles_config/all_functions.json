@@ -1927,5 +1927,119 @@
                 ]
             }
         }
+    },
+    "segment_cytoplasm_area": {
+        "name": "Semantic segmentation of the cytoplasm",
+        "python::module": "infer_subc.organelles.cytoplasm",
+        "python::function": "segment_cytoplasm_area",
+        "parameters": {
+            "global_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "cutoff_size": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "local_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.001
+            },
+            "min_hole_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 20,
+                "increment": 1
+            },
+            "max_hole_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 100,
+                "increment": 1
+            },
+            "small_obj_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 600,
+                "increment": 1
+            },
+            "fill_filter_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            }
+        }
+    },
+    "segment_nuclei_seeds": {
+        "name": "Segmentation of nuclei 'seeds' from cytoplasm",
+        "python::module": "infer_subc.organelles.nuclei",
+        "python::function": "segment_nuclei_seeds",
+        "parameters": {
+            "max_nuclei_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 800,
+                "increment": 1
+            },
+            "small_obj_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 100,
+                "increment": 1
+            }
+        }
+    },
+    "combine_cytoplasm_and_nuclei": {
+        "name": "Combine nucleus and cytoplasm masks",
+        "python::module": "infer_subc.organelles.cellmask",
+        "python::function": "combine_cytoplasm_and_nuclei",
+        "parameters": {
+            "max_hole_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 100,
+                "increment": 1
+            }
+        }
+    },
+    "select_highest_intensity_cell": {
+        "name": "Label cells based on nuclei 'seeds'; isolate highest intensity",
+        "python::module": "infer_subc.organelles.cellmask",
+        "python::function": "select_highest_intensity_cell",
+        "parameters": {}
+    },
+    "mask_cytoplasm_nuclei": {
+        "name": "Segmentation of single nucleus from cytoplasm; cell mask applied",
+        "python::module": "infer_subc.organelles.nuclei",
+        "python::function": "mask_cytoplasm_nuclei",
+        "parameters": {
+            "small_obj_width": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 100,
+                "increment": 1
+            }
+        }
     }
 }

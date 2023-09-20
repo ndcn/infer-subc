@@ -1,0 +1,86 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "weight_ch0": 4,
+            "weight_ch1": 3,
+            "weight_ch2": 1,
+            "weight_ch3": 1,
+            "weight_ch4": 6,
+            "weight_ch5": 6,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0,
+            "rescale": true
+        },
+        "parent": 0,
+        "annotation": " this creates an aggregate signal for the cellmask"
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "median_size": 0,
+            "gauss_sigma": 0
+        },
+        "parent": 1,
+        "annotation": "basic nuclei segmentation: 3"
+    },
+    "3": {
+        "category": "preprocessing",
+        "function": "non_linear_cellmask_transform",
+        "parent": 2,
+        "annotation": "basic nuclei segmentation: 4"
+    },
+    "4": {
+        "category": "core",
+        "function": "segment_cytoplasm_area",
+        "parameter_values":{
+            "global_method": "median",
+            "cutoff_size": 200,
+            "local_adjust": 0.001,
+            "min_hole_width": 0,
+            "max_hole_width": 30,
+            "small_obj_width": 50,
+            "fill_filter_method": "slice_by_slice"
+        },
+        "parent": 3,
+        "annotation": ""
+    },
+    "5": {
+        "category": "core",
+        "function": "segment_nuclei_seeds",
+        "parameter_values": {
+            "max_nuclei_width": 350,
+            "small_obj_width": 10
+        },
+        "parent": 4,
+        "annotation": ""
+    },
+    "6": {
+        "category": "core",
+        "function": "combine_cytoplasm_and_nuclei",
+        "parameter_values": {
+            "max_hole_width": 20
+        },
+        "parent": [4,5],
+        "annotation": " "
+    },
+    "7": {
+        "category": "postprocessing",
+        "function": "select_highest_intensity_cell",
+        "parameter_values": {},
+        "parent": [0, 6, 5]
+    },
+    "8": {
+        "category": "postpostprocessing",
+        "function": "mask_cytoplasm_nuclei",
+        "parameter_values": {
+            "small_obj_width": 10
+        },
+        "parent": [7, 4],
+        "annotation": ""
+    }
+}
