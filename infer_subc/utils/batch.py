@@ -95,10 +95,21 @@ def explode_masks(root_path: Union[Path,str], postfix: str= "masks", im_type: st
     return wrote_cnt
 
 
-
-def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str], int_path: Union[Path,str]) -> Dict:
+def find_segmentation_tiff_files(prototype:Union[Path,str],
+                                  organelles: List[str], 
+                                  int_path: Union[Path,str],
+                                  suffix: Union[str, None] = None ) -> Dict:
     """
     find the nescessary image files based on protype, the organelles involved, and paths
+
+    suffix:
+        the str that comes between the .stem of the file name and the organelle/cell area type sufffix.
+        Ex) Prototype = "C:/Users/Shannon/Documents/Python_Scripts/Infer-subc/raw/a48hrs-Ctrl_9_Unmixing.czi"
+            Name of organelle file = a48hrs-Ctrl_9_Unmixing-20230426_test_cell.tiff
+            result of .stem = "a48hrs-Ctrl_9_Unmixing"
+            organelle/cell area type = "cell"
+            suffix = "-20230426_test_"
+
     """
 
     # raw
@@ -117,44 +128,102 @@ def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str
         return out_files
     
     # cyto, cellmask
-    cyto_nm = int_path / f"{prototype.stem}-cyto.tiff"
+    cyto_nm = int_path / f"{prototype.stem}{suffix}cyto.tiff"
     if cyto_nm.exists():
         out_files["cyto"] = cyto_nm
     else:
         print(f"cytosol mask not found.  We'll try to extract from masks ")
-        if explode_mask(int_path / f"{prototype.stem}-masks.tiff"): 
+        if explode_mask(int_path / f"{prototype.stem}{suffix}masks.tiff"): 
             out_files["cyto"] = cyto_nm
         else: 
-            print(f"failed to explode {prototype.stem}-masks.tiff")
+            print(f"failed to explode {prototype.stem}{suffix}masks.tiff")
             return out_files
     
-    cellmask_nm = int_path / f"{prototype.stem}-cell.tiff"
+    cellmask_nm = int_path / f"{prototype.stem}{suffix}cell.tiff"
     if  cellmask_nm.exists():
         out_files["cell"] = cellmask_nm
     else:
-        print(f"cellmask file not found in {int_path} returning")
+        print(f"cell file not found in {int_path} returning")
         out_files["cell"] = None
+
+    nuc_nm = int_path / f"{prototype.stem}{suffix}nuc.tiff"
+    if  cellmask_nm.exists():
+        out_files["nuc"] = nuc_nm
+    else:
+        print(f"nuc file not found in {int_path} returning")
+        out_files["nuc"] = None
 
     # organelles
     for org_n in organelles:
-        org_name = Path(int_path) / f"{prototype.stem}-{org_n}.tiff"
+        org_name = Path(int_path) / f"{prototype.stem}{suffix}{org_n}.tiff"
         if org_name.exists(): 
             out_files[org_n] = org_name
         else: 
             print(f"{org_n} .tiff file not found in {int_path} returning")
             out_files[org_n] = None
     
-    if "nuc" not in organelles:
-        nuc_nm = int_path / f"{prototype.stem}-nuc.tiff"
-        if  nuc_nm.exists():
-            out_files["nuc"] = nuc_nm
-        else:
-            print(f"nuc file not found in {int_path} returning")
-            out_files["nuc"] = None
-
-
-
     return out_files
+
+
+# def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str], int_path: Union[Path,str]) -> Dict:
+#     """
+#     find the nescessary image files based on protype, the organelles involved, and paths
+#     """
+
+#     # raw
+#     prototype = Path(prototype)
+#     if not prototype.exists():
+#         print(f"bad prototype. please choose an existing `raw` file as prototype")
+#         return dict()
+#     # make sure protoype ends with czi
+
+#     out_files = {"raw":prototype}
+
+#     int_path = Path(int_path) 
+#     # raw
+#     if not int_path.is_dir():
+#         print(f"bad path argument. please choose an existing path containing organelle segmentations")
+#         return out_files
+    
+#     # cyto, cellmask
+#     cyto_nm = int_path / f"{prototype.stem}-cyto.tiff"
+#     if cyto_nm.exists():
+#         out_files["cyto"] = cyto_nm
+#     else:
+#         print(f"cytosol mask not found.  We'll try to extract from masks ")
+#         if explode_mask(int_path / f"{prototype.stem}-masks.tiff"): 
+#             out_files["cyto"] = cyto_nm
+#         else: 
+#             print(f"failed to explode {prototype.stem}-masks.tiff")
+#             return out_files
+    
+#     cellmask_nm = int_path / f"{prototype.stem}-cell.tiff"
+#     if  cellmask_nm.exists():
+#         out_files["cell"] = cellmask_nm
+#     else:
+#         print(f"cellmask file not found in {int_path} returning")
+#         out_files["cell"] = None
+
+#     # organelles
+#     for org_n in organelles:
+#         org_name = Path(int_path) / f"{prototype.stem}-{org_n}.tiff"
+#         if org_name.exists(): 
+#             out_files[org_n] = org_name
+#         else: 
+#             print(f"{org_n} .tiff file not found in {int_path} returning")
+#             out_files[org_n] = None
+    
+#     if "nuc" not in organelles:
+#         nuc_nm = int_path / f"{prototype.stem}-nuc.tiff"
+#         if  nuc_nm.exists():
+#             out_files["nuc"] = nuc_nm
+#         else:
+#             print(f"nuc file not found in {int_path} returning")
+#             out_files["nuc"] = None
+
+
+
+#     return out_files
 
 
 ###########

@@ -1,6 +1,8 @@
 import numpy as np
 from typing import Any, List, Union
 from pathlib import Path
+import itertools 
+import time
 
 from infer_subc.core.img import apply_mask
 
@@ -9,198 +11,487 @@ import pandas as pd
 from infer_subc.utils.stats import ( get_contact_metrics_3D, 
                     get_org_metrics_3D, 
                     get_simple_stats_3D, 
-                    get_radial_stats, 
-                    get_depth_stats, 
-                    _assert_uint16_labels )
+                    get_XY_dist_metrics, 
+                    get_Z_dist_metrics, 
+                    _assert_uint16_labels,
+                    get_region_metrics_3D)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
-def make_organelle_stat_tables(
+
+organelle_to_colname = {"nuc":"NU", "lyso": "LY", "mito":"MT", "golgi":"GL", "perox":"PR", "ER":"ER", "LD":"LD", "cell":"CM", "cyto":"CY", "nucleus": "N1","nuclei":"NU",}
+
+def make_all_metrics_tables(
     organelle_names: List[str],
     organelles: List[np.ndarray],
     intensities: List[np.ndarray],
-    nuclei_obj:np.ndarray, 
-    cellmask_obj:np.ndarray,
-    organelle_mask: np.ndarray, 
-    out_data_path: Path, 
+    region_names: List[str],
+    regions: List[np.ndarray],
+    dist_centering_obj:np.ndarray, 
+    mask:np.ndarray,
     source_file: str,
-    n_rad_bins: Union[int,None] = None,
+    scale: Union[tuple,None] = None,
+    n_XY_bins: Union[int,None] = None,
     n_zernike: Union[int,None] = None,
+    include_contact_dist: bool = True
 ) -> int:
     """
     get summary and all cross stats between organelles `a` and `b`
-    calls `get_org_metrics_3D`
+    calls `get_summary_stats_3D`
+    order of intensity measurements in the regions dataframe is the same as the order of organelle names provided in the organelle_names list
     """
+    start = time.time()
     count = 0
-    org_stats_tabs = []
+    ####################
+    # collect individual organelle measurements, 
+    # the organelle contacts associated the that organelle, 
+    # and total organelle distribution measurements
+    # for each organelle
+    ####################
+    org_tabs = []
+    rps = []
+    dist_tabs = []
+    XY_bins = []
+
+    # zern_bins = []
     for j, target in enumerate(organelle_names):
-        org_img = intensities[j]        
-        org_obj = _assert_uint16_labels(organelles[j])
+        org_img = intensities[j]
+        if target == 'ER':
+            org_obj = (organelles[j] > 0).astype(np.uint16)
+        else:
+            org_obj = organelles[j]
 
-        # A_stats_tab, rp = get_simple_stats_3D(A,mask)
-        a_stats_tab, rp = get_org_metrics_3D(org_obj, org_img, organelle_mask)
-        a_stats_tab.insert(loc=0,column='organelle',value=target )
-        a_stats_tab.insert(loc=0,column='ID',value=source_file.stem )
+        ####################
+        # measure individual organelle and cell region metrics
+        ####################
+        org_metrics, rp = get_org_metrics_3D(segmentation_img=org_obj, 
+                                             intensity_img=org_img, 
+                                             mask=mask,
+                                             scale=scale)
+        org_metrics.insert(loc=0,column='organelle',value=target)
 
-        # add the touches for all other organelles
-        # loop over Bs
-        merged_tabs = []
+        ####################
+        # collect organelles in contact with this organelle
+        ####################
         for i, nmi in enumerate(organelle_names):
             if i != j:
-                # get overall stats of intersection
-                # print(f"  b = {nmi}")
-                count += 1
-                # add the list of touches
-                b = _assert_uint16_labels(organelles[i])
-
+                if target == 'ER':
+                    b = (organelles[i] > 0).astype(np.uint16)
+                else:
+                    b = organelles[i]
+            
                 ov = []
                 b_labs = []
                 labs = []
-                for idx, lab in enumerate(a_stats_tab["label"]):  # loop over A_objects
+                for idx, lab in enumerate(org_metrics["label"]):
                     xyz = tuple(rp[idx].coords.T)
                     cmp_org = b[xyz]
                     
-                    # total number of overlapping pixels
-                    overlap = sum(cmp_org > 0)
-                    # overlap?
+                    # total area (in voxels or real world units) where these two orgs overlap within the cell
+                    if scale != None:
+                        overlap = sum(cmp_org > 0)*scale[0]*scale[1]*scale[2]
+                    else:
+                        # total number of overlapping pixels
+                        overlap = sum(cmp_org > 0)
+                        # overlap?
+                    
+                    # which b organelles are involved in that overlap
                     labs_b = cmp_org[cmp_org > 0]
                     b_js = np.unique(labs_b).tolist()
 
                     # if overlap > 0:
-                    labs.append(lab)
+                    labs.append(lab) # labs.append(lab)
                     ov.append(overlap)
                     b_labs.append(b_js)
+                org_metrics[f"{nmi}_overlap"] = ov
+                org_metrics[f"{nmi}_labels"] = b_labs 
 
-                cname = organelle_to_colname[nmi]
-                # add organelle B columns to A_stats_tab
-                a_stats_tab[f"{cname}_overlap"] = ov
-                a_stats_tab[f"{cname}_labels"] = b_labs  # might want to make this easier for parsing later
+        ####################
+        # measure organelle distribution 
+        ####################
+        XY_org_distribution ,zernike_org_distribution, XY_bin_masks = get_XY_dist_metrics(cellmask_obj=mask, # TODO: add output for zernike masks
+                                                                 nuclei_obj=dist_centering_obj,
+                                                                 organelle_obj=org_obj,
+                                                                 organelle_name=target,
+                                                                 num_bins=n_XY_bins,
+                                                                 zernike_degrees=n_zernike)
 
-                #####  2  ###########
-                # get cross_stats
-
-                cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask) 
-                shell_cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask, use_shell_a=True)
-                            
-                # cross_tab["organelle_b"]=nmi
-                # shell_cross_tab["organelle_b"]=nmi
-                #  Merge cross_tabs and shell_cross_tabs 
-                # merged_tab = pd.merge(cross_tab,shell_cross_tab, on="label_")
-                merged_tab = pd.concat([cross_tab,shell_cross_tab])
-                merged_tab.insert(loc=0,column='organelle_b',value=nmi )
-
-                merged_tabs.append( merged_tab )
-
-
-        #  Now append the 
-        # csv_path = out_data_path / f"{source_file.stem}-{target}_shellX{nmi}-stats.csv"
-        # e_stats_tab.to_csv(csv_path)
-        # stack these tables for each organelle
-        crossed_tab = pd.concat(merged_tabs)
-        # csv_path = out_data_path / f"{source_file.stem}-{target}X{nmi}-stats.csv"
-        # stats_tab.to_csv(csv_path)
-        crossed_tab.insert(loc=0,column='organelle',value=target )
-        crossed_tab.insert(loc=0,column='ID',value=source_file.stem )
-
-        # now get radial stats
-        rad_stats,z_stats, _ = get_radial_stats(        
-                cellmask_obj,
-                organelle_mask,
-                org_obj,
-                org_img,
-                target,
-                nuclei_obj,
-                n_rad_bins,
-                n_zernike
-                )
-
-        d_stats = get_depth_stats(        
-                cellmask_obj,
-                organelle_mask,
-                org_obj,
-                org_img,
-                target,
-                nuclei_obj
-                )
+        Z_org_distribution = get_Z_dist_metrics(cellmask_obj=mask, 
+                                            organelle_obj=org_obj,
+                                            organelle_name=target,
+                                            nuclei_obj=dist_centering_obj)
       
-        proj_stats = pd.merge(rad_stats, z_stats,on=["organelle","mask"])
-        proj_stats = pd.merge(proj_stats, d_stats,on=["organelle","mask"])
-        proj_stats.insert(loc=0,column='ID',value=source_file.stem )
+        org_distribution_metrics = pd.merge(XY_org_distribution, zernike_org_distribution,on=["organelle"])
+        org_distribution_metrics = pd.merge(org_distribution_metrics, Z_org_distribution,on=["organelle"])
+
+        org_tabs.append(org_metrics)
+        rps.append(rp)
+        dist_tabs.append(org_distribution_metrics)
+        XY_bins.append(XY_bin_masks)
+        # zern_bins.append(zernike_masks)
+    
+    ####################
+    # measure individual organelle and cell region metrics
+    ####################
+    raw_image = np.stack(intensities)
+    region_metrics = get_region_metrics_3D(region_segs=regions, 
+                                        region_names=region_names,
+                                        intensity_img=raw_image,
+                                        mask=mask)
+
+    ####################
+    # collect non-redundant contact metrics
+    #  TODO: figure out how to add the shell measurements as new columns, not rows    
+    ####################
+    contact_combos = list(itertools.combinations(organelle_names, 2))
+    contact_tabs = []
+    for pair in contact_combos:
+        a_name = pair[0]
+        b_name = pair[1]
+
+        i = organelle_names.index(a_name)
+        j = organelle_names.index(b_name)
+
+        a = organelles[i] # org_obj
+        b = organelles[j]
+
+        if include_contact_dist == True:
+            contact_tab, contact_XY_dist, contact_Zern_dist, contact_Z_dist = get_contact_metrics_3D(a, a_name, b, b_name, mask, 
+                                                                                                     False, True, dist_centering_obj)
+            
+            contact_dist_metrics = pd.merge(contact_XY_dist, contact_Zern_dist,on=["organelle"])
+            contact_dist_metrics = pd.merge(contact_dist_metrics, contact_Z_dist,on=["organelle"])
+        else:
+            contact_tab = get_contact_metrics_3D(a, a_name, b, b_name, mask, False)
+            
+        contact_tabs.append(contact_tab)
+        dist_tabs.append(contact_dist_metrics)
+
+    ####################
+    # combine all tabs into one table per type:
+    ####################
+    final_org_tab = pd.concat(org_tabs, ignore_index=True)
+    final_org_tab.insert(loc=0,column='image_name',value=source_file.stem )
+
+    final_contact_tab = pd.concat(contact_tabs, ignore_index=True)
+    final_contact_tab.insert(loc=0,column='image_name',value=source_file.stem )
+
+    combined_dist_tab = pd.concat(dist_tabs, ignore_index=True)
+    combined_dist_tab.insert(loc=0,column='image_name',value=source_file.stem )
+
+    region_metrics.insert(loc=0,column='image_name',value=source_file.stem )
+
+    end = time.time()
+    print(f"It took {(end-start)/60} minutes to quantify one image.")
+    return final_org_tab, final_contact_tab, combined_dist_tab, region_metrics
 
 
-        # write out files... 
-        # org_stats_tabs.append(A_stats_tab)
-        csv_path = out_data_path / f"{source_file.stem}-{target}-stats.csv"
-        a_stats_tab.to_csv(csv_path)
+# def make_organelle_stat_tables(
+#     organelle_names: List[str],
+#     organelles: List[np.ndarray],
+#     intensities: List[np.ndarray],
+#     nuclei_obj:np.ndarray, 
+#     cellmask_obj:np.ndarray,
+#     organelle_mask: np.ndarray, 
+#     out_data_path: Path, 
+#     source_file: str,
+#     n_rad_bins: Union[int,None] = None,
+#     n_zernike: Union[int,None] = None,
+# ) -> int:
+#     """
+#     get summary and all cross stats between organelles `a` and `b`
+#     calls `get_org_metrics_3D`
+#     """
+#     count = 0
+#     org_stats_tabs = []
+#     for j, target in enumerate(organelle_names):
+#         org_img = intensities[j]        
+#         org_obj = _assert_uint16_labels(organelles[j])
 
-        csv_path = out_data_path / f"{source_file.stem}-{target}-cross-stats.csv"
-        crossed_tab.to_csv(csv_path)
+#         # A_stats_tab, rp = get_simple_stats_3D(A,mask)
+#         a_stats_tab, rp = get_org_metrics_3D(org_obj, org_img, organelle_mask)
+#         a_stats_tab.insert(loc=0,column='organelle',value=target )
+#         a_stats_tab.insert(loc=0,column='ID',value=source_file.stem )
 
-        csv_path = out_data_path / f"{source_file.stem}-{target}-proj-stats.csv"
-        proj_stats.to_csv(csv_path)
+#         # add the touches for all other organelles
+#         # loop over Bs
+#         merged_tabs = []
+#         for i, nmi in enumerate(organelle_names):
+#             if i != j:
+#                 # get overall stats of intersection
+#                 # print(f"  b = {nmi}")
+#                 count += 1
+#                 # add the list of touches
+#                 b = _assert_uint16_labels(organelles[i])
 
-        count += 1
+#                 ov = []
+#                 b_labs = []
+#                 labs = []
+#                 for idx, lab in enumerate(a_stats_tab["label"]):  # loop over A_objects
+#                     xyz = tuple(rp[idx].coords.T)
+#                     cmp_org = b[xyz]
+                    
+#                     # total number of overlapping pixels
+#                     overlap = sum(cmp_org > 0)
+#                     # overlap?
+#                     labs_b = cmp_org[cmp_org > 0]
+#                     b_js = np.unique(labs_b).tolist()
 
-    print(f"dumped {count}x3 organelle stats ({organelle_names}) csvs")
-    return count
+#                     # if overlap > 0:
+#                     labs.append(lab)
+#                     ov.append(overlap)
+#                     b_labs.append(b_js)
+
+#                 cname = organelle_to_colname[nmi]
+#                 # add organelle B columns to A_stats_tab
+#                 a_stats_tab[f"{cname}_overlap"] = ov
+#                 a_stats_tab[f"{cname}_labels"] = b_labs  # might want to make this easier for parsing later
+
+#                 #####  2  ###########
+#                 # get cross_stats
+
+#                 cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask) 
+#                 shell_cross_tab = get_contact_metrics_3D(org_obj, b, organelle_mask, use_shell_a=True)
+                            
+#                 # cross_tab["organelle_b"]=nmi
+#                 # shell_cross_tab["organelle_b"]=nmi
+#                 #  Merge cross_tabs and shell_cross_tabs 
+#                 # merged_tab = pd.merge(cross_tab,shell_cross_tab, on="label_")
+#                 merged_tab = pd.concat([cross_tab,shell_cross_tab])
+#                 merged_tab.insert(loc=0,column='organelle_b',value=nmi )
+
+#                 merged_tabs.append( merged_tab )
 
 
-def dump_all_stats_tables(int_path: Union[Path,str], 
-                   out_path: Union[Path, str], 
-                   raw_path: Union[Path,str], 
-                   organelle_names: List[str]= ["nuclei","golgi","peroxi"], 
-                   organelle_chs: List[int]= [NUC_CH,GOLGI_CH, PEROX_CH], 
-                    ) -> int :
+#         #  Now append the 
+#         # csv_path = out_data_path / f"{source_file.stem}-{target}_shellX{nmi}-stats.csv"
+#         # e_stats_tab.to_csv(csv_path)
+#         # stack these tables for each organelle
+#         crossed_tab = pd.concat(merged_tabs)
+#         # csv_path = out_data_path / f"{source_file.stem}-{target}X{nmi}-stats.csv"
+#         # stats_tab.to_csv(csv_path)
+#         crossed_tab.insert(loc=0,column='organelle',value=target )
+#         crossed_tab.insert(loc=0,column='ID',value=source_file.stem )
+
+#         # now get radial stats
+#         rad_stats,z_stats, _ = get_radial_stats(        
+#                 cellmask_obj,
+#                 organelle_mask,
+#                 org_obj,
+#                 org_img,
+#                 target,
+#                 nuclei_obj,
+#                 n_rad_bins,
+#                 n_zernike
+#                 )
+
+#         d_stats = get_depth_stats(        
+#                 cellmask_obj,
+#                 organelle_mask,
+#                 org_obj,
+#                 org_img,
+#                 target,
+#                 nuclei_obj
+#                 )
+      
+#         proj_stats = pd.merge(rad_stats, z_stats,on=["organelle","mask"])
+#         proj_stats = pd.merge(proj_stats, d_stats,on=["organelle","mask"])
+#         proj_stats.insert(loc=0,column='ID',value=source_file.stem )
+
+
+#         # write out files... 
+#         # org_stats_tabs.append(A_stats_tab)
+#         csv_path = out_data_path / f"{source_file.stem}-{target}-stats.csv"
+#         a_stats_tab.to_csv(csv_path)
+
+#         csv_path = out_data_path / f"{source_file.stem}-{target}-cross-stats.csv"
+#         crossed_tab.to_csv(csv_path)
+
+#         csv_path = out_data_path / f"{source_file.stem}-{target}-proj-stats.csv"
+#         proj_stats.to_csv(csv_path)
+
+#         count += 1
+
+#     print(f"dumped {count}x3 organelle stats ({organelle_names}) csvs")
+#     return count
+
+
+def _batch_process_quantification(out_file_prefix: str,
+                                  seg_path: Union[Path,str],
+                                  out_path: Union[Path, str], 
+                                  raw_path: Union[Path,str], 
+                                  raw_file_type: str,
+                                  organelle_names: List[str], 
+                                  organelle_chs: List[int], 
+                                  region_names: List[str],
+                                  seg_suffix: Union[str, None] = None,
+                                  scale: bool = True,
+                                  n_XY_bins: Union[int,None] = 5,
+                                  n_zernike: Union[int,None] = 9,
+                                  include_contact_dist: bool = True
+                                    ) -> int :
     """  
     TODO: add loggin instead of printing
         append tiffcomments with provenance
-    """
 
-    
+    organelle_names - should match the file suffix; I think the order will specify the order in the csv files
+        
+    """
+    start = time.time()
     if isinstance(raw_path, str): raw_path = Path(raw_path)
-    if isinstance(int_path, str): int_path = Path(int_path)
+    if isinstance(seg_path, str): seg_path = Path(seg_path)
     if isinstance(out_path, str): out_path = Path(out_path)
     
-    img_file_list = list_image_files(raw_path,".czi")
+    img_file_list = list_image_files(raw_path,raw_file_type)
 
     if not Path.exists(out_path):
         Path.mkdir(out_path)
         print(f"making {out_path}")
+    
+    count = 0
+
+    org_tabs = []
+    contact_tabs = []
+    dist_tabs = []
+    region_tabs = []
+    
+    segs_to_collect = organelle_names + region_names
+
+    if scale == True:
+        for img_f in img_file_list:
+            count = count + 1
+            filez = find_segmentation_tiff_files(img_f, segs_to_collect, seg_path, seg_suffix)
+            img_data, meta_dict = read_czi_image(filez["raw"])
+            scale = meta_dict['scale'] # this will only work if the scale can be pulled from the metadata this way
+
+            # create intensities from raw as list
+            intensities = [img_data[ch] for ch in organelle_chs]
+
+            # load regions
+            regions = []
+            for name in region_names:
+                mask = read_tiff_image(filez[name])
+                regions.append(mask)
+
+            nuc_mask = regions[region_names.index('nuc')]
+            cell_mask = regions[region_names.index('cell')]
+
+            # load organelles as list
+            organelles = [read_tiff_image(filez[org]) for org in organelle_names]
+
+            if scale == True:
+                org_metrics, contact_metrics, dist_metrics, region_metrics = make_all_metrics_tables(organelle_names=organelle_names,
+                                                                                    organelles=organelles,
+                                                                                    intensities=intensities,
+                                                                                    regions=regions,
+                                                                                    region_names=region_names,
+                                                                                    dist_centering_obj=nuc_mask, 
+                                                                                    mask=cell_mask,
+                                                                                    source_file=img_f,
+                                                                                    scale=scale,
+                                                                                    n_XY_bins=n_XY_bins,
+                                                                                    n_zernike=n_zernike,
+                                                                                    include_contact_dist=include_contact_dist)
+            else:
+                org_metrics, contact_metrics, dist_metrics, region_metrics = make_all_metrics_tables(organelle_names=organelle_names,
+                                                                                    organelles=organelles,
+                                                                                    intensities=intensities,
+                                                                                    regions=regions,
+                                                                                    region_names=region_names,
+                                                                                    dist_centering_obj=nuc_mask, 
+                                                                                    mask=cell_mask,
+                                                                                    source_file=img_f,
+                                                                                    n_XY_bins=n_XY_bins,
+                                                                                    n_zernike=n_zernike,
+                                                                                    include_contact_dist=include_contact_dist)
+            org_tabs.append(org_metrics)
+            contact_tabs.append(contact_metrics)
+            dist_tabs.append(dist_metrics)
+            region_tabs.append(region_metrics)
+            end2 = time.time()
+            print(f"Completed processing for {count} images in {(end2-start)/60} mins.")
+
+    final_org = pd.concat(org_tabs, ignore_index=True)
+    final_contact = pd.concat(contact_tabs, ignore_index=True)
+    final_dist = pd.concat(dist_tabs, ignore_index=True)
+    final_region = pd.concat(region_tabs, ignore_index=True)
+
+    org_csv_path = out_path / f"{out_file_prefix}organelles.csv"
+    final_org.to_csv(org_csv_path)
+
+    contact_csv_path = out_path / f"{out_file_prefix}contacts.csv"
+    final_contact.to_csv(contact_csv_path)
+
+    dist_csv_path = out_path / f"{out_file_prefix}distributions.csv"
+    final_dist.to_csv(dist_csv_path)
+
+    region_csv_path = out_path / f"{out_file_prefix}regions.csv"
+    final_region.to_csv(region_csv_path)
+
+    end = time.time()
+    print(f"Quantification for {count} files is COMPLETE! Files saved to '{out_data_path}'.")
+    print(f"It took {(end - start)/60} minutes to quantify these files.")
+    return count
+
+
+# def dump_all_stats_tables(int_path: Union[Path,str], 
+#                    out_path: Union[Path, str], 
+#                    raw_path: Union[Path,str], 
+#                    organelle_names: List[str]= ["nuclei","golgi","peroxi"], 
+#                    organelle_chs: List[int]= [NUC_CH,GOLGI_CH, PEROX_CH], 
+#                     ) -> int :
+#     """  
+#     TODO: add loggin instead of printing
+#         append tiffcomments with provenance
+#     """
+
+    
+#     if isinstance(raw_path, str): raw_path = Path(raw_path)
+#     if isinstance(int_path, str): int_path = Path(int_path)
+#     if isinstance(out_path, str): out_path = Path(out_path)
+    
+#     img_file_list = list_image_files(raw_path,".czi")
+
+#     if not Path.exists(out_path):
+#         Path.mkdir(out_path)
+#         print(f"making {out_path}")
         
-    for img_f in img_file_list:
-        filez = find_segmentation_tiff_files(img_f, organelle_names, int_path)
-        img_data,meta_dict = read_czi_image(filez["raw"])
+#     for img_f in img_file_list:
+#         filez = find_segmentation_tiff_files(img_f, organelle_names, int_path)
+#         img_data,meta_dict = read_czi_image(filez["raw"])
 
-        # load organelles and masks
-        cyto_mask = read_tiff_image(filez["cyto"])
-        cellmask_obj = read_tiff_image(filez["cell"])
+#         # load organelles and masks
+#         cyto_mask = read_tiff_image(filez["cyto"])
+#         cellmask_obj = read_tiff_image(filez["cell"])
 
 
 
-        # create intensities from raw as list
-        intensities = [img_data[ch] for ch in organelle_chs]
+#         # create intensities from raw as list
+#         intensities = [img_data[ch] for ch in organelle_chs]
 
-        # load organelles as list
-        organelles = [read_tiff_image(filez[org]) for org in organelle_names]
+#         # load organelles as list
+#         organelles = [read_tiff_image(filez[org]) for org in organelle_names]
         
-        #get mask (cyto_mask)
-        nuclei_obj = organelles[ organelle_names.index("nuc") ]
+#         #get mask (cyto_mask)
+#         nuclei_obj = organelles[ organelle_names.index("nuc") ]
 
-        n_files = make_organelle_stat_tables(organelle_names, 
-                                      organelles,
-                                      intensities, 
-                                      nuclei_obj,
-                                      cellmask_obj,
-                                      cyto_mask, 
-                                      out_path, 
-                                      img_f,
-                                      n_rad_bins=5,
-                                      n_zernike=9)
+#         n_files = make_organelle_stat_tables(organelle_names, 
+#                                       organelles,
+#                                       intensities, 
+#                                       nuclei_obj,
+#                                       cellmask_obj,
+#                                       cyto_mask, 
+#                                       out_path, 
+#                                       img_f,
+#                                       n_rad_bins=5,
+#                                       n_zernike=9)
 
-    return n_files
+#     return n_files
+
+
 
 
 

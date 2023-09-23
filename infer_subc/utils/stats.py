@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 from skimage.measure import regionprops_table, regionprops, mesh_surface_area, marching_cubes, label
 from skimage.morphology import binary_erosion
@@ -17,8 +18,7 @@ from infer_subc.core.img import apply_mask
 import pandas as pd
 
 def _my_props_to_dict(
-    rp, label_image, intensity_image=None, properties=("label", "area", "centroid", "bbox"), extra_properties=None
-):
+    rp, label_image, intensity_image=None, properties=("label", "area", "centroid", "bbox"), extra_properties=None, spacing: Union[tuple, None] = None):
     """
     helper for get_summary_stats
     """
@@ -32,7 +32,7 @@ def _my_props_to_dict(
         if intensity_image is not None:
             intensity_image = np.zeros(label_image.shape + intensity_image.shape[ndim:], dtype=intensity_image.dtype)
 
-        regions = regionprops(label_image, intensity_image=intensity_image, extra_properties=extra_properties)
+        regions = regionprops(label_image, intensity_image=intensity_image, extra_properties=extra_properties, spacing=spacing)
 
         out_d = _props_to_dict(regions, properties=properties, separator="-")
         return {k: v[:0] for k, v in out_d.items()}
@@ -75,12 +75,17 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     Additional measurement include:
     ['standard_deviation_intensity',
     'surface_area']
+
+    # NOTE: Sometimes, the area_convex measurement causes an error. It is a know issue that occurs when the objects 
+    # being measured have too few voxels. 
+    # Here's the github reference:https://github.com/scikit-image/scikit-image/issues/5363
+
     """
     ###################################################
     ## MASK THE ORGANELLE OBJECTS THAT WILL BE MEASURED
     ###################################################
     # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
-    input_labels = _assert_uint16_labels(segmentation_img)
+    input_labels = segmentation_img #_assert_uint16_labels(segmentation_img)
 
     # mask
     input_labels = apply_mask(segmentation_img, mask)
@@ -123,10 +128,15 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
                               label_image=input_labels, 
                               intensity_image=intensity_img, 
                               properties=properties, 
-                              extra_properties=extra_properties)
+                              extra_properties=extra_properties,
+                              spacing=scale)
 
     props_table = pd.DataFrame(props)
     props_table.rename(columns={"area": "volume"}, inplace=True)
+
+    if scale is not None:
+        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
+        props_table.insert(loc=1, column="scale", value=f"{round_scale}")
 
     ##################################################################
     ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
@@ -242,7 +252,103 @@ def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
         return label(inp > 0).astype(np.uint16)
     return inp
 
-def get_contact_metrics_3D(a, b, mask, use_shell_a=False):
+
+def get_region_metrics_3D(region_segs: List[np.ndarray], region_names: [str], intensity_img, mask: np.ndarray, scale: Union[tuple, None]=None) -> Tuple[Any, Any]:
+    """
+    Parameters
+    ------------
+    segmentation_img:
+        a list of all 3d np.ndarray images of the segemented cell regions (e.g., whole cell, nucleus, cytoplasm, etc.)
+    names:
+        names or nicknames for the cell regions being analyzed
+    intensity_img:
+        a 3d np.ndarray image of the "raw" florescence intensity the segmentation was based on; for our use, this is the raw image with all the channels
+        we will measure the intensity within the cell region being analyzed
+    mask:
+        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
+
+    Returns
+    -------------
+    pandas dataframe of containing regionprops measurements (columns) for each object in the segmentation image (rows) and the regionprops object
+
+    """
+
+    ##########################################
+    ## CREATE LIST OF REGIONPROPS MEASUREMENTS
+    ##########################################
+    # start with LABEL
+    properties = ["label"]
+    # add position
+    properties = properties + ["centroid", "bbox"]
+    # add area
+    properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
+    # add shape measurements
+    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length"] # ,"feret_diameter_max", "axis_minor_length"]
+    # add intensity values (used for quality checks)
+    properties = properties + ["min_intensity", "max_intensity", "mean_intensity"]
+
+    #######################
+    ## ADD EXTRA PROPERTIES
+    #######################
+    def standard_deviation_intensity(region, intensities):
+        return np.std(intensities[region])
+
+    extra_properties = [standard_deviation_intensity]
+
+    ##################
+    ## RUN REGIONPROPS
+    ##################
+    intensity_input = np.moveaxis(intensity_img, 0, -1)
+
+    props_stuff = []
+    for idx, nm in enumerate(region_names):
+        input_labels = apply_mask(region_segs[idx], mask)
+
+        rp = regionprops(input_labels, 
+                        intensity_image=intensity_input, 
+                        extra_properties=extra_properties, 
+                        spacing=scale)
+
+        props = _my_props_to_dict(rp, 
+                                label_image=input_labels, 
+                                intensity_image=intensity_input, 
+                                properties=properties, 
+                                extra_properties=extra_properties,
+                                spacing=scale)
+
+        props_table = pd.DataFrame(props)
+
+        surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props))
+        props_table.insert(11, "surface_area", surface_area_tab)
+        props_table.insert(0, "region", nm)
+
+        props_stuff.append(props_table)
+
+
+    ################################################################
+    ## ADD SKELETONIZATION OPTION FOR MEASURING LENGTH AND BRANCHING
+    ################################################################
+    #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
+    #         if x.volumetric:
+    #             y_data = skimage.morphology.skeletonize_3d(x_data)
+    # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
+
+    all_props_tab = pd.concat(props_stuff)
+    all_props_tab.rename(columns={"area": "volume"}, inplace=True)
+    if scale is not None:
+        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
+        all_props_tab.insert(loc=1, column="scale", value=f"{round_scale}")
+
+
+    return all_props_tab
+
+
+def get_contact_metrics_3D(a, a_name: str, 
+                           b, b_name:str, 
+                           mask, 
+                           use_shell_a=False, 
+                           include_distributions=False, 
+                           nucleus_for_dist: Union[np.ndarray, None]=None):
     """
     collect volumentric measurements of organelle `a` intersect organelle `b`
 
@@ -250,8 +356,12 @@ def get_contact_metrics_3D(a, b, mask, use_shell_a=False):
     ------------
     a:
         a 3D np.ndarray image of one segemented organelle
+    a_name: 
+        organelle a name or nickname for labeling in the csv
     b:
         a 3D np.ndarray image of a second segemented organelle
+    b_name: 
+        organelle b name or nickname for labeling in the csv
     mask:
         a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
     use_shell_a:
@@ -340,21 +450,40 @@ def get_contact_metrics_3D(a, b, mask, use_shell_a=False):
         if len(all_bs) != 1:
             print(f"we have an error.  bs-> {all_bs}")
 
-        label_a.append(all_as[0] )
-        label_b.append(all_bs[0] )
+        label_a.append(f"{all_as[0]}" )
+        label_b.append(f"{all_bs[0]}" )
         index_ab.append(f"{all_as[0]}_{all_bs[0]}")
 
 
-    props["label_A"] = label_a ## TODO: FIND A WAY TO INSERT ACTUAL ORGANELLE NAME, NOT "a" OR "b"
-    props["label_b"] = label_b
     props_table = pd.DataFrame(props)
     props_table.insert(11, "surface_area", surface_area_tab)
+    props_table.insert(1, "org_B_label", label_b)
+    props_table.insert(1, "org_B", b_name)
+    props_table.insert(1, "org_A_label", label_a)
+    props_table.insert(1, "org_A", a_name)
+    if use_shell_a is True:
+        props_table.insert(loc=0,column='shell',value=use_shell_a)
+    props_table.insert(1,column='X_label',value=index_ab)
     props_table.rename(columns={"area": "volume"}, inplace=True)
     props_table.drop(columns="slice", inplace=True)
-    props_table.insert(loc=0,column='label_',value=index_ab)
-    props_table.insert(loc=0,column='shell',value=use_shell_a)
 
-    return props_table
+    # added option to measure contact distributions too
+    if include_distributions is True:
+        XY_contact_dist, zernike_contact_dist, XY_bin_masks = get_XY_dist_metrics(cellmask_obj=mask, 
+                                                                                  organelle_obj=a_int_b,
+                                                                                  organelle_name=f"{a_name}X{b_name}",
+                                                                                  nuclei_obj=nucleus_for_dist,
+                                                                                  num_bins=5,
+                                                                                  zernike_degrees=9)
+        
+        Z_contact_dist = get_Z_dist_metrics(cellmask_obj=mask,
+                                            organelle_obj=a_int_b,
+                                            organelle_name=f"{a_name}X{b_name}",
+                                            nuclei_obj=nucleus_for_dist)
+
+        return props_table, XY_contact_dist, zernike_contact_dist, Z_contact_dist
+    else:
+        return props_table
 
 # def get_aXb_stats_3D(a, b, mask, use_shell_a=False):
 #     """
@@ -479,17 +608,15 @@ def size_similarly(labels, secondary):
     return result, mask
 
 
-
-
-def get_radial_stats(        
+def get_XY_dist_metrics(        
         cellmask_obj: np.ndarray,
-        organelle_mask: np.ndarray,
-        organelle_obj:np.ndarray,
-        organelle_img: np.ndarray,
-        organelle_name: str,
         nuclei_obj: np.ndarray,
-        n_rad_bins: Union[int,None] = None,
-        n_zernike: Union[int,None] = None,
+        organelle_obj:np.ndarray,
+        organelle_name: str,
+        num_bins: Union[int,None] = None,
+        center_obj_as_bin=True,
+        bins_from_center=False,
+        zernike_degrees: Union[int,None] = None,
         ):
 
     """
@@ -504,32 +631,77 @@ def get_radial_stats(
 
     """
 
+    cell_proj = create_masked_sum_projection(cellmask_obj)
+    nucleus_proj = create_masked_sum_projection(nuclei_obj,cellmask_obj.astype(bool))
+    org_proj = create_masked_sum_projection(organelle_obj,cellmask_obj.astype(bool))
+ 
 
-    # flattened
-    cellmask_proj = create_masked_sum_projection(cellmask_obj) #test_cell_proj_a
-    org_proj = create_masked_sum_projection(organelle_obj,organelle_mask.astype(bool)) #test_colgi_proj_a
-    img_proj = create_masked_sum_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
-
-    nucleus_proj = create_masked_sum_projection(nuclei_obj,cellmask_obj.astype(bool)) #test_nuc_proj_a
-
-    radial_stats, radial_bin_mask = get_XY_distribution(cellmask_proj=cellmask_proj,
-                                                        nucleus_proj=nucleus_proj,
-                                                        org_proj=org_proj,
-                                                        org_name=organelle_name,
-                                                        bin_count=n_rad_bins,
-                                                        center_obj_as_bin = True,
-                                                        bins_from_center = False)
+    XY_metrics, distribution_mask = get_concentric_distribution(cellmask_proj=cell_proj, 
+                                                        nucleus_proj=nucleus_proj, 
+                                                        org_proj=org_proj, 
+                                                        org_name=organelle_name, 
+                                                        bin_count=num_bins, 
+                                                        center_obj_as_bin=center_obj_as_bin,
+                                                        bins_from_center=bins_from_center)
     
-    zernike_stats = get_zernike_stats(
-                                      cellmask_proj=cellmask_proj, 
-                                      org_proj=org_proj, 
-                                      img_proj=img_proj, 
-                                      organelle_name=organelle_name, 
-                                      nucleus_proj=nucleus_proj, 
-                                      zernike_degree = n_zernike
-                                      )
+    zernike_metrics = get_zernike_metrics(cellmask_proj=cell_proj, 
+                                        org_proj=org_proj,
+                                        organelle_name=organelle_name, 
+                                        nucleus_proj=nucleus_proj, 
+                                        zernike_degree=zernike_degrees)
+    
 
-    return radial_stats,zernike_stats,radial_bin_mask
+    return XY_metrics, zernike_metrics, distribution_mask #eventually add zerinke_bin_mask too
+
+# def get_radial_stats(        
+#         cellmask_obj: np.ndarray,
+#         organelle_mask: np.ndarray,
+#         organelle_obj:np.ndarray,
+#         organelle_img: np.ndarray,
+#         organelle_name: str,
+#         nuclei_obj: np.ndarray,
+#         n_rad_bins: Union[int,None] = None,
+#         n_zernike: Union[int,None] = None,
+#         ):
+
+#     """
+#     Params
+
+
+#     Returns
+#     -----------
+#     rstats table of radial distributions
+#     zstats table of zernike magnitudes and phases
+#     rad_bins image of the rstats bins over the cellmask_obj 
+
+#     """
+
+
+#     # flattened
+#     cellmask_proj = create_masked_sum_projection(cellmask_obj) #test_cell_proj_a
+#     org_proj = create_masked_sum_projection(organelle_obj,organelle_mask.astype(bool)) #test_colgi_proj_a
+#     img_proj = create_masked_sum_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
+
+#     nucleus_proj = create_masked_sum_projection(nuclei_obj,cellmask_obj.astype(bool)) #test_nuc_proj_a
+
+#     radial_stats, radial_bin_mask = get_XY_distribution(cellmask_proj=cellmask_proj,
+#                                                         nucleus_proj=nucleus_proj,
+#                                                         org_proj=org_proj,
+#                                                         org_name=organelle_name,
+#                                                         bin_count=n_rad_bins,
+#                                                         center_obj_as_bin = True,
+#                                                         bins_from_center = False)
+    
+#     zernike_stats = get_zernike_stats(
+#                                       cellmask_proj=cellmask_proj, 
+#                                       org_proj=org_proj, 
+#                                       img_proj=img_proj, 
+#                                       organelle_name=organelle_name, 
+#                                       nucleus_proj=nucleus_proj, 
+#                                       zernike_degree = n_zernike
+#                                       )
+
+#     return radial_stats,zernike_stats,radial_bin_mask
     
 def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep_nuc_bins):
     """
@@ -627,7 +799,171 @@ def get_normalized_distance_and_mask(labels, center_objects, center_on_nuc, keep
     normalized_distance[good_mask] = d_from_center[good_mask] / ( total_distance[good_mask] + 0.001 )
     return normalized_distance, good_mask, i_center, j_center
 
-def get_XY_distribution(
+# def get_XY_distribution(
+#         cellmask_proj: np.ndarray,
+#         nucleus_proj: np.ndarray,
+#         org_proj: np.ndarray,
+#         org_name: str,
+#         bin_count: Union[int, None] = 5,
+#         center_obj_as_bin: bool = True,
+#         bins_from_center:bool = False
+#     ):
+#     """
+#     Based on CellProfiler's measureobjectintensitydistribution. Measure the distribution of segmented objects within a masked area. 
+#     In our case, we will usually utilize this function to measure the amount of an organelle within the cell.
+#     Radial bins are created out from a center point, usually the nucleus edge.
+
+#     Parameters
+#     ------------
+#     cellmask_proj: np.ndarray
+#         a sum projection of the segmented cell area where the "intensity" value of each pixel is equal to the number of z slices where the binary cell mask is True
+#     nucleus_proj: np.ndarray
+#         a sum projection of the segmented nucleus area where the "intensity" value of each pixel is equal to the number of z slices where the binary nucleus mask is True
+#     org_proj: np.ndarray,
+#         a sum projection of the segmented organelle area where the "intensity" value of each pixel is equal to the number of z slices where the binary organelle mask is True
+#     org_name: str,
+#         the name or nickname of your organelle; used for labeling columns in the dataframe
+#     bin_count: Union[int, None] = 5,
+#         the number of bins to create within the cell mask
+#     center_obj_as_bin: bool = True,
+#         True = include the centering object area when creating the bins
+#         False = do not include the centering object area when creating the bins
+#     bins_from_center:bool = False
+#         True = distribute the bins from the center of the centering object
+#     masked
+
+
+#     Returns
+#     -------------
+#     returns one statistics table (pd.DataFrame) + bin_array (np.ndarray) image
+#     """
+
+#     # other parameters that will stay constant
+#     nobjects = 1
+
+#     # create binary arrays
+#     center_objects = nucleus_proj>0 
+#     cellmask = (cellmask_proj>0).astype(np.uint16)
+
+
+#     ################   ################
+#     ## define masks for computing distances
+#     ################   ################
+#     normalized_distance, good_mask, i_center, j_center = get_normalized_distance_and_mask(cellmask, center_objects, bins_from_center, center_obj_as_bin)
+    
+#     if normalized_distance is None:
+#         print('WTF!!  normalized_distance returned wrong')
+
+#     ################   ################
+#     ## get histograms
+#     ################   ################
+#     ngood_pixels = np.sum(good_mask)
+#     good_labels = cellmask[good_mask]
+
+#     # protect against None normaized_distances
+#     bin_array = (normalized_distance * bin_count).astype(int)
+#     bin_array[bin_array > bin_count] = bin_count # shouldn't do anything
+
+#     #                 (    i          ,         j              )
+#     labels_and_bins = (good_labels - 1, bin_array[good_mask])
+
+#     #                coo_matrix( (             data,             (i, j)    ), shape=                      )
+#     histogram_cmsk = coo_matrix( (cellmask_proj[good_mask], labels_and_bins), shape=(nobjects, bin_count) ).toarray()
+#     histogram_org = coo_matrix(  (org_proj[good_mask],      labels_and_bins), shape=(nobjects, bin_count) ).toarray()
+
+#     bin_array = (normalized_distance * bin_count).astype(int)
+
+#     sum_by_object_cmsk = np.sum(histogram_cmsk, 1) # flattened cellmask voxel count
+#     sum_by_object_org = np.sum(histogram_org, 1)  # organelle voxel count
+
+
+#     # DEPRICATE: since we are NOT computing object_i by object_i (individual organelle labels)
+#     # sum_by_object_per_bin = np.dstack([sum_by_object] * (bin_count + 1))[0]
+#     # fraction_at_distance = histogram / sum_by_object_per_bin
+
+#     # number of bins.
+#     number_at_distance = coo_matrix(( np.ones(ngood_pixels), labels_and_bins), (nobjects, bin_count)).toarray()
+
+#     # sicne we aren't breaking objects apart this is just ngood_pixels
+
+#     sum_by_object = np.sum(number_at_distance, 1)
+
+#     sum_by_object_per_bin = np.dstack([sum_by_object] * (bin_count))[0]
+#     fraction_at_bin = number_at_distance / sum_by_object_per_bin # sums to 1.0
+
+#     # object_mask = number_at_distance > 0
+#     # DEPRICATE:# not doing over multiple objects so don't need object mask.. or fractionals
+#     # mean_pixel_fraction = fraction_at_distance / ( fraction_at_bin + np.finfo(float).eps )
+#     # masked_fraction_at_distance = np.ma.masked_array( fraction_at_distance, ~object_mask )
+#     # masked_mean_pixel_fraction = np.ma.masked_array(mean_pixel_fraction, ~object_mask)
+
+#     ################   ################
+#     ## collect Anisotropy calculation.  + summarize
+#     ################   ################
+#     # Split each cell into eight wedges, then compute coefficient of variation of the wedges' mean intensities
+#     # in each ring. Compute each pixel's delta from the center object's centroid
+#     i, j = np.mgrid[0 : cellmask.shape[0], 0 : cellmask.shape[1]]
+#     imask = i[good_mask] > i_center[good_mask]
+#     jmask = j[good_mask] > j_center[good_mask]
+#     absmask = abs(i[good_mask] - i_center[good_mask]) > abs(j[good_mask] - j_center[good_mask])
+#     radial_index = (imask.astype(int) + jmask.astype(int) * 2 + absmask.astype(int) * 4)
+
+#     # return radial_index, labels, good_mask, bin_indexes
+#     stat_names =[]
+#     cv_cmsk = []
+#     cv_obj = []
+
+#     # collect the numbers from each "bin"
+#     for bin in range(bin_count):
+#         bin_mask = good_mask & (bin_array == bin)
+#         bin_pixels = np.sum(bin_mask)
+
+#         bin_labels = cellmask[bin_mask]
+
+#         bin_radial_index = radial_index[bin_array[good_mask] == bin]
+#         labels_and_radii = (bin_labels - 1, bin_radial_index)
+#         pixel_count = coo_matrix( (np.ones(bin_pixels), labels_and_radii), (nobjects, 8) ).toarray()
+
+#         radial_counts_cmsk = coo_matrix( (cellmask_proj[bin_mask], labels_and_radii), (nobjects, 8) ).toarray()
+#         radial_counts = coo_matrix( (org_proj[bin_mask], labels_and_radii), (nobjects, 8) ).toarray()
+#         # radial_values = coo_matrix( (img_proj[bin_mask], labels_and_radii), (nobjects, 8) ).toarray()
+
+#         # we might need the masked arrays for some organelles... but I think not. keeping for now
+#         mask = pixel_count == 0
+
+#         radial_means_cmsk = np.ma.masked_array(radial_counts_cmsk / pixel_count, mask)
+#         radial_cv_cmsk = np.std(radial_means_cmsk, 1) / np.mean(radial_means_cmsk, 1)
+#         radial_cv_cmsk[np.sum(~mask, 1) == 0] = 0
+#         radial_cv_cmsk.mask = np.sum(~mask, 1) == 0
+
+
+#         radial_means_obj = np.ma.masked_array(radial_counts / pixel_count, mask)
+#         radial_cv_obj = np.std(radial_means_obj, 1) / np.mean(radial_means_obj, 1)
+#         radial_cv_obj[np.sum(~mask, 1) == 0] = 0
+#         radial_cv_obj.mask = np.sum(~mask, 1) == 0
+
+#         bin_name = str(bin + 1) if bin > 0 else "1"
+
+#         stat_names.append(bin_name)
+#         cv_cmsk.append(float(np.mean(radial_cv_cmsk)))  #convert to float to make importing from csv more straightforward
+#         cv_obj.append(float(np.mean(radial_cv_obj)))
+    
+#     stats_dict={'organelle': org_name,
+#                 'mask': 'cell',
+#                 'radial_n_bins': bin_count,
+#                 'radial_bins': [stat_names],
+#                 'radial_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
+#                 'radial_org_vox_cnt': [histogram_org.squeeze().tolist()],
+#                 # 'radial_org_intensity': [histogram_img.squeeze().tolist()],
+#                 'radial_n_pix': [number_at_distance.squeeze().tolist()],
+#                 'radial_cm_cv':[cv_cmsk],
+#                 'radial_org_cv':[cv_obj]}
+
+#     # stats_tab = pd.DataFrame(statistics,columns=col_names)
+#     stats_tab = pd.DataFrame(stats_dict)  
+#     return stats_tab, bin_array
+
+def get_concentric_distribution(
         cellmask_proj: np.ndarray,
         nucleus_proj: np.ndarray,
         org_proj: np.ndarray,
@@ -777,15 +1113,13 @@ def get_XY_distribution(
         cv_obj.append(float(np.mean(radial_cv_obj)))
     
     stats_dict={'organelle': org_name,
-                'mask': 'cell',
-                'radial_n_bins': bin_count,
-                'radial_bins': [stat_names],
-                'radial_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
-                'radial_org_vox_cnt': [histogram_org.squeeze().tolist()],
-                # 'radial_org_intensity': [histogram_img.squeeze().tolist()],
-                'radial_n_pix': [number_at_distance.squeeze().tolist()],
-                'radial_cm_cv':[cv_cmsk],
-                'radial_org_cv':[cv_obj]}
+                'XY_n_bins': bin_count,
+                'XY_bins': [stat_names],
+                'XY_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
+                'XY_org_vox_cnt': [histogram_org.squeeze().tolist()],
+                'XY_n_pix': [number_at_distance.squeeze().tolist()],
+                'XY_cm_cv':[cv_cmsk],
+                'XY_org_cv':[cv_obj]}
 
     # stats_tab = pd.DataFrame(statistics,columns=col_names)
     stats_tab = pd.DataFrame(stats_dict)  
@@ -1008,11 +1342,9 @@ def create_masked_depth_projection(img_in:np.ndarray, mask:Union[np.ndarray, Non
     return img_out.sum(axis=(1,2))
 
 
-def get_depth_stats(        
+def get_Z_dist_metrics(        
         cellmask_obj: np.ndarray,
-        organelle_mask: np.ndarray,
         organelle_obj:np.ndarray,
-        organelle_img: np.ndarray,
         organelle_name: str,
         nuclei_obj: Union[np.ndarray, None],
         ):
@@ -1022,21 +1354,48 @@ def get_depth_stats(
 
     # flattened
     cellmask_proj = create_masked_depth_projection(cellmask_obj)
-    org_proj = create_masked_depth_projection(organelle_obj,organelle_mask.astype(bool))
-    img_proj = create_masked_depth_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
+    org_proj = create_masked_depth_projection(organelle_obj,cellmask_obj.astype(bool))
 
     nucleus_proj = create_masked_depth_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
     z_bins = [i for i in range(cellmask_obj.shape[0])]
 
     stats_tab = pd.DataFrame({'organelle':organelle_name,
-                            'mask':'cell',
-                            'n_z':cellmask_obj.shape[0],
-                            'z':[z_bins],
+                            'z_n':cellmask_obj.shape[0],
+                            'z_slice':[z_bins],
                             'z_cm_vox_cnt':[cellmask_proj.tolist()],
                             'z_org_vox_cnt':[org_proj.tolist()],
-                            'z_org_intensity':[img_proj.tolist()],
                             'z_nuc_vox_cnt':[nucleus_proj.tolist()]})
     return stats_tab
+
+# def get_depth_stats(        
+#         cellmask_obj: np.ndarray,
+#         organelle_mask: np.ndarray,
+#         organelle_obj:np.ndarray,
+#         organelle_img: np.ndarray,
+#         organelle_name: str,
+#         nuclei_obj: Union[np.ndarray, None],
+#         ):
+#     """
+
+#     """
+
+#     # flattened
+#     cellmask_proj = create_masked_depth_projection(cellmask_obj)
+#     org_proj = create_masked_depth_projection(organelle_obj,organelle_mask.astype(bool))
+#     img_proj = create_masked_depth_projection(organelle_img,organelle_mask.astype(bool), to_bool=False)
+
+#     nucleus_proj = create_masked_depth_projection(nuclei_obj,cellmask_obj.astype(bool)) if nuclei_obj is not None else None
+#     z_bins = [i for i in range(cellmask_obj.shape[0])]
+
+#     stats_tab = pd.DataFrame({'organelle':organelle_name,
+#                             'mask':'cell',
+#                             'n_z':cellmask_obj.shape[0],
+#                             'z':[z_bins],
+#                             'z_cm_vox_cnt':[cellmask_proj.tolist()],
+#                             'z_org_vox_cnt':[org_proj.tolist()],
+#                             'z_org_intensity':[img_proj.tolist()],
+#                             'z_nuc_vox_cnt':[nucleus_proj.tolist()]})
+#     return stats_tab
     
 
 # Zernicke routines.  inspired by cellprofiler, but heavily simplified
@@ -1076,13 +1435,49 @@ def zernike_polynomial(labels, zernike_is):
     
 
    
+# def get_zernike_metrics(        
+#         cellmask_proj: np.ndarray,
+#         nucleus_proj: Union[np.ndarray, None], 
+#         org_proj: np.ndarray,
+#         organelle_name: str,
+#         zernike_degree: int = 9 
+#         ):
+
+#     """
+    
+#     """
+
+#     labels = label(cellmask_proj>0) #extent as 0,1 rather than bool
+#     zernike_indexes = centrosome.zernike.get_zernike_indexes( zernike_degree + 1)
+
+
+#     z = zernike_polynomial(labels, zernike_indexes)
+
+#     z_cm = zernike_metrics(cellmask_proj, z)
+#     z_org = zernike_metrics(org_proj, z)
+#     z_nuc = zernike_metrics(nucleus_proj, z)
+
+
+#     # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)
+#     stats_tab = pd.DataFrame({'organelle':organelle_name,
+#                                 'mask':'cell',
+#                                 'zernike_n':[zernike_indexes[:,0].tolist()],
+#                                 'zernike_m':[zernike_indexes[:,1].tolist()],
+#                                 'zernike_cm_mag':[z_cm[0].tolist()],
+#                                 'zernike_cm_phs':[z_cm[1].tolist()],   
+#                                 'zernike_obj_mag':[z_org[0].tolist()],
+#                                 'zernike_obj_phs':[z_org[1].tolist()],
+#                                 'zernike_nuc_mag':[z_nuc[0].tolist()],
+#                                 'zernike_nuc_phs':[z_nuc[1].tolist()]})
+
+#     return stats_tab
+
 def get_zernike_metrics(        
         cellmask_proj: np.ndarray,
         nucleus_proj: Union[np.ndarray, None], 
         org_proj: np.ndarray,
         organelle_name: str,
-        zernike_degree: int = 9 
-        ):
+        zernike_degree: int = 9 ):
 
     """
     
@@ -1099,9 +1494,9 @@ def get_zernike_metrics(
     z_nuc = zernike_metrics(nucleus_proj, z)
 
 
+
     # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)
     stats_tab = pd.DataFrame({'organelle':organelle_name,
-                                'mask':'cell',
                                 'zernike_n':[zernike_indexes[:,0].tolist()],
                                 'zernike_m':[zernike_indexes[:,1].tolist()],
                                 'zernike_cm_mag':[z_cm[0].tolist()],
