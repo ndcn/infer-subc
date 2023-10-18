@@ -608,11 +608,12 @@ def size_similarly(labels, secondary):
     return result, mask
 
 
-def get_XY_dist_metrics(        
+def get_XY_distribution(        
         cellmask_obj: np.ndarray,
         nuclei_obj: np.ndarray,
         organelle_obj:np.ndarray,
         organelle_name: str,
+        scale: Union[tuple, None]=None,
         num_bins: Union[int,None] = None,
         center_obj_as_bin=True,
         bins_from_center=False,
@@ -621,6 +622,8 @@ def get_XY_dist_metrics(
 
     """
     Params
+    ----------
+
 
 
     Returns
@@ -636,22 +639,25 @@ def get_XY_dist_metrics(
     org_proj = create_masked_sum_projection(organelle_obj,cellmask_obj.astype(bool))
  
 
-    XY_metrics, distribution_mask = get_concentric_distribution(cellmask_proj=cell_proj, 
+    XY_metrics, dist_bin_mask, dist_wedge_mask = get_concentric_distribution(cellmask_proj=cell_proj, 
                                                         nucleus_proj=nucleus_proj, 
                                                         org_proj=org_proj, 
                                                         org_name=organelle_name, 
+                                                        scale=scale,
                                                         bin_count=num_bins, 
                                                         center_obj_as_bin=center_obj_as_bin,
                                                         bins_from_center=bins_from_center)
     
-    zernike_metrics = get_zernike_metrics(cellmask_proj=cell_proj, 
-                                        org_proj=org_proj,
-                                        organelle_name=organelle_name, 
-                                        nucleus_proj=nucleus_proj, 
-                                        zernike_degree=zernike_degrees)
-    
+    if zernike_degrees is not None:
+        zernike_metrics = get_zernike_metrics(cellmask_proj=cell_proj, 
+                                            org_proj=org_proj,
+                                            organelle_name=organelle_name, 
+                                            nucleus_proj=nucleus_proj, 
+                                            zernike_degree=zernike_degrees)
+        
+        XY_metrics = pd.merge(XY_metrics, zernike_metrics, on="object")
 
-    return XY_metrics, zernike_metrics, distribution_mask #eventually add zerinke_bin_mask too
+    return XY_metrics, dist_bin_mask, dist_wedge_mask 
 
 # def get_radial_stats(        
 #         cellmask_obj: np.ndarray,
@@ -968,6 +974,7 @@ def get_concentric_distribution(
         nucleus_proj: np.ndarray,
         org_proj: np.ndarray,
         org_name: str,
+        scale: Union[tuple, None]=None,
         bin_count: Union[int, None] = 5,
         center_obj_as_bin: bool = True,
         bins_from_center:bool = False
@@ -1072,6 +1079,9 @@ def get_concentric_distribution(
     absmask = abs(i[good_mask] - i_center[good_mask]) > abs(j[good_mask] - j_center[good_mask])
     radial_index = (imask.astype(int) + jmask.astype(int) * 2 + absmask.astype(int) * 4)
 
+    wedge_array = np.zeros_like(good_mask, dtype=int)
+    wedge_array[good_mask] = radial_index
+
     # return radial_index, labels, good_mask, bin_indexes
     stat_names =[]
     cv_cmsk = []
@@ -1112,7 +1122,7 @@ def get_concentric_distribution(
         cv_cmsk.append(float(np.mean(radial_cv_cmsk)))  #convert to float to make importing from csv more straightforward
         cv_obj.append(float(np.mean(radial_cv_obj)))
     
-    stats_dict={'organelle': org_name,
+    stats_dict={'object': org_name,
                 'XY_n_bins': bin_count,
                 'XY_bins': [stat_names],
                 'XY_cm_vox_cnt': [histogram_cmsk.squeeze().tolist()],
@@ -1123,7 +1133,22 @@ def get_concentric_distribution(
 
     # stats_tab = pd.DataFrame(statistics,columns=col_names)
     stats_tab = pd.DataFrame(stats_dict)  
-    return stats_tab, bin_array
+
+    if scale is not None:
+        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
+        stats_tab.insert(loc=1, column="scale", value=f"{round_scale}")
+
+        stats_tab['XY_cm_vol'] = [(histogram_cmsk * np.prod(scale)).squeeze()]
+        stats_tab['XY_org_vol'] = [(histogram_org * np.prod(scale)).squeeze()]
+        stats_tab['XY_n_area'] =  [(number_at_distance * np.prod(scale[1:])).squeeze()]
+
+        stats_tab = stats_tab.reindex(columns=['object', 'scale', 'XY_n_bins', 'XY_bins', 'XY_cm_vox_cnt',
+        'XY_org_vox_cnt', 'XY_n_pix', 'XY_cm_vol', 'XY_org_vol', 'XY_n_area', 'XY_cm_cv', 'XY_org_cv'])
+
+    else: 
+        stats_tab.insert(loc=2, column="scale", value=f"{tuple(np.ones(3))}")
+
+    return stats_tab, bin_array, wedge_array
 
 # def get_XY_distribution(
 #         cellmask_proj: np.ndarray,
@@ -1496,7 +1521,7 @@ def get_zernike_metrics(
 
 
     # nm_labels = [f"{n}_{m}" for (n, m) in (zernike_indexes)
-    stats_tab = pd.DataFrame({'organelle':organelle_name,
+    stats_tab = pd.DataFrame({'object':organelle_name,
                                 'zernike_n':[zernike_indexes[:,0].tolist()],
                                 'zernike_m':[zernike_indexes[:,1].tolist()],
                                 'zernike_cm_mag':[z_cm[0].tolist()],
