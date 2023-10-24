@@ -11,7 +11,7 @@ import pandas as pd
 from infer_subc.utils.stats import ( get_contact_metrics_3D, 
                     get_org_metrics_3D, 
                     get_simple_stats_3D, 
-                    get_XY_dist_metrics, 
+                    get_XY_distribution, 
                     get_Z_dist_metrics, 
                     _assert_uint16_labels,
                     get_region_metrics_3D)
