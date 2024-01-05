@@ -42,22 +42,28 @@ def _my_props_to_dict(
     return _props_to_dict(rp, properties=properties, separator="-")
 
 
-def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.ndarray, scale: Union[tuple, None]=None) -> Tuple[Any, Any]:
+def get_org_morphology_3D(segmentation_img: np.ndarray, 
+                           seg_name: str, 
+                           intensity_img, 
+                           mask: np.ndarray, 
+                           scale: Union[tuple, None]=None):
     """
     Parameters
     ------------
     segmentation_img:
-        a 3d np.ndarray image of the segemented organelles
+        a 3D (ZYX) np.ndarray of segmented objects 
+    seg_name: str
+        a name or nickname of the object being measured; this will be used for record keeping in the output table
     intensity_img:
-        a 3d np.ndarray image of the "raw" florescence intensity the segmentation was based on
+        a 3D (ZYX) np.ndarray contain gray scale values from the "raw" image the segmentation is based on )single channel)
     mask:
-        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
+        a 3D (ZYX) binary np.ndarray mask of the area to measure from
+    scale: tuple, optional
+        a tuple that contains the real world dimensions for each dimension in the image (Z, Y, X)
 
-    Returns
-    -------------
-    pandas dataframe of containing regionprops measurements (columns) for each object in the segmentation image (rows) and the regionprops object
 
-    Regionprops measurements included:
+    Regionprops measurements:
+    ------------------------
     ['label',
     'centroid',
     'bbox',
@@ -74,23 +80,25 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     'mean_intensity',
     'min_intensity']
 
-    Additional measurement include:
+    Additional measurements:
+    -----------------------
     ['standard_deviation_intensity',
     'surface_area']
 
-    # NOTE: Sometimes, the area_convex measurement causes an error. It is a know issue that occurs when the objects 
-    # being measured have too few voxels. 
-    # Here's the github reference:https://github.com/scikit-image/scikit-image/issues/5363
 
+    Returns
+    -------------
+    pandas dataframe of containing regionprops measurements (columns) for each object in the segmentation image (rows) and the regionprops object
+    
     """
     ###################################################
     ## MASK THE ORGANELLE OBJECTS THAT WILL BE MEASURED
     ###################################################
     # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
-    input_labels = segmentation_img #_assert_uint16_labels(segmentation_img)
+    input_labels = _assert_uint16_labels(segmentation_img)
 
     # mask
-    input_labels = apply_mask(segmentation_img, mask)
+    input_labels = apply_mask(input_labels, mask)
 
     ##########################################
     ## CREATE LIST OF REGIONPROPS MEASUREMENTS
@@ -105,7 +113,7 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
 
     # add shape measurements
-    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length"] # ,"feret_diameter_max", "axis_minor_length"]
+    properties = properties + ["extent", "euler_number", "solidity", "axis_major_length"] # ,"feret_diameter_max", "axis_minor_length"]
 
     # add intensity values (used for quality checks)
     properties = properties + ["min_intensity", "max_intensity", "mean_intensity"]
@@ -121,31 +129,29 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     ##################
     ## RUN REGIONPROPS
     ##################
-    rp = regionprops(input_labels, 
-                     intensity_image=intensity_img, 
-                     extra_properties=extra_properties, 
-                     spacing=scale)
-
-    props = _my_props_to_dict(rp, 
-                              label_image=input_labels, 
-                              intensity_image=intensity_img, 
-                              properties=properties, 
-                              extra_properties=extra_properties,
-                              spacing=scale)
+    props = regionprops_table(input_labels, 
+                           intensity_image=intensity_img, 
+                           properties=properties,
+                           extra_properties=extra_properties,
+                           spacing=scale)
 
     props_table = pd.DataFrame(props)
+    props_table.insert(0, "object", seg_name)
     props_table.rename(columns={"area": "volume"}, inplace=True)
 
     if scale is not None:
         round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
-        props_table.insert(loc=1, column="scale", value=f"{round_scale}")
+        props_table.insert(loc=2, column="scale", value=f"{round_scale}")
+    else: 
+        props_table.insert(loc=2, column="scale", value=f"{tuple(np.ones(segmentation_img.ndim))}") 
 
     ##################################################################
     ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
     ##################################################################
-    surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props))
+    surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props, scale))
 
-    props_table.insert(11, "surface_area", surface_area_tab)
+    props_table.insert(12, "surface_area", surface_area_tab)
+    props_table.insert(14, "SA_to_volume_ratio", props_table["surface_area"].div(props_table["volume"]))
 
     ################################################################
     ## ADD SKELETONIZATION OPTION FOR MEASURING LENGTH AND BRANCHING
@@ -155,7 +161,7 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
     #             y_data = skimage.morphology.skeletonize_3d(x_data)
     # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
 
-    return props_table, rp
+    return props_table
 
 
 # def get_summary_stats_3D(input_labels: np.ndarray, intensity_img, mask: np.ndarray) -> Tuple[Any, Any]:
@@ -221,7 +227,7 @@ def get_org_metrics_3D(segmentation_img: np.ndarray, intensity_img, mask: np.nda
 
 # creating a function to measure the surface area of each object. This function utilizes "marching_cubes" to generate a mesh (non-pixelated object)
 
-def surface_area_from_props(labels, props):
+def surface_area_from_props(labels, props, scale: Union[tuple,None]=None):
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
     # TODO: spacing = [1, 1, 1] # this is where we could deal with anisotropy in Z
@@ -235,10 +241,12 @@ def surface_area_from_props(labels, props):
             max(props["bbox-2"][index] - 1, 0) : min(props["bbox-5"][index] + 1, labels.shape[2]),
         ]
         volume = volume == lab
+        if scale is None:
+            scale=(1.0,) * labels.ndim
         verts, faces, _normals, _values = marching_cubes(
             volume,
             method="lewiner",
-            spacing=(1.0,) * labels.ndim,
+            spacing=scale,
             level=0,
         )
         surface_areas[index] = mesh_surface_area(verts, faces)
@@ -255,25 +263,66 @@ def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
     return inp
 
 
-def get_region_metrics_3D(region_segs: List[np.ndarray], region_names: [str], intensity_img, mask: np.ndarray, scale: Union[tuple, None]=None) -> Tuple[Any, Any]:
+def get_region_morphology_3D(region_seg: np.ndarray, 
+                              region_name: str,
+                              intensity_img: np.ndarray, 
+                              channel_names: [str],
+                              mask: np.ndarray, 
+                              scale: Union[tuple, None]=None) -> Tuple[Any, Any]:
     """
     Parameters
     ------------
-    segmentation_img:
-        a list of all 3d np.ndarray images of the segemented cell regions (e.g., whole cell, nucleus, cytoplasm, etc.)
-    names:
-        names or nicknames for the cell regions being analyzed
+    region_seg:
+        a 3D (ZYX) np.ndarray of segmented objects 
+    region_name: str
+        a name or nickname of the object being measured; this will be used for record keeping in the output table
     intensity_img:
-        a 3d np.ndarray image of the "raw" florescence intensity the segmentation was based on; for our use, this is the raw image with all the channels
-        we will measure the intensity within the cell region being analyzed
+        a 3D (ZYX) np.ndarray contain gray scale values from the "raw" image the segmentation is based on )single channel)
     mask:
-        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
+        a 3D (ZYX) binary np.ndarray mask of the area to measure from
+    scale: tuple, optional
+        a tuple that contains the real world dimensions for each dimension in the image (Z, Y, X)
+
+
+    Regionprops measurements:
+    ------------------------
+    ['label',
+    'centroid',
+    'bbox',
+    'area',
+    'equivalent_diameter',
+    'extent',
+    'feret_diameter_max',
+    'euler_number',
+    'convex_area',
+    'solidity',
+    'axis_major_length',
+    'axis_minor_length',
+    'max_intensity',
+    'mean_intensity',
+    'min_intensity']
+
+    Additional measurements:
+    -----------------------
+    ['standard_deviation_intensity',
+    'surface_area']
+
 
     Returns
     -------------
     pandas dataframe of containing regionprops measurements (columns) for each object in the segmentation image (rows) and the regionprops object
 
     """
+    if len(channel_names) != intensity_img.shape[0]:
+        ValueError("You have not provided a name for each channel in the intensity image. Make sure there is a channel name for each channel in the intensity image.")
+    
+    ###################################################
+    ## MASK THE REGION OBJECTS THAT WILL BE MEASURED
+    ###################################################
+    # in case we sent a boolean mask (e.g. cyto, nucleus, cellmask)
+    input_labels = _assert_uint16_labels(region_seg)
+
+    input_labels = apply_mask(input_labels, mask)
 
     ##########################################
     ## CREATE LIST OF REGIONPROPS MEASUREMENTS
@@ -285,7 +334,7 @@ def get_region_metrics_3D(region_segs: List[np.ndarray], region_names: [str], in
     # add area
     properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
     # add shape measurements
-    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length"] # ,"feret_diameter_max", "axis_minor_length"]
+    properties = properties + ["extent", "euler_number", "solidity", "axis_major_length"] # ,"feret_diameter_max", , "axis_minor_length"]
     # add intensity values (used for quality checks)
     properties = properties + ["min_intensity", "max_intensity", "mean_intensity"]
 
@@ -302,30 +351,42 @@ def get_region_metrics_3D(region_segs: List[np.ndarray], region_names: [str], in
     ##################
     intensity_input = np.moveaxis(intensity_img, 0, -1)
 
-    props_stuff = []
-    for idx, nm in enumerate(region_names):
-        input_labels = apply_mask(region_segs[idx], mask)
+    rp = regionprops(input_labels, 
+                    intensity_image=intensity_input, 
+                    extra_properties=extra_properties, 
+                    spacing=scale)
 
-        rp = regionprops(input_labels, 
-                        intensity_image=intensity_input, 
-                        extra_properties=extra_properties, 
-                        spacing=scale)
+    props = regionprops_table(label_image=input_labels, 
+                              intensity_image=intensity_input, 
+                              properties=properties, 
+                              extra_properties=extra_properties,
+                              spacing=scale)
 
-        props = _my_props_to_dict(rp, 
-                                label_image=input_labels, 
-                                intensity_image=intensity_input, 
-                                properties=properties, 
-                                extra_properties=extra_properties,
-                                spacing=scale)
+    props_table = pd.DataFrame(props)
+    props_table.insert(0, "object", region_name)
+    props_table.rename(columns={"area": "volume"}, inplace=True)
 
-        props_table = pd.DataFrame(props)
+    if scale is not None:
+        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
+        props_table.insert(loc=2, column="scale", value=f"{round_scale}")
+    else: 
+        props_table.insert(loc=2, column="scale", value=f"{tuple(np.ones(region_seg.ndim))}") 
 
-        surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props))
-        props_table.insert(11, "surface_area", surface_area_tab)
-        props_table.insert(0, "region", nm)
+    rename_dict = {}
+    for col in props_table.columns:
+        for idx, name in enumerate(channel_names):
+            if col.endswith(f"intensity-{idx}"):
+                rename_dict[f"{col}"] = f"{col[:-1]}{name}_ch"
 
-        props_stuff.append(props_table)
+    props_table = props_table.rename(columns=rename_dict)
 
+    ##################################################################
+    ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
+    ##################################################################
+    surface_area_tab = pd.DataFrame(surface_area_from_props(input_labels, props, scale))
+
+    props_table.insert(12, "surface_area", surface_area_tab)
+    props_table.insert(14, "SA_to_volume_ratio", props_table["surface_area"].div(props_table["volume"]))
 
     ################################################################
     ## ADD SKELETONIZATION OPTION FOR MEASURING LENGTH AND BRANCHING
@@ -335,45 +396,61 @@ def get_region_metrics_3D(region_segs: List[np.ndarray], region_names: [str], in
     #             y_data = skimage.morphology.skeletonize_3d(x_data)
     # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
 
-    all_props_tab = pd.concat(props_stuff)
-    all_props_tab.rename(columns={"area": "volume"}, inplace=True)
-    if scale is not None:
-        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
-        all_props_tab.insert(loc=1, column="scale", value=f"{round_scale}")
+    return props_table
 
 
-    return all_props_tab
-
-
-def get_contact_metrics_3D(a, a_name: str, 
-                           b, b_name:str, 
-                           mask, 
-                           use_shell_a=False, 
-                           include_distributions=False, 
-                           nucleus_for_dist: Union[np.ndarray, None]=None):
+def get_contact_metrics_3D(a: np.ndarray,
+                            a_name: str, 
+                            b: np.ndarray, 
+                            b_name:str, 
+                            mask: np.ndarray, 
+                            scale: Union[tuple, None]=None,
+                            include_dist:bool=False, 
+                            dist_centering_obj: Union[np.ndarray, None]=None,
+                            dist_num_bins: Union[int, None]=None,
+                            dist_zernike_degrees: Union[int, None]=None,
+                            dist_center_on: Union[bool, None]=None,
+                            dist_keep_center_as_bin: Union[bool, None]=None):
     """
     collect volumentric measurements of organelle `a` intersect organelle `b`
 
     Parameters
     ------------
-    a:
-        a 3D np.ndarray image of one segemented organelle
-    a_name: 
-        organelle a name or nickname for labeling in the csv
-    b:
-        a 3D np.ndarray image of a second segemented organelle
-    b_name: 
-        organelle b name or nickname for labeling in the csv
-    mask:
-        a 3d np.ndarray image of the cell mask (or other mask of choice); used to create a "single cell" analysis
-    use_shell_a:
-        creates a "shell" of organelle a to simulate just the membrane area of the organelle and the performs the overlaps; all the same measurements are carried out of the shell region
+    a: np.ndarray
+        3D (ZYX) np.ndarray of one set of objects that will be assessed as part of a "contact"
+    a_name: str
+        the name or nickname of object a; this will be used for record keeping purposed in the output dataframe 
+    b: np.ndarray
+        3D (ZYX) np.ndarray of one set of objects that will be assessed as part of a "contact"
+    b_name: str
+        the name or nickname of object b; this will be used for record keeping purposed in the output dataframe 
+    mask: np.ndarray
+        3D (ZYX) binary mask of the area to measure contacts from
+    include_dist:bool=False
+        *optional*
+        True = include the XY and Z distribution measurements of the contact sites within the masked region 
+        (utilizing the functions get_XY_distribution() and get_Z_distribution() from Infer-subc)
+        False = do not include distirbution measurements
+    dist_centering_obj: Union[np.ndarray, None]=None
+        ONLY NEEDED IF include_dist=True; if None, the center of the mask will be used
+        3D (ZYX) np.ndarray containing the object to use for centering the XY distribution mask
+    dist_num_bins: Union[int, None]=None
+        ONLY NEEDED IF include_dist=True; if None, the default is 5
+    dist_zernike_degrees: Unions[int, None]=None,
+        ONLY NEEDED IF include_dist=True; if None, the zernike share measurements will not be included in the distribution
+        the number of zernike degrees to include for the zernike shape descriptors
+    dist_center_on: Union[bool, None]=None
+        ONLY NEEDED IF include_dist=True; if None, the default is False
+        True = distribute the bins from the center of the centering object
+        False = distribute the bins from the edge of the centering object
+    dist_keep_center_as_bin: Union[bool, None]=None
+        ONLY NEEDED IF include_dist=True; if None, the default is True
+        True = include the centering object area when creating the bins
+        False = do not include the centering object area when creating the bins
 
-    Returns
-    -------------
-    pandas dataframe of containing regionprops measurements (columns) for each overlap region between a and b (rows)
 
-    Regionprops measurements included:
+    Regionprops measurements:
+    ------------------------
     ['label',
     'centroid',
     'bbox',
@@ -387,20 +464,24 @@ def get_contact_metrics_3D(a, a_name: str,
     'axis_major_length',
     'axis_minor_length']
 
-    Additional measurement include:
+    Additional measurements:
+    ----------------------
     ['surface_area']
- 
+
+    
+    Returns
+    -------------
+    pandas dataframe of containing regionprops measurements (columns) for each overlap region between a and b (rows)
+    
     """
+    
     #########################
     ## CREATE OVERLAP REGIONS
     #########################
     a = _assert_uint16_labels(a)
     b = _assert_uint16_labels(b)
 
-    if use_shell_a:
-        a_int_b = np.logical_and(np.logical_xor(a > 0, binary_erosion(a > 0)), b > 0)
-    else:
-        a_int_b = np.logical_and(a > 0, b > 0)
+    a_int_b = np.logical_and(a > 0, b > 0)
 
     labels = label(apply_mask(a_int_b, mask)).astype("int")
 
@@ -417,17 +498,17 @@ def get_contact_metrics_3D(a, a_name: str,
     properties = properties + ["area", "equivalent_diameter"] # "num_pixels", 
 
     # add shape measurements
-    properties = properties + ["extent", "euler_number", "convex_area", "solidity", "axis_major_length", "slice"] # "feret_diameter_max", "axis_minor_length", 
+    properties = properties + ["extent", "euler_number", "solidity", "axis_major_length", "slice"] # "feret_diameter_max", "axis_minor_length", 
 
     ##################
     ## RUN REGIONPROPS
     ##################
-    props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None)
+    props = regionprops_table(labels, intensity_image=None, properties=properties, extra_properties=None, spacing=scale)
 
     ##################################################################
     ## RUN SURFACE AREA FUNCTION SEPARATELY AND APPEND THE PROPS_TABLE
     ##################################################################
-    surface_area_tab = pd.DataFrame(surface_area_from_props(labels, props))
+    surface_area_tab = pd.DataFrame(surface_area_from_props(labels, props, scale))
 
     ######################################################
     ## LIST WHICH ORGANELLES ARE INVOLVED IN THE CONTACTS
@@ -457,33 +538,48 @@ def get_contact_metrics_3D(a, a_name: str,
         index_ab.append(f"{all_as[0]}_{all_bs[0]}")
 
 
+    ######################################################
+    ## CREATE COMBINED DATAFRAME OF THE QUANTIFICATION
+    ######################################################
     props_table = pd.DataFrame(props)
-    props_table.insert(11, "surface_area", surface_area_tab)
-    props_table.insert(1, "org_B_label", label_b)
-    props_table.insert(1, "org_B", b_name)
-    props_table.insert(1, "org_A_label", label_a)
-    props_table.insert(1, "org_A", a_name)
-    if use_shell_a is True:
-        props_table.insert(loc=0,column='shell',value=use_shell_a)
-    props_table.insert(1,column='X_label',value=index_ab)
+    props_table.drop(columns=['slice', 'label'], inplace=True)
+    props_table.insert(0, 'label',value=index_ab)
+    props_table.insert(0, "object", f"{a_name}X{b_name}")
     props_table.rename(columns={"area": "volume"}, inplace=True)
-    props_table.drop(columns="slice", inplace=True)
 
-    # added option to measure contact distributions too
-    if include_distributions is True:
-        XY_contact_dist, zernike_contact_dist, XY_bin_masks = get_XY_dist_metrics(cellmask_obj=mask, 
-                                                                                  organelle_obj=a_int_b,
-                                                                                  organelle_name=f"{a_name}X{b_name}",
-                                                                                  nuclei_obj=nucleus_for_dist,
-                                                                                  num_bins=5,
-                                                                                  zernike_degrees=9)
+    props_table.insert(11, "surface_area", surface_area_tab)
+    props_table.insert(13, "SA_to_volume_ratio", props_table["surface_area"].div(props_table["volume"]))
+
+    if scale is not None:
+        round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
+        props_table.insert(loc=2, column="scale", value=f"{round_scale}")
+    else: 
+        props_table.insert(loc=2, column="scale", value=f"{tuple(np.ones(labels.ndim))}") 
+
+
+    ######################################################
+    ## optional: DISTRIBUTION OF CONTACTS MEASUREMENTS
+    ######################################################
+    if include_dist is True:
+        XY_contact_dist, XY_bins, XY_wedges = get_XY_distribution(mask=mask, 
+                                                                  obj=a_int_b,
+                                                                  obj_name=f"{a_name}X{b_name}",
+                                                                  centering_obj=dist_centering_obj,
+                                                                  scale=scale,
+                                                                  center_on=dist_center_on,
+                                                                  keep_center_as_bin=dist_keep_center_as_bin,
+                                                                  num_bins=dist_num_bins,
+                                                                  zernike_degrees=dist_zernike_degrees)
         
-        Z_contact_dist = get_Z_dist_metrics(cellmask_obj=mask,
-                                            organelle_obj=a_int_b,
-                                            organelle_name=f"{a_name}X{b_name}",
-                                            nuclei_obj=nucleus_for_dist)
+        Z_contact_dist = get_Z_distribution(mask=mask,
+                                            obj=a_int_b,
+                                            obj_name=f"{a_name}X{b_name}",
+                                            center_obj=dist_centering_obj,
+                                            scale=scale)
+        
+        contact_dist_tab = pd.merge(XY_contact_dist, Z_contact_dist, on=["object", "scale"])
 
-        return props_table, XY_contact_dist, zernike_contact_dist, Z_contact_dist
+        return props_table, contact_dist_tab
     else:
         return props_table
 
@@ -651,7 +747,8 @@ def get_XY_distribution(
         True = include the centering object area when creating the bins
         False = do not include the centering object area when creating the bins
     zernike_degrees: Union[int,None] = None
-        the number of zernike degrees to include for the zernike shape descriptors
+        the number of zernike degrees to include for the zernike shape descriptors; if None, the zernike measurements will not 
+        be included in the output
 
 
     Returns
@@ -1277,7 +1374,7 @@ def get_concentric_distribution(
             radial_cv.mask = np.sum(~n_mask, 1) == 0
             radial_cvs.append(radial_cv)
 
-        bin_name = str(bin + 1) if bin > 0 else "1"
+        bin_name = bin + 1 if bin > 0 else 1
         wedges_perbin_name = np.ma.masked_array([it+1 for it in range(8)])
 
         bin_names.append(bin_name)
@@ -1324,13 +1421,9 @@ def get_concentric_distribution(
         area_mets = ['XY_n_pix_perbin', 'XY_n_pix_perwedge', 'XY_n_pix_wedges_perbin']
 
         for met in vol_mets:
-            tab[met] = [(np.float_(tab[met][0]) * np.prod(scale)).squeeze().tolist()]
+            tab[met.replace('_vox_cnt_', "_vol_")] = [(np.float_(tab[met][0]) * np.prod(scale)).squeeze().tolist()]
         for met in area_mets:
-            tab[met] = [(np.float_(tab[met][0]) * np.prod(scale[1:])).squeeze().tolist()]
-        
-        tab.rename(columns=lambda s: s.replace('_vox_cnt_', "_vol_"), inplace=True)
-        tab.rename(columns=lambda s: s.replace('_n_pix_', "_area_"), inplace=True)
-
+            tab[met.replace('_n_pix_', "_area_")] = [(np.float_(tab[met][0]) * np.prod(scale[1:])).squeeze().tolist()]
     else: 
         tab.insert(loc=2, column="scale", value=f"{tuple(np.ones(3))}")
 
@@ -1599,14 +1692,10 @@ def get_Z_distribution(
         round_scale = (round(scale[0], 4), round(scale[1], 4), round(scale[2], 4))
         Zdist_tab.insert(loc=1, column="scale", value=f"{round_scale}")
 
-        Zdist_tab['Z_slices'] = mask.shape[0] * scale[0]
-        Zdist_tab['Z_mask_vox_cnt'] = [(mask_proj * np.prod(scale)).tolist()]
-        Zdist_tab['Z_obj_vox_cnt'] = [(obj_proj * np.prod(scale)).tolist()]
-        Zdist_tab['Z_center_vox_cnt'] = [(center_proj * np.prod(scale)).tolist()]
-
-        Zdist_tab.rename(columns=lambda s: s.replace('_vox_cnt', "_volume"), inplace=True)
-        Zdist_tab.rename(columns={'Z_slices': 'Z_height'}, inplace=True)
-
+        Zdist_tab['Z_height'] = mask.shape[0] * scale[0]
+        Zdist_tab['Z_mask_volume'] = [(mask_proj * np.prod(scale)).tolist()]
+        Zdist_tab['Z_obj_volume'] = [(obj_proj * np.prod(scale)).tolist()]
+        Zdist_tab['Z_center_volume'] = [(center_proj * np.prod(scale)).tolist()]
     else: 
         Zdist_tab.insert(loc=2, column="scale", value=f"{tuple(np.ones(3))}")
 

@@ -8,13 +8,13 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import ( get_contact_metrics_3D, 
-                    get_org_metrics_3D, 
+from infer_subc.utils.stats import (get_contact_metrics_3D, 
+                    get_org_morphology_3D, 
                     get_simple_stats_3D, 
                     get_XY_distribution, 
-                    get_Z_dist_metrics, 
+                    get_Z_distribution, 
                     _assert_uint16_labels,
-                    get_region_metrics_3D)
+                    get_region_morphology_3D)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
@@ -22,171 +22,257 @@ from infer_subc.core.file_io import read_czi_image, read_tiff_image
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
 
-organelle_to_colname = {"nuc":"NU", "lyso": "LY", "mito":"MT", "golgi":"GL", "perox":"PR", "ER":"ER", "LD":"LD", "cell":"CM", "cyto":"CY", "nucleus": "N1","nuclei":"NU",}
-
-def make_all_metrics_tables(
-    organelle_names: List[str],
-    organelles: List[np.ndarray],
-    intensities: List[np.ndarray],
-    region_names: List[str],
-    regions: List[np.ndarray],
-    dist_centering_obj:np.ndarray, 
-    mask:np.ndarray,
-    source_file: str,
-    scale: Union[tuple,None] = None,
-    n_XY_bins: Union[int,None] = None,
-    n_zernike: Union[int,None] = None,
-    include_contact_dist: bool = True
-) -> int:
+def make_all_metrics_tables(source_file: str,
+                             list_obj_names: List[str],
+                             list_obj_segs: List[np.ndarray],
+                             list_intensity_img: List[np.ndarray],
+                             list_region_names: List[str],
+                             list_region_segs: List[np.ndarray],
+                             mask: str,
+                             dist_centering_obj:str, 
+                             dist_num_bins: int,
+                             dist_center_on: bool=False,
+                             dist_keep_center_as_bin: bool=True,
+                             dist_zernike_degrees: Union[int, None]=None,
+                             scale: Union[tuple,None] = None,
+                             include_contact_dist:bool=True):
     """
-    get summary and all cross stats between organelles `a` and `b`
-    calls `get_summary_stats_3D`
-    order of intensity measurements in the regions dataframe is the same as the order of organelle names provided in the organelle_names list
+    Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
+
+    Parameters:
+    ----------
+    source_file: str
+        file path; this is used for recorder keeping of the file name in the output data tables
+    list_obj_names: List[str]
+        a list of object names (strings) that will be measured; this should match the order in list_obj_segs
+    list_obj_segs: List[np.ndarray]
+        a list of 3D (ZYX) segmentation np.ndarrays that will be measured per cell; the order should match the list_obj_names 
+    list_intensity_img: List[np.ndarray]
+        a list of 3D (ZYX) grayscale np.ndarrays that will be used to measure fluoresence intensity in each region and object
+    list_region_names: List[str]
+        a list of region names (strings); these should include the mask (entire region being measured - usually the cell) 
+        and other sub-mask regions from which we can meausure the objects in (ex - nucleus, neurites, soma, etc.). It should 
+        also include the centering object used when created the XY distribution bins.
+        The order should match the list_region_segs
+    list_region_segs: List[np.ndarray]
+        a list of 3D (ZYX) binary np.ndarrays of the region masks; the order should match the list_region_names.
+    mask: str
+        a str of which region name (contained in the list_region_names list) should be used as the main mask (e.g., cell mask)
+    dist_centering_obj:str
+        a str of which region name (contained in the list_region_names list) should be used as the centering object in 
+        get_XY_distribution()
+    dist_num_bins: int
+        the number of concentric rings to draw between the centering object and edge of the mask in get_XY_distribution()
+    dist_center_on: bool=False,
+        for get_XY_distribution:
+        True = distribute the bins from the center of the centering object
+        False = distribute the bins from the edge of the centering object
+    dist_keep_center_as_bin: bool=True
+        for get_XY_distribution:
+        True = include the centering object area when creating the bins
+        False = do not include the centering object area when creating the bins
+    dist_zernike_degrees: Union[int, None]=None
+        for get_XY_distribution:
+        the number of zernike degrees to include for the zernike shape descriptors; if None, the zernike measurements will not 
+        be included in the output
+    scale: Union[tuple,None] = None
+        a tuple that contains the real world dimensions for each dimension in the image (Z, Y, X)
+    include_contact_dist:bool=True
+        whether to include the distribution of contact sites in get_contact_metrics_3d(); True = include contact distribution
+
+    Returns:
+    ----------
+    4 Dataframes of measurements of organelle morphology, region morphology, contact morphology, and organelle/contact distributions
+
     """
     start = time.time()
     count = 0
-    ####################
-    # collect individual organelle measurements, 
-    # the organelle contacts associated the that organelle, 
-    # and total organelle distribution measurements
-    # for each organelle
-    ####################
+
+    # segmentation image for all masking steps below
+    mask = list_region_segs[list_region_names.index(mask)]
+
+    ######################
+    # measure cell regions
+    ######################
+    # create np.ndarray of intensity images
+    raw_image = np.stack(list_intensity_img)
+    
+    # container for region data
+    region_tabs = []
+    for r, r_name in enumerate(list_region_names):
+        region = list_region_segs[r]
+        region_metrics = get_region_morphology_3D(region_seg=region, 
+                                                  region_name=r_name,
+                                                  channel_names=list_obj_names,
+                                                  intensity_img=raw_image, 
+                                                  mask=mask,
+                                                  scale=scale)
+        region_tabs.append(region_metrics)
+
+    ##############################################################
+    # loop through all organelles to collect measurements for each
+    ##############################################################
+    # containers to collect per organelle information
     org_tabs = []
-    rps = []
     dist_tabs = []
     XY_bins = []
+    XY_wedges = []
 
-    # zern_bins = []
-    for j, target in enumerate(organelle_names):
-        org_img = intensities[j]
+    for j, target in enumerate(list_obj_names):
+        # organelle intensity image
+        org_img = list_intensity_img[j]
+
+        # organelle segmentation
         if target == 'ER':
-            org_obj = (organelles[j] > 0).astype(np.uint16)
+            # ensure ER is only one object
+            org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
         else:
-            org_obj = organelles[j]
+            org_obj = list_obj_segs[j]
 
-        ####################
-        # measure individual organelle and cell region metrics
-        ####################
-        org_metrics, rp = get_org_metrics_3D(segmentation_img=org_obj, 
-                                             intensity_img=org_img, 
-                                             mask=mask,
-                                             scale=scale)
-        org_metrics.insert(loc=0,column='organelle',value=target)
+        ##########################################################
+        # measure organelle morphology & number of objs contacting
+        ##########################################################
+        org_metrics = get_org_morphology_3D(segmentation_img=org_obj, 
+                                            seg_name=target,
+                                            intensity_img=org_img, 
+                                            mask=mask,
+                                            scale=scale)
 
-        ####################
-        # collect organelles in contact with this organelle
-        ####################
-        for i, nmi in enumerate(organelle_names):
-            if i != j:
-                if target == 'ER':
-                    b = (organelles[i] > 0).astype(np.uint16)
-                else:
-                    b = organelles[i]
+        ### org_metrics.insert(loc=0,column='cell',value=1) 
+        # ^^^ saving this thought for later when someone might have more than one cell per image.
+        # Not sure how they analysis process would fit in our pipelines as they exist now. 
+        # Maybe here, iterating though the index of the masks above all of this and using that index as the cell number?
+
+        # TODO: find a better way to quantify the number and area of contacts per organelle
+            # I think it can be done during summarizing based on the label and object values in the contact sheet
+        # for i, nmi in enumerate(list_obj_names):
+        #     if i != j:
+        #         if target == 'ER':
+        #             b = (list_obj_segs[i] > 0).astype(np.uint16)
+        #         else:
+        #             b = list_obj_segs[i]
             
-                ov = []
-                b_labs = []
-                labs = []
-                for idx, lab in enumerate(org_metrics["label"]):
-                    xyz = tuple(rp[idx].coords.T)
-                    cmp_org = b[xyz]
+        #         ov = []
+        #         b_labs = []
+        #         labs = []
+        #         for idx, lab in enumerate(org_metrics["label"]):
+        #             xyz = tuple(rp[idx].coords.T)
+        #             cmp_org = b[xyz]
                     
-                    # total area (in voxels or real world units) where these two orgs overlap within the cell
-                    if scale != None:
-                        overlap = sum(cmp_org > 0)*scale[0]*scale[1]*scale[2]
-                    else:
-                        # total number of overlapping pixels
-                        overlap = sum(cmp_org > 0)
-                        # overlap?
+        #             # total area (in voxels or real world units) where these two orgs overlap within the cell
+        #             if scale != None:
+        #                 overlap = sum(cmp_org > 0)*scale[0]*scale[1]*scale[2]
+        #             else:
+        #                 # total number of overlapping pixels
+        #                 overlap = sum(cmp_org > 0)
+        #                 # overlap?
                     
-                    # which b organelles are involved in that overlap
-                    labs_b = cmp_org[cmp_org > 0]
-                    b_js = np.unique(labs_b).tolist()
+        #             # which b organelles are involved in that overlap
+        #             labs_b = cmp_org[cmp_org > 0]
+        #             b_js = np.unique(labs_b).tolist()
 
-                    # if overlap > 0:
-                    labs.append(lab) # labs.append(lab)
-                    ov.append(overlap)
-                    b_labs.append(b_js)
-                org_metrics[f"{nmi}_overlap"] = ov
-                org_metrics[f"{nmi}_labels"] = b_labs 
-
-        ####################
-        # measure organelle distribution 
-        ####################
-        XY_org_distribution ,zernike_org_distribution, XY_bin_masks = get_XY_dist_metrics(cellmask_obj=mask, # TODO: add output for zernike masks
-                                                                 nuclei_obj=dist_centering_obj,
-                                                                 organelle_obj=org_obj,
-                                                                 organelle_name=target,
-                                                                 num_bins=n_XY_bins,
-                                                                 zernike_degrees=n_zernike)
-
-        Z_org_distribution = get_Z_dist_metrics(cellmask_obj=mask, 
-                                            organelle_obj=org_obj,
-                                            organelle_name=target,
-                                            nuclei_obj=dist_centering_obj)
-      
-        org_distribution_metrics = pd.merge(XY_org_distribution, zernike_org_distribution,on=["organelle"])
-        org_distribution_metrics = pd.merge(org_distribution_metrics, Z_org_distribution,on=["organelle"])
+        #             # if overlap > 0:
+        #             labs.append(lab) # labs.append(lab)
+        #             ov.append(overlap)
+        #             b_labs.append(b_js)
+        #         org_metrics[f"{nmi}_overlap"] = ov
+        #         org_metrics[f"{nmi}_labels"] = b_labs 
 
         org_tabs.append(org_metrics)
-        rps.append(rp)
+
+        ################################
+        # measure organelle distribution 
+        ################################
+        centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+        XY_org_distribution, XY_bin_masks, XY_wedge_masks = get_XY_distribution(mask=mask,
+                                                                                centering_obj=centering,
+                                                                                obj=org_obj,
+                                                                                obj_name=target,
+                                                                                scale=scale,
+                                                                                num_bins=dist_num_bins,
+                                                                                center_on=dist_center_on,
+                                                                                keep_center_as_bin=dist_keep_center_as_bin,
+                                                                                zernike_degrees=dist_zernike_degrees)
+        Z_org_distribution = get_Z_distribution(mask=mask, 
+                                                obj=org_obj,
+                                                obj_name=target,
+                                                center_obj=centering,
+                                                scale=scale)
+        
+        org_distribution_metrics = pd.merge(XY_org_distribution, Z_org_distribution,on=["object", "scale"])
+
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
-        # zern_bins.append(zernike_masks)
-    
-    ####################
-    # measure individual organelle and cell region metrics
-    ####################
-    raw_image = np.stack(intensities)
-    region_metrics = get_region_metrics_3D(region_segs=regions, 
-                                        region_names=region_names,
-                                        intensity_img=raw_image,
-                                        mask=mask)
+        XY_wedges.append(XY_wedge_masks)
 
-    ####################
-    # collect non-redundant contact metrics
-    #  TODO: figure out how to add the shell measurements as new columns, not rows    
-    ####################
-    contact_combos = list(itertools.combinations(organelle_names, 2))
+    #######################################
+    # collect non-redundant contact metrics 
+    #######################################
+    # list the non-redundant organelle pairs
+    contact_combos = list(itertools.combinations(list_obj_names, 2))
+
+    # container to keep contact data in
     contact_tabs = []
+
+    # loop through each pair and measure contacts
     for pair in contact_combos:
+        # pair names
         a_name = pair[0]
         b_name = pair[1]
 
-        i = organelle_names.index(a_name)
-        j = organelle_names.index(b_name)
-
-        a = organelles[i] # org_obj
-        b = organelles[j]
+        # segmentations to measure
+        if a_name == 'ER':
+            # ensure ER is only one object
+            a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
+        else:
+            a = list_obj_segs[list_obj_names.index(a_name)]
+        
+        if b_name == 'ER':
+            # ensure ER is only one object
+            b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
+        else:
+            b = list_obj_segs[list_obj_names.index(b_name)]
+        
 
         if include_contact_dist == True:
-            contact_tab, contact_XY_dist, contact_Zern_dist, contact_Z_dist = get_contact_metrics_3D(a, a_name, b, b_name, mask, 
-                                                                                                     False, True, dist_centering_obj)
-            
-            contact_dist_metrics = pd.merge(contact_XY_dist, contact_Zern_dist,on=["organelle"])
-            contact_dist_metrics = pd.merge(contact_dist_metrics, contact_Z_dist,on=["organelle"])
+            contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
+                                                                   b, b_name, 
+                                                                   mask, 
+                                                                   scale, 
+                                                                   include_dist=include_contact_dist,
+                                                                   dist_centering_obj=centering,
+                                                                   dist_num_bins=dist_num_bins,
+                                                                   dist_zernike_degrees=dist_zernike_degrees,
+                                                                   dist_center_on=dist_center_on,
+                                                                   dist_keep_center_as_bin=dist_keep_center_as_bin)
+            dist_tabs.append(contact_dist_tab)
         else:
-            contact_tab = get_contact_metrics_3D(a, a_name, b, b_name, mask, False)
-            
+            contact_tab = get_contact_metrics_3D(a, a_name, 
+                                                 b, b_name, 
+                                                 mask, 
+                                                 scale, 
+                                                 include_dist=include_contact_dist)
         contact_tabs.append(contact_tab)
-        dist_tabs.append(contact_dist_metrics)
 
-    ####################
+
+    ###########################################
     # combine all tabs into one table per type:
-    ####################
+    ###########################################
     final_org_tab = pd.concat(org_tabs, ignore_index=True)
-    final_org_tab.insert(loc=0,column='image_name',value=source_file.stem )
+    final_org_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
     final_contact_tab = pd.concat(contact_tabs, ignore_index=True)
-    final_contact_tab.insert(loc=0,column='image_name',value=source_file.stem )
+    final_contact_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
     combined_dist_tab = pd.concat(dist_tabs, ignore_index=True)
-    combined_dist_tab.insert(loc=0,column='image_name',value=source_file.stem )
+    combined_dist_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
-    region_metrics.insert(loc=0,column='image_name',value=source_file.stem )
+    final_region_tab = pd.concat(region_tabs, ignore_index=True)
+    final_region_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
     end = time.time()
     print(f"It took {(end-start)/60} minutes to quantify one image.")
-    return final_org_tab, final_contact_tab, combined_dist_tab, region_metrics
+    return final_org_tab, final_contact_tab, combined_dist_tab, final_region_tab
 
 
 # def make_organelle_stat_tables(
@@ -319,120 +405,168 @@ def make_all_metrics_tables(
 #     return count
 
 
-def _batch_process_quantification(out_file_prefix: str,
+def _batch_process_quantification(out_file_name: str,
                                   seg_path: Union[Path,str],
                                   out_path: Union[Path, str], 
                                   raw_path: Union[Path,str], 
                                   raw_file_type: str,
-                                  organelle_names: List[str], 
-                                  organelle_chs: List[int], 
+                                  organelle_names: List[str],
+                                  organelle_channels: List[int],
                                   region_names: List[str],
-                                  seg_suffix: Union[str, None] = None,
-                                  scale: bool = True,
-                                  n_XY_bins: Union[int,None] = 5,
-                                  n_zernike: Union[int,None] = 9,
-                                  include_contact_dist: bool = True
-                                    ) -> int :
+                                  masks_file_name: str,
+                                  mask: str,
+                                  dist_centering_obj:str, 
+                                  dist_num_bins: int,
+                                  dist_center_on: bool=False,
+                                  dist_keep_center_as_bin: bool=True,
+                                  dist_zernike_degrees: Union[int, None]=None,
+                                  include_contact_dist: bool = True,
+                                  scale:bool=True,
+                                  seg_suffix:Union[str, None]=None) -> int :
     """  
-    TODO: add loggin instead of printing
-        append tiffcomments with provenance
+    batch process segmentation quantification (morphology, distribution, contacts); this function is currently optimized to process images from one file folder per image type (e.g., raw, segmentation)
+    the output csv files are saved to the indicated out_path folder
 
-    organelle_names - should match the file suffix; I think the order will specify the order in the csv files
+    Parameters:
+    ----------
+    out_file_name: str
+        the prefix to use when naming the output datatables
+    seg_path: Union[Path,str]
+        Path or str to the folder that contains the segmentation tiff files
+    out_path: Union[Path, str]
+        Path or str to the folder that the output datatables will be saved to
+    raw_path: Union[Path,str]
+        Path or str to the folder that contains the raw image files
+    raw_file_type: str
+        the file type of the raw data; ex - ".tiff", ".czi"
+    organelle_names: List[str]
+        a list of all organelle names that will be analyzed; the names should be the same as the suffix used to name each of the tiff segmentation files
+        Note: the intensity measurements collect per region (from get_region_morphology_3D function) will only be from channels associated to these organelles 
+    organelle_channels: List[int]
+        a list of channel indices associated to respective organelle staining in the raw image; the indices should listed in same order in which the respective segmentation name is listed in organelle_names
+    region_names: List[str]
+        a list of regions, or masks, to measure; the order should correlate to the order of the channels in the "masks" output segmentation file
+    masks_file_name: str
+        the suffix of the "masks" segmentation file; ex- "masks_B", "masks", etc.
+        this function currently does not accept indivial region segmentations 
+    mask: str
+        the name of the region to use as the mask when measuring the organelles; this should be one of the names listed in regions list; usually this will be the "cell" mask
+    dist_centering_obj:str
+        the name of the region or object to use as the centering object in the get_XY_distribution function
+    dist_num_bins: int
+        the number of bins for the get_XY_distribution function
+    dist_center_on: bool=False,
+        for get_XY_distribution:
+        True = distribute the bins from the center of the centering object
+        False = distribute the bins from the edge of the centering object
+    dist_keep_center_as_bin: bool=True
+        for get_XY_distribution:
+        True = include the centering object area when creating the bins
+        False = do not include the centering object area when creating the bins
+    dist_zernike_degrees: Union[int, None]=None
+        for get_XY_distribution:
+        the number of zernike degrees to include for the zernike shape descriptors; if None, the zernike measurements will not 
+        be included in the output
+    include_contact_dist:bool=True
+        whether to include the distribution of contact sites in get_contact_metrics_3d(); True = include contact distribution
+    scale:bool=True
+        a tuple that contains the real world dimensions for each dimension in the image (Z, Y, X)
+    seg_suffix:Union[str, None]=None
+        any additional text that is included in the segmentation tiff files between the file stem and the segmentation suffix
+
+
+    Returns:
+    ----------
+    count: int
+        the number of images processed
         
     """
     start = time.time()
+    count = 0
+
     if isinstance(raw_path, str): raw_path = Path(raw_path)
     if isinstance(seg_path, str): seg_path = Path(seg_path)
     if isinstance(out_path, str): out_path = Path(out_path)
     
-    img_file_list = list_image_files(raw_path,raw_file_type)
-
     if not Path.exists(out_path):
         Path.mkdir(out_path)
         print(f"making {out_path}")
     
-    count = 0
+    # reading list of files from the raw path
+    img_file_list = list_image_files(raw_path, raw_file_type)
 
+    # list of segmentation files to collect
+    segs_to_collect = organelle_names + [masks_file_name]
+
+    # containers to collect data tabels
     org_tabs = []
     contact_tabs = []
     dist_tabs = []
     region_tabs = []
-    
-    segs_to_collect = organelle_names + region_names
+    for img_f in img_file_list:
+        count = count + 1
+        filez = find_segmentation_tiff_files(img_f, segs_to_collect, seg_path, seg_suffix)
 
-    if scale == True:
-        for img_f in img_file_list:
-            count = count + 1
-            filez = find_segmentation_tiff_files(img_f, segs_to_collect, seg_path, seg_suffix)
-            img_data, meta_dict = read_czi_image(filez["raw"])
-            scale = meta_dict['scale'] # this will only work if the scale can be pulled from the metadata this way
+        # read in raw file and metadata
+        img_data, meta_dict = read_czi_image(filez["raw"])
 
-            # create intensities from raw as list
-            intensities = [img_data[ch] for ch in organelle_chs]
+        # create intensities from raw file as list based on the channel order provided
+        intensities = [img_data[ch] for ch in organelle_channels]
 
-            # load regions
-            regions = []
-            for name in region_names:
-                mask = read_tiff_image(filez[name])
-                regions.append(mask)
+        # define the scale
+        if scale is True:
+            scale_tup = meta_dict['scale']
+        else:
+            scale_tup = None
 
-            nuc_mask = regions[region_names.index('nuc')]
-            cell_mask = regions[region_names.index('cell')]
+        # load regions as a list based on order in list (should match order in "masks" file)
+        masks = read_tiff_image(filez[masks_file_name]) 
+        regions = [masks[r] for r, region in enumerate(region_names)]
 
-            # load organelles as list
-            organelles = [read_tiff_image(filez[org]) for org in organelle_names]
+        # store organelle images as list
+        organelles = [read_tiff_image(filez[org]) for org in organelle_names]
 
-            if scale == True:
-                org_metrics, contact_metrics, dist_metrics, region_metrics = make_all_metrics_tables(organelle_names=organelle_names,
-                                                                                    organelles=organelles,
-                                                                                    intensities=intensities,
-                                                                                    regions=regions,
-                                                                                    region_names=region_names,
-                                                                                    dist_centering_obj=nuc_mask, 
-                                                                                    mask=cell_mask,
-                                                                                    source_file=img_f,
-                                                                                    scale=scale,
-                                                                                    n_XY_bins=n_XY_bins,
-                                                                                    n_zernike=n_zernike,
-                                                                                    include_contact_dist=include_contact_dist)
-            else:
-                org_metrics, contact_metrics, dist_metrics, region_metrics = make_all_metrics_tables(organelle_names=organelle_names,
-                                                                                    organelles=organelles,
-                                                                                    intensities=intensities,
-                                                                                    regions=regions,
-                                                                                    region_names=region_names,
-                                                                                    dist_centering_obj=nuc_mask, 
-                                                                                    mask=cell_mask,
-                                                                                    source_file=img_f,
-                                                                                    n_XY_bins=n_XY_bins,
-                                                                                    n_zernike=n_zernike,
-                                                                                    include_contact_dist=include_contact_dist)
-            org_tabs.append(org_metrics)
-            contact_tabs.append(contact_metrics)
-            dist_tabs.append(dist_metrics)
-            region_tabs.append(region_metrics)
-            end2 = time.time()
-            print(f"Completed processing for {count} images in {(end2-start)/60} mins.")
+        org_metrics, contact_metrics, dist_metrics, region_metrics = make_all_metrics_tables(source_file=img_f,
+                                                                                             list_obj_names=organelle_names,
+                                                                                             list_obj_segs=organelles,
+                                                                                             list_intensity_img=intensities, 
+                                                                                             list_region_names=region_names,
+                                                                                             list_region_segs=regions, 
+                                                                                             mask=mask,
+                                                                                             dist_centering_obj=dist_centering_obj,
+                                                                                             dist_num_bins=dist_num_bins,
+                                                                                             dist_center_on=dist_center_on,
+                                                                                             dist_keep_center_as_bin=dist_keep_center_as_bin,
+                                                                                             dist_zernike_degrees=dist_zernike_degrees,
+                                                                                             scale=scale_tup,
+                                                                                             include_contact_dist=include_contact_dist)
+
+        org_tabs.append(org_metrics)
+        contact_tabs.append(contact_metrics)
+        dist_tabs.append(dist_metrics)
+        region_tabs.append(region_metrics)
+        end2 = time.time()
+        print(f"Completed processing for {count} images in {(end2-start)/60} mins.")
 
     final_org = pd.concat(org_tabs, ignore_index=True)
     final_contact = pd.concat(contact_tabs, ignore_index=True)
     final_dist = pd.concat(dist_tabs, ignore_index=True)
     final_region = pd.concat(region_tabs, ignore_index=True)
 
-    org_csv_path = out_path / f"{out_file_prefix}organelles.csv"
+    org_csv_path = out_path / f"{out_file_name}organelles.csv"
     final_org.to_csv(org_csv_path)
 
-    contact_csv_path = out_path / f"{out_file_prefix}contacts.csv"
+    contact_csv_path = out_path / f"{out_file_name}contacts.csv"
     final_contact.to_csv(contact_csv_path)
 
-    dist_csv_path = out_path / f"{out_file_prefix}distributions.csv"
+    dist_csv_path = out_path / f"{out_file_name}distributions.csv"
     final_dist.to_csv(dist_csv_path)
 
-    region_csv_path = out_path / f"{out_file_prefix}regions.csv"
+    region_csv_path = out_path / f"{out_file_name}regions.csv"
     final_region.to_csv(region_csv_path)
 
     end = time.time()
-    print(f"Quantification for {count} files is COMPLETE! Files saved to '{out_data_path}'.")
+    print(f"Quantification for {count} files is COMPLETE! Files saved to '{out_path}'.")
     print(f"It took {(end - start)/60} minutes to quantify these files.")
     return count
 
