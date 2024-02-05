@@ -9,9 +9,10 @@ PEROX_CH = 4
 ER_CH = 5
 LD_CH = 6
 RESIDUAL_CH = 7
+PM_CH = 8
 
 TEST_IMG_N = 5
 
-ALL_CHANNELS = [NUC_CH, LYSO_CH, MITO_CH, GOLGI_CH, PEROX_CH, ER_CH, LD_CH, RESIDUAL_CH]
+ALL_CHANNELS = [NUC_CH, LYSO_CH, MITO_CH, GOLGI_CH, PEROX_CH, ER_CH, LD_CH, RESIDUAL_CH, PM_CH]
 
-organelle_to_colname = {"nuc":"NU", "lyso": "LS", "mito":"MT", "golgi":"GL", "perox":"PR", "ER":"ER", "LD":"LD", "cell":"CM", "cyto":"CY", "nucleus": "N1","nuclei":"NU",}
+organelle_to_colname = {"nuc":"NU", "lyso": "LS", "mito":"MT", "golgi":"GL", "perox":"PR", "ER":"ER", "LD":"LD", "cell":"CM", "cyto":"CY", "nucleus": "N1","nuclei":"NU", "membrane":"PM"}
