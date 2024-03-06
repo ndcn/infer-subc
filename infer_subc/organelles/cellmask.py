@@ -3,9 +3,11 @@ from pathlib import Path
 import time
 import numpy as np
 from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
+from aicssegmentation.core.utils import hole_filling
 
 from skimage.filters import scharr
 from skimage.measure import label
+from skimage.morphology import disk, closing, binary_dilation, dilation, binary_erosion
 
 from infer_subc.core.img import label_bool_as_uint16
 from infer_subc.constants import (
@@ -17,6 +19,7 @@ from infer_subc.constants import (
     PEROX_CH,
     ER_CH,
     LD_CH,
+    PM_CH,
     RESIDUAL_CH,
 )
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
@@ -31,6 +34,9 @@ from infer_subc.core.img import (
     fill_and_filter_linear_size,
     get_max_label,
     get_interior_labels,
+    select_channel_from_raw,
+    threshold_otsu_log,
+    inverse_log_transform,
 )
 
 
@@ -117,6 +123,187 @@ def choose_max_label_cellmask_union_nucleus(cellmask_img: np.ndarray,
 
     return cellmask_out > 0
 
+def rescale_intensity(in_img: np.ndarray):
+    #rescales the intensity of input image on a scale of 0 to 10
+    out_img = ((in_img - in_img.min())/(in_img.max() - in_img.min()))*10
+    return out_img
+
+def create_composite(in_img: np.ndarray,
+                     weights: list[float],
+                     invert_PM: bool=False):
+    out_img = np.zeros_like(in_img[0]).astype(np.double)
+    for channel, weight in enumerate(weights):
+        if weight > 0:
+            if (channel == PM_CH)&(invert_PM):
+                out_img += weight * abs(np.max(in_img[PM_CH]) - in_img[PM_CH])
+            else:
+                out_img += weight * rescale_intensity(in_img[channel])
+    return out_img
+
+##########################
+# infer_mask_from_membrane
+##########################
+def infer_cellmask_from_membrane(in_img: np.ndarray,
+                                weights: list[float],
+                                nuclei_labels: np.ndarray,
+                                invert_PM_A: bool=False,
+                                invert_PM_B: bool=False,
+                                close_fp_size: int=15,
+                                thresh_method: str="med",
+                                cutoff_A: int=0,
+                                cutoff_B: int=0,
+                                thresh_adj_A: float=1.0,
+                                thresh_adj_B: float=1.0,
+                                nuc_fp_size: int=0,
+                                hole_min: int=0, 
+                                hole_max: int=0,
+                                small_obj: int=0,
+                                bound_pm_A: bool=False,
+                                bound_pm_B: bool=False,
+                                adj_pm: float=1.0,
+                                watershed_method: str="3D"
+                                ):
+    """
+    Procedure to infer cellmask fom a composite including plasma membrane
+
+    Parameters
+    ------------
+    in_img:
+        a 3D image containing all channels (Channel, Z, Y, X)
+    weights:
+        a list of floats involved in the weight used for each channel; zero is used if channel is to be excluded
+    invert_PM_A:
+        a true/false statement determining whether or not to invert PM when creating composite A
+    invert_PM_B:
+        a true/false statement determining whether or not to invert PM when creating composite B
+    close_fp_size:
+        an integer value that determines the size of the disk used in closing the composite image
+    thresh_method:
+        which method to use for calculating global threshold. Options include:
+        "triangle" (or "tri"), "median" (or "med"), and "ave_tri_med" (or "ave").
+        "ave" refers the average of "triangle" threshold and "mean" threshold.
+    cutoff_A:
+        thresholding composite A's minimum size
+    cutoff_B:
+        thresholding composite B's minimum size
+    thresh_adj_A:
+        a decimal number used for adjusting the threshold of composite A
+    trhesh_adj_B:
+        a decimal number used for adjusting the threshold of composite B
+    hole_min_thresh:
+        minimum size for filling holes during thresholding
+    hole_max_thresh:
+        maximum size for filling holes during thresholding
+    small_obj:
+        minimum object size cutoff for thresholding
+    bound_pm_A:
+        a true/false statement determining whether or not to enforce the boundaries of the plasma membrane in watershed A
+    bound_pm_B:
+        a true/false statement determining whether or not to enforce the boundaries of the plasma membrane in watershed B
+    adj_pm:
+        a decimal number used for adjusting the threshold of the plasma membrane
+    watershed_method:
+        determines if the watershed should be run 'sice-by-slice' or in '3D'
+    """
+    #################
+    # EXTRACT IMAGES
+    #################
+    composite_A = create_composite(in_img, weights, invert_PM_A)
+    composite_B = create_composite(in_img, weights, invert_PM_B)
+
+    #################
+    # PRE-PROCESSING
+    #################
+    closed_A = np.zeros_like(composite_A)
+    closed_B = np.zeros_like(composite_B)
+    close_fp = disk(close_fp_size)
+    for z in range(len(composite_A)):
+        closed_A[z] = closing(composite_A[z].copy(), footprint=close_fp)
+        closed_B[z] = closing(composite_B[z].copy(), footprint=close_fp)
+    
+    #################
+    # CORE-PROCESSING
+    #################
+        #unsure if min_max_intensity_normalization() is required here, possible spot to increase speed
+    closed_threshed_A = masked_object_thresh(min_max_intensity_normalization(closed_A.copy()),
+                                             global_method=thresh_method,
+                                             cutoff_size=cutoff_A,
+                                             local_adjust=thresh_adj_A).astype(bool)
+    closed_threshed_B = masked_object_thresh(min_max_intensity_normalization(closed_B.copy()),
+                                             global_method=thresh_method,
+                                             cutoff_size=cutoff_B,
+                                             local_adjust=thresh_adj_B).astype(bool)
+        #determining the nuclei for watershedding
+    keep_nuc = get_max_label((closed_threshed_A), dilation(nuclei_labels))
+    single_nuc = np.zeros_like(nuclei_labels)
+    single_nuc[nuclei_labels == keep_nuc] = 1
+
+        #adding nuclei to the threshold
+    if nuc_fp_size > 0:
+        nuc_fp = disk(nuc_fp_size)
+        for z in range(len(closed_threshed_A)):
+            closed_threshed_A[z] += binary_dilation(single_nuc.astype(bool)[z], footprint=nuc_fp)
+            closed_threshed_B[z] += binary_dilation(single_nuc.astype(bool)[z], footprint=nuc_fp)
+    else:
+        for z in range(len(closed_threshed_A)):
+            closed_threshed_A[z] += binary_dilation(single_nuc.astype(bool)[z])
+            closed_threshed_B[z] += binary_dilation(single_nuc.astype(bool)[z])
+    
+
+    #################
+    # POST-PROCESSING
+    #################
+    filled_A = fill_and_filter_linear_size(closed_threshed_A,
+                                           hole_min=hole_min,
+                                           hole_max=hole_max,
+                                           min_size=small_obj)
+    filled_B = fill_and_filter_linear_size(closed_threshed_B,
+                                           hole_min=hole_min,
+                                           hole_max=hole_max,
+                                           min_size=small_obj)
+    if bound_pm_A:
+        pm_img = select_channel_from_raw(in_img, PM_CH)
+        pm_image, d = log_transform(pm_img.copy())
+        pm_thresh = threshold_otsu_log(pm_image) 
+        invert_pm_obj = np.invert(pm_img > (inverse_log_transform(pm_thresh, d) * adj_pm))
+        mask_A = np.zeros_like(invert_pm_obj)
+        mask_A[(invert_pm_obj == filled_A) & 
+                 (invert_pm_obj == 1) & 
+                 (filled_A == 1)] = 1
+        mask_A = closing(mask_A)
+    else:
+        mask_A = filled_A.copy()
+    if bound_pm_B:
+        pm_img = select_channel_from_raw(in_img, PM_CH)
+        pm_image, d = log_transform(pm_img.copy())
+        pm_thresh = threshold_otsu_log(pm_image) 
+        invert_pm_obj = np.invert(pm_img > (inverse_log_transform(pm_thresh, d) * adj_pm))
+        mask_B = np.zeros_like(invert_pm_obj)
+        mask_B[(invert_pm_obj == filled_B) & 
+                 (invert_pm_obj == 1) & 
+                 (filled_B == 1)] = 1
+        mask_B = closing(mask_B)
+    else:
+        mask_B = filled_B.copy()
+
+    ######################
+    # POST-POST PROCESSING
+    ######################
+    cm_A = masked_inverted_watershed(closed_threshed_A, 
+                                     single_nuc, 
+                                     mask_A,
+                                     method=watershed_method)
+    cm_B = masked_inverted_watershed(closed_threshed_B, 
+                                     single_nuc, 
+                                     mask_B,
+                                     method=watershed_method)
+    cm_combo = cm_A.astype(bool) + cm_B.astype(bool)
+    for z in range(len(cm_combo)):
+        cm_combo[z] = binary_dilation(cm_combo.copy()[z], footprint=close_fp)
+    cm_combo = hole_filling(cm_combo.copy(), hole_min=hole_min, hole_max=hole_max, fill_2d=True)
+    for z in range(len(cm_combo)):
+        cm_combo[z] = binary_erosion(cm_combo.copy()[z], footprint=close_fp)
+    return cm_combo
 
 ##########################
 # 1. infer_cellmask

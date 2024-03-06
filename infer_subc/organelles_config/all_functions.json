@@ -2041,5 +2041,266 @@
                 "increment": 1
             }
         }
+    },
+    "membrane_composite": {
+        "name": "Create a composite image",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "membrane_composite",
+        "parameters": {
+            "weight_ch0": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch1": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch2": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch3": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch4": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch5": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch6": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch7": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch8": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "weight_ch9": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10,
+                "increment": 1
+            },
+            "Invert_PM": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            },
+            "PM_Channel": {
+                "widget_type": "drop-down",
+                "data_type": "int",
+                "options": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9
+                ]
+            }
+        }
+    },
+    "close": {
+        "name": "Close gaps and smooth image",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "close",
+        "parameters": {
+            "Method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "Ball",
+                    "Disk"
+                ]
+            },
+            "Size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 50,
+                "increment": 1
+            }
+        }
+    },
+    "find_nuc": {
+        "name": "Find the nucleus corresponding to the cell",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "find_nuc",
+        "parameters":null
+    },
+    "mix_nuc": {
+        "name": "Combine the nucleus with the threshold",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "mix_nuc",
+        "parameters": {
+            "Method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "Ball",
+                    "Disk"
+                ]
+            },
+            "Size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 25,
+                "increment": 1
+            }
+        }
+    },
+    "fill_and_bind": {
+        "name": "Fill holes in the threshold & restrict to PM",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "fill_and_bind",
+        "parameters": {
+            "Min_Hole_Width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "Max_Hole_Width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "Small_Obj_Width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            },
+            "PM_Channel": {
+                "widget_type": "drop-down",
+                "data_type": "int",
+                "options": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9
+                    ]
+            },
+            "Thresh_Adj": {
+                "data_type": "float",
+                "increment": 0.1,
+                "max": 5,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "Bind_to_PM": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "double_watershed": {
+        "name": "Watershed for cellmask",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "double_watershed",
+        "parameters": {
+            "Watershed_Method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice-by-slice"
+                ]
+            }
+        }
+    },
+    "close_and_fill": {
+        "name": "Watershed for cellmask",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "close_and_fill",
+        "parameters": {
+            "Min_Hole_Width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 0,
+                "widget_type": "slider"
+            },
+            "Max_Hole_Width": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 40,
+                "min": 4,
+                "widget_type": "slider"
+            },
+            "Method": {
+                "widget_type": "drop-down",
+                "data_type":"str",
+                "options": [
+                    "Ball",
+                    "Disk"
+                ]
+            },
+            "Size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 25,
+                "increment": 1
+            }
+        }
     }
 }
