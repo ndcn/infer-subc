@@ -24,7 +24,6 @@ from infer_subc.core.img import label_uint16
 
 
 
-
 from infer_subc.organelles import (
     fixed_infer_cellmask_fromcomposite,
     fixed_infer_nuclei_fromlabel,
@@ -95,66 +94,122 @@ def explode_masks(root_path: Union[Path,str], postfix: str= "masks", im_type: st
     return wrote_cnt
 
 
-
-def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str], int_path: Union[Path,str]) -> Dict:
+def find_segmentation_tiff_files(prototype:Union[Path,str],
+                                  name_list:List[str], 
+                                  seg_path:Union[Path,str],
+                                  suffix:Union[str, None]=None) -> Dict:
     """
-    find the nescessary image files based on protype, the organelles involved, and paths
-    """
+    Find the matching segmentation files to the raw image file based on the raw image file path.
 
+    Paramters:
+    ---------
+    prototype:Union[Path,str]
+        the file path (as a string) for one raw image file; this file should have matching segmentation 
+        output files with the same file name root and different file name ending that match the strings 
+        provided in name_list
+    name_list:List[str]
+        a list of file name endings related to what segmentation is that file
+    seg_path:Union[Path,str]
+        the path (as a string) to the matching segmentation files.
+    suffix:Union[str, None]=None
+        any additional text that exists between the file root and the name_list ending
+        Ex) Prototype = "C:/Users/Shannon/Documents/Python_Scripts/Infer-subc/raw/a48hrs-Ctrl_9_Unmixing.czi"
+            Name of organelle file = a48hrs-Ctrl_9_Unmixing-20230426_test_cell.tiff
+            result of .stem = "a48hrs-Ctrl_9_Unmixing"
+            organelle/cell area type = "cell"
+            suffix = "-20230426_test_"
+    
+    Returns:
+    ----------
+    a dictionary of file paths for each image type (raw and all the different segmentations)
+
+    """
     # raw
     prototype = Path(prototype)
     if not prototype.exists():
         print(f"bad prototype. please choose an existing `raw` file as prototype")
         return dict()
-    # make sure protoype ends with czi
 
     out_files = {"raw":prototype}
+    seg_path = Path(seg_path) 
 
-    int_path = Path(int_path) 
     # raw
-    if not int_path.is_dir():
+    if not seg_path.is_dir():
         print(f"bad path argument. please choose an existing path containing organelle segmentations")
         return out_files
-    
-    # cyto, cellmask
-    cyto_nm = int_path / f"{prototype.stem}-cyto.tiff"
-    if cyto_nm.exists():
-        out_files["cyto"] = cyto_nm
-    else:
-        print(f"cytosol mask not found.  We'll try to extract from masks ")
-        if explode_mask(int_path / f"{prototype.stem}-masks.tiff"): 
-            out_files["cyto"] = cyto_nm
-        else: 
-            print(f"failed to explode {prototype.stem}-masks.tiff")
-            return out_files
-    
-    cellmask_nm = int_path / f"{prototype.stem}-cell.tiff"
-    if  cellmask_nm.exists():
-        out_files["cell"] = cellmask_nm
-    else:
-        print(f"cellmask file not found in {int_path} returning")
-        out_files["cell"] = None
 
-    # organelles
-    for org_n in organelles:
-        org_name = Path(int_path) / f"{prototype.stem}-{org_n}.tiff"
+    # segmentations
+    for org_n in name_list:
+        org_name = Path(seg_path) / f"{prototype.stem}{suffix}{org_n}.tiff"
         if org_name.exists(): 
             out_files[org_n] = org_name
         else: 
-            print(f"{org_n} .tiff file not found in {int_path} returning")
+            print(f"{org_n} .tiff file not found in {seg_path} returning")
             out_files[org_n] = None
     
-    if "nuc" not in organelles:
-        nuc_nm = int_path / f"{prototype.stem}-nuc.tiff"
-        if  nuc_nm.exists():
-            out_files["nuc"] = nuc_nm
-        else:
-            print(f"nuc file not found in {int_path} returning")
-            out_files["nuc"] = None
+    return out_files 
 
 
 
-    return out_files
+# def find_segmentation_tiff_files(prototype:Union[Path,str], organelles: List[str], int_path: Union[Path,str]) -> Dict:
+#     """
+#     find the nescessary image files based on protype, the organelles involved, and paths
+#     """
+
+#     # raw
+#     prototype = Path(prototype)
+#     if not prototype.exists():
+#         print(f"bad prototype. please choose an existing `raw` file as prototype")
+#         return dict()
+#     # make sure protoype ends with czi
+
+#     out_files = {"raw":prototype}
+
+#     int_path = Path(int_path) 
+#     # raw
+#     if not int_path.is_dir():
+#         print(f"bad path argument. please choose an existing path containing organelle segmentations")
+#         return out_files
+    
+#     # cyto, cellmask
+#     cyto_nm = int_path / f"{prototype.stem}-cyto.tiff"
+#     if cyto_nm.exists():
+#         out_files["cyto"] = cyto_nm
+#     else:
+#         print(f"cytosol mask not found.  We'll try to extract from masks ")
+#         if explode_mask(int_path / f"{prototype.stem}-masks.tiff"): 
+#             out_files["cyto"] = cyto_nm
+#         else: 
+#             print(f"failed to explode {prototype.stem}-masks.tiff")
+#             return out_files
+    
+#     cellmask_nm = int_path / f"{prototype.stem}-cell.tiff"
+#     if  cellmask_nm.exists():
+#         out_files["cell"] = cellmask_nm
+#     else:
+#         print(f"cellmask file not found in {int_path} returning")
+#         out_files["cell"] = None
+
+#     # organelles
+#     for org_n in organelles:
+#         org_name = Path(int_path) / f"{prototype.stem}-{org_n}.tiff"
+#         if org_name.exists(): 
+#             out_files[org_n] = org_name
+#         else: 
+#             print(f"{org_n} .tiff file not found in {int_path} returning")
+#             out_files[org_n] = None
+    
+#     if "nuc" not in organelles:
+#         nuc_nm = int_path / f"{prototype.stem}-nuc.tiff"
+#         if  nuc_nm.exists():
+#             out_files["nuc"] = nuc_nm
+#         else:
+#             print(f"nuc file not found in {int_path} returning")
+#             out_files["nuc"] = None
+
+
+
+#     return out_files
 
 
 ###########

@@ -170,9 +170,7 @@ class AICSImageReaderWrap:
         self.raw_meta = get_raw_meta_data(meta)
 
 
-
-# TODO throw exception and call with try
-def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
+def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path, file_type: str) -> Union[np.ndarray, None]:
     """
     read inferred organelle from ome.tif file
 
@@ -184,6 +182,8 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
         dictionary of meta-data (ome) from original file
     out_data_path:
         Path object of directory where tiffs are read from
+    file_type: 
+        The type of file you want to import as a string (ex - ".tif", ".tiff", ".czi", etc.)
 
     Returns
     -------------
@@ -191,22 +191,61 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -
 
     """
 
-    # copy the original file name to meta
-    img_name = Path(meta_dict["file_name"])  #
-    # add params to metadata
+    img_name = Path(meta_dict["file_name"])
 
-    organelle_fname = f"{img_name.stem}-{name}.tiff"
-
-    organelle_path = out_data_path / organelle_fname
-
-    if Path.exists(organelle_path):
-        # organelle_obj, _meta_dict = read_ome_image(organelle_path)
-        organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
-        print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
-        return organelle_obj
+    if name is None:
+        pass
     else:
-        print(f"`{name}` object not found: {organelle_path}")
-        raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
+        organelle_fname = f"{img_name.stem}-{name}{file_type}"
+
+        organelle_path = out_data_path / organelle_fname
+
+        if Path.exists(organelle_path):
+            # organelle_obj, _meta_dict = read_ome_image(organelle_path)
+            organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
+            print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
+            return organelle_obj
+        else:
+            print(f"`{name}` object not found: {organelle_path}")
+            raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
+
+
+# TODO throw exception and call with try
+# def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
+#     """
+#     read inferred organelle from ome.tif file
+
+#     Parameters
+#     ------------
+#     name: str
+#         name of organelle.  i.e. nuc, lyso, etc.
+#     meta_dict:
+#         dictionary of meta-data (ome) from original file
+#     out_data_path:
+#         Path object of directory where tiffs are read from
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+
+#     # copy the original file name to meta
+#     img_name = Path(meta_dict["file_name"])  #
+#     # add params to metadata
+
+#     organelle_fname = f"{img_name.stem}-{name}.tiff"
+
+#     organelle_path = out_data_path / organelle_fname
+
+#     if Path.exists(organelle_path):
+#         # organelle_obj, _meta_dict = read_ome_image(organelle_path)
+#         organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
+#         print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
+#         return organelle_obj
+#     else:
+#         print(f"`{name}` object not found: {organelle_path}")
+#         raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
 
 
 def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, out_data_path: Path) -> str:
