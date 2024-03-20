@@ -553,16 +553,16 @@ def _batch_process_quantification(out_file_name: str,
     final_dist = pd.concat(dist_tabs, ignore_index=True)
     final_region = pd.concat(region_tabs, ignore_index=True)
 
-    org_csv_path = out_path / f"{out_file_name}organelles.csv"
+    org_csv_path = out_path / f"{out_file_name}_organelles.csv"
     final_org.to_csv(org_csv_path)
 
-    contact_csv_path = out_path / f"{out_file_name}contacts.csv"
+    contact_csv_path = out_path / f"{out_file_name}_contacts.csv"
     final_contact.to_csv(contact_csv_path)
 
-    dist_csv_path = out_path / f"{out_file_name}distributions.csv"
+    dist_csv_path = out_path / f"{out_file_name}_distributions.csv"
     final_dist.to_csv(dist_csv_path)
 
-    region_csv_path = out_path / f"{out_file_name}regions.csv"
+    region_csv_path = out_path / f"{out_file_name}_regions.csv"
     final_region.to_csv(region_csv_path)
 
     end = time.time()
@@ -625,6 +625,355 @@ def _batch_process_quantification(out_file_name: str,
 
 #     return n_files
 
+
+def batch_summary_stats(csv_path_list: List[str],
+                         out_path: str,
+                         out_preffix: str):
+    """" 
+    csv_path_list: List[str],
+        A list of path strings where .csv files to analyze are located.
+    out_path: str,
+        A path string where the summary data file will be output to
+    out_preffix: str
+        The prefix used to name the output file.    
+    """
+    ds_count = 0
+    fl_count = 0
+    ###################
+    # Read in the csv files and combine them into one of each type
+    ###################
+    org_tabs = []
+    contact_tabs = []
+    dist_tabs = []
+    region_tabs = []
+    
+    org = "_organelles"
+    contacts = "_contacts"
+    dist = "_distributions"
+    regions = "_regions"
+
+    for loc in csv_path_list:
+        ds_count = ds_count + 1
+        files_store = sorted(loc.glob("*.csv"))
+        for file in files_store:
+            fl_count = fl_count + 1
+            stem = file.stem
+
+            # org = "organelles" TODO: get rid of these (moved to the above)
+            # contacts = "contacts"
+            # dist = "distributions"
+            # regions = "_regions"
+
+            if org in stem:
+                test_orgs = pd.read_csv(file, index_col=0)
+                test_orgs.insert(0, "dataset", stem[:-11])
+                org_tabs.append(test_orgs)
+            if contacts in stem:
+                test_contact = pd.read_csv(file, index_col=0)
+                test_contact.insert(0, "dataset", stem[:-9])
+                contact_tabs.append(test_contact)
+            if dist in stem:
+                test_dist = pd.read_csv(file, index_col=0)
+                test_dist.insert(0, "dataset", stem[:-14])
+                dist_tabs.append(test_dist)
+            if regions in stem:
+                test_regions = pd.read_csv(file, index_col=0)
+                test_regions.insert(0, "dataset", stem[:-8])
+                region_tabs.append(test_regions)
+            
+    org_df = pd.concat(org_tabs,axis=0, join='outer')
+    contacts_df = pd.concat(contact_tabs,axis=0, join='outer')
+    dist_df = pd.concat(dist_tabs,axis=0, join='outer')
+    regions_df = pd.concat(region_tabs,axis=0, join='outer')
+
+    ###################
+    # adding new metrics to the original sheets
+    ###################
+    # TODO: include these labels when creating the original sheets
+    contact_cnt = contacts_df[["dataset", "image_name", "object", "label", "volume"]]
+    contact_cnt[["orgA", "orgB"]] = contact_cnt["object"].str.split('X', expand=True)
+    contact_cnt[["A_ID", "B_ID"]] = contact_cnt["label"].str.split('_', expand=True)
+    contact_cnt["A"] = contact_cnt["orgA"] +"_" + contact_cnt["A_ID"].astype(str)
+    contact_cnt["B"] = contact_cnt["orgB"] +"_" + contact_cnt["B_ID"].astype(str)
+
+    contact_cnt_percell = contact_cnt[["dataset", "image_name", "orgA", "A_ID", "object", "volume"]].groupby(["dataset", "image_name", "orgA", "A_ID", "object"]).agg(["count", "sum"])
+    contact_cnt_percell.columns = ["_".join(col_name).rstrip('_') for col_name in contact_cnt_percell.columns.to_flat_index()]
+    unstacked = contact_cnt_percell.unstack(level='object')
+    unstacked.columns = ["_".join(col_name).rstrip('_') for col_name in unstacked.columns.to_flat_index()]
+    unstacked = unstacked.reset_index()
+    for col in unstacked.columns:
+        if col.startswith("volume_count_"):
+            newname = col.split("_")[-1] + "_count"
+            unstacked.rename(columns={col:newname}, inplace=True)
+        if col.startswith("volume_sum_"):
+            newname = col.split("_")[-1] + "_volume"
+            unstacked.rename(columns={col:newname}, inplace=True)
+    unstacked.rename(columns={"orgA":"object", "A_ID":"label"}, inplace=True)
+    unstacked.set_index(['dataset', 'image_name', 'object', 'label'])
+
+    contact_percellB = contact_cnt[["dataset", "image_name", "orgB", "B_ID", "object", "volume"]].groupby(["dataset", "image_name", "orgB", "B_ID", "object"]).agg(["count", "sum"])
+    contact_percellB.columns = ["_".join(col_name).rstrip('_') for col_name in contact_percellB.columns.to_flat_index()]
+    unstackedB = contact_percellB.unstack(level='object')
+    unstackedB.columns = ["_".join(col_name).rstrip('_') for col_name in unstackedB.columns.to_flat_index()]
+    unstackedB = unstackedB.reset_index()
+    for col in unstackedB.columns:
+        if col.startswith("volume_count_"):
+            newname = col.split("_")[-1] + "_count"
+            unstackedB.rename(columns={col:newname}, inplace=True)
+        if col.startswith("volume_sum_"):
+            newname = col.split("_")[-1] + "_volume"
+            unstackedB.rename(columns={col:newname}, inplace=True)
+    unstackedB.rename(columns={"orgB":"object", "B_ID":"label"}, inplace=True)
+    unstackedB.set_index(['dataset', 'image_name', 'object', 'label'])
+
+    contact_cnt = pd.concat([unstacked, unstackedB], axis=0).sort_index(axis=0)
+    contact_cnt = contact_cnt.groupby(['dataset', 'image_name', 'object', 'label']).sum().reset_index()
+    contact_cnt['label']=contact_cnt['label'].astype("Int64")
+
+    org_df = pd.merge(org_df, contact_cnt, how='left', on=['dataset', 'image_name', 'object', 'label'], sort=True)
+    org_df[contact_cnt.columns] = org_df[contact_cnt.columns].fillna(0)
+
+    ###################
+    # summary stat group
+    ###################
+    group_by = ['dataset', 'image_name', 'object']
+    sharedcolumns = ["SA_to_volume_ratio", "equivalent_diameter", "extent", "euler_number", "solidity", "axis_major_length"]
+    ag_func_standard = ['mean', 'median', 'std']
+
+    ###################
+    # summarize shared measurements between org_df and contacts_df
+    ###################
+    org_cont_tabs = []
+    for tab in [org_df, contacts_df]:
+        tab1 = tab[group_by + ['volume']].groupby(group_by).agg(['count', 'sum'] + ag_func_standard)
+        tab2 = tab[group_by + ['surface_area']].groupby(group_by).agg(['sum'] + ag_func_standard)
+        tab3 = tab[group_by + sharedcolumns].groupby(group_by).agg(ag_func_standard)
+        shared_metrics = pd.merge(tab1, tab2, 'outer', on=group_by)
+        shared_metrics = pd.merge(shared_metrics, tab3, 'outer', on=group_by)
+        org_cont_tabs.append(shared_metrics)
+
+    org_summary = org_cont_tabs[0]
+    contact_summary = org_cont_tabs[1]
+
+    ###################
+    # group metrics from regions_df similar to the above
+    ###################
+    regions_summary = regions_df[group_by + ['volume', 'surface_area'] + sharedcolumns].set_index(group_by)
+
+    ###################
+    # summarize extra metrics from org_df
+    ###################
+    columns2 = [col for col in org_df.columns if col.endswith(("_count", "_volume"))]
+    contact_counts_summary = org_df[group_by + columns2].groupby(group_by).agg(['sum'] + ag_func_standard)
+    org_summary = pd.merge(org_summary, contact_counts_summary, 'outer', on=group_by)#left_on=group_by, right_on=True)
+
+    ###################
+    # summarize distribution measurements
+    ###################
+    # organelle distributions
+    hist_dfs = []
+    for ind in dist_df.index:
+        selection = dist_df.loc[[ind]]
+        bins_df = pd.DataFrame()
+        wedges_df = pd.DataFrame()
+        Z_df = pd.DataFrame()
+
+        bins_df[['bins', 'masks', 'obj']] = selection[['XY_bins', 'XY_mask_vox_cnt_perbin', 'XY_obj_vox_cnt_perbin']]
+        wedges_df[['bins', 'masks', 'obj']] = selection[['XY_wedges', 'XY_mask_vox_cnt_perwedge', 'XY_obj_vox_cnt_perwedge']]
+        Z_df[['bins', 'masks', 'obj']] = selection[['Z_slices', 'Z_mask_vox_cnt', 'Z_obj_vox_cnt']]
+
+        dfs = [selection[['dataset', 'image_name', 'object']].reset_index()]
+        for df, prefix in zip([bins_df, wedges_df, Z_df], ["XY_bins_", "XY_wedges_", "Z_slices_"]):
+            single_df = pd.DataFrame(list(zip(df["bins"].values[0][1:-1].split(", "), 
+                                            df["obj"].values[0][1:-1].split(", "), 
+                                            df["masks"].values[0][1:-1].split(", "))), columns =['bins', 'obj', 'mask']).astype(int)
+            
+            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
+            single_df['obj_norm'] = (single_df["obj"]/single_df["mask_fract"]).fillna(0)
+            single_df['portion_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
+
+            if "Z_" in prefix:
+                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*10).apply(np.floor)
+
+            sumstats_df = pd.DataFrame()
+
+            s = single_df['bins'].repeat(single_df['obj_norm'])
+            sumstats_df['hist_mean']=[s.mean()]
+            sumstats_df['hist_median']=[s.median()]
+            if single_df['obj_norm'].sum() != 0: sumstats_df['hist_mode']=[s.mode()[0]]
+            else: sumstats_df['hist_mode']=['NaN']
+            sumstats_df['hist_min']=[s.min()]
+            sumstats_df['hist_max']=[s.max()]
+            sumstats_df['hist_range']=[s.max() - s.min()]
+            sumstats_df['hist_stdev']=[s.std()]
+            sumstats_df['hist_skew']=[s.skew()]
+            sumstats_df['hist_kurtosis']=[s.kurtosis()]
+            sumstats_df['hist_var']=[s.var()]
+            sumstats_df.columns = [prefix+col for col in sumstats_df.columns]
+            dfs.append(sumstats_df.reset_index())
+        combined_df = pd.concat(dfs, axis=1).drop(columns="index")
+        hist_dfs.append(combined_df)
+    dist_org_summary = pd.concat(hist_dfs, ignore_index=True)
+
+    # nucleus distribution
+    nuc_dist_df = dist_df[["dataset", "image_name", 
+                        "XY_bins", "XY_center_vox_cnt_perbin", "XY_mask_vox_cnt_perbin",
+                        "XY_wedges", "XY_center_vox_cnt_perwedge", "XY_mask_vox_cnt_perwedge",
+                        "Z_slices", "Z_center_vox_cnt", "Z_mask_vox_cnt"]].set_index(["dataset", "image_name"])
+    nuc_hist_dfs = []
+    for idx in nuc_dist_df.index.unique():
+        selection = nuc_dist_df.loc[idx].iloc[[0]].reset_index()
+        bins_df = pd.DataFrame()
+        wedges_df = pd.DataFrame()
+        Z_df = pd.DataFrame()
+
+        bins_df[['bins', 'center', 'masks']] = selection[['XY_bins', 'XY_center_vox_cnt_perbin', 'XY_mask_vox_cnt_perbin']]
+        wedges_df[['bins', 'center', 'masks']] = selection[['XY_wedges', 'XY_center_vox_cnt_perwedge', 'XY_mask_vox_cnt_perwedge']]
+        Z_df[['bins', 'center', 'masks']] = selection[['Z_slices', 'Z_center_vox_cnt', 'Z_mask_vox_cnt']]
+
+        dfs = [selection[['dataset', 'image_name']]]
+        for df, prefix in zip([bins_df, wedges_df, Z_df], ["XY_bins_", "XY_wedges_", "Z_slices_"]):
+            single_df = pd.DataFrame(list(zip(df["bins"].values[0][1:-1].split(", "), 
+                                            df["masks"].values[0][1:-1].split(", "),
+                                            df["center"].values[0][1:-1].split(", "))), columns =['bins', 'mask', 'obj']).astype(int)
+            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
+            single_df['obj_norm'] = (single_df["obj"]/single_df["mask_fract"]).fillna(0)
+            single_df['portion_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
+            if "Z_" in prefix:
+                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*10).apply(np.floor)
+
+            sumstats_df = pd.DataFrame()
+
+            s = single_df['bins'].repeat(single_df['obj_norm'])
+            sumstats_df['hist_mean']=[s.mean()]
+            sumstats_df['hist_median']=[s.median()]
+            if single_df['obj_norm'].sum() != 0: sumstats_df['hist_mode']=[s.mode()[0]]
+            else: sumstats_df['hist_mode']=['NaN']
+            sumstats_df['hist_min']=[s.min()]
+            sumstats_df['hist_max']=[s.max()]
+            sumstats_df['hist_range']=[s.max() - s.min()]
+            sumstats_df['hist_stdev']=[s.std()]
+            sumstats_df['hist_skew']=[s.skew()]
+            sumstats_df['hist_kurtosis']=[s.kurtosis()]
+            sumstats_df['hist_var']=[s.var()]
+            sumstats_df.columns = [prefix+col for col in sumstats_df.columns]
+            dfs.append(sumstats_df.reset_index())
+        combined_df = pd.concat(dfs, axis=1).drop(columns="index")
+        nuc_hist_dfs.append(combined_df)
+    dist_center_summary = pd.concat(nuc_hist_dfs, ignore_index=True)
+    dist_center_summary.insert(2, column="object", value="nuc")
+
+    dist_summary = pd.concat([dist_org_summary, dist_center_summary], axis=0).set_index(group_by).sort_index()
+
+    ###################
+    # add normalization
+    ###################
+    # organelle area fraction
+    area_fractions = []
+    for idx in org_summary.index.unique():
+        org_vol = org_summary.loc[idx][('volume', 'sum')]
+        cell_vol = regions_summary.loc[idx[:-1] + ('cell',)]["volume"]
+        afrac = org_vol/cell_vol
+        area_fractions.append(afrac)
+    org_summary[('volume', 'fraction')] = area_fractions
+    # TODO: add in line to reorder the level=0 columns here
+
+    # contact sites volume normalized
+    norm_toA_list = []
+    norm_toB_list = []
+    for col in contact_summary.index:
+        norm_toA_list.append(contact_summary.loc[col][('volume', 'sum')]/org_summary.loc[col[:-1]+(col[-1].split('X')[0],)][('volume', 'sum')])
+        norm_toB_list.append(contact_summary.loc[col][('volume', 'sum')]/org_summary.loc[col[:-1]+(col[-1].split('X')[1],)][('volume', 'sum')])
+    contact_summary[('volume', 'norm_to_A')] = norm_toA_list
+    contact_summary[('volume', 'norm_to_B')] = norm_toB_list
+
+    # number and area of individuals organelle involved in contact
+    cont_cnt = org_df[group_by]
+    cont_cnt[[col.split('_')[0] for col in org_df.columns if col.endswith(("_count"))]] = org_df[[col for col in org_df.columns if col.endswith(("_count"))]].astype(bool)
+    cont_cnt_perorg = cont_cnt.groupby(group_by).agg('sum')
+    cont_cnt_perorg.columns = pd.MultiIndex.from_product([cont_cnt_perorg.columns, ['count_in']])
+    for col in cont_cnt_perorg.columns:
+        cont_cnt_perorg[(col[0], 'num_fraction_in')] = cont_cnt_perorg[col].values/org_summary[('volume', 'count')].values
+    cont_cnt_perorg.sort_index(axis=1, inplace=True)
+    org_summary = pd.merge(org_summary, cont_cnt_perorg, on=group_by, how='outer')
+
+
+    ###################
+    # flatten datasheets and combine
+    # TODO: restructure this so that all of the datasheets and unstacked and then reorded based on shared level 0 columns before flattening
+    ###################
+    # org flattening
+    org_final = org_summary.unstack(-1)
+    for col in org_final.columns:
+        if col[1] in ('count_in', 'num_fraction_in') or col[0].endswith(('_count', '_volume')):
+            if col[2] not in col[0]:
+                org_final.drop(col,axis=1, inplace=True)
+    new_col_order = ['dataset', 'image_name', 'object', 'volume', 'surface_area', 'SA_to_volume_ratio', 
+                 'equivalent_diameter', 'extent', 'euler_number', 'solidity', 'axis_major_length', 
+                 'ERXLD', 'ERXLD_count', 'ERXLD_volume', 'golgiXER', 'golgiXER_count', 'golgiXER_volume', 
+                 'golgiXLD', 'golgiXLD_count', 'golgiXLD_volume', 'golgiXperox', 'golgiXperox_count', 'golgiXperox_volume', 
+                 'lysoXER', 'lysoXER_count', 'lysoXER_volume', 'lysoXLD', 'lysoXLD_count', 'lysoXLD_volume', 
+                 'lysoXgolgi', 'lysoXgolgi_count', 'lysoXgolgi_volume', 'lysoXmito', 'lysoXmito_count', 'lysoXmito_volume', 
+                 'lysoXperox', 'lysoXperox_count', 'lysoXperox_volume', 'mitoXER', 'mitoXER_count', 'mitoXER_volume', 
+                 'mitoXLD', 'mitoXLD_count', 'mitoXLD_volume', 'mitoXgolgi', 'mitoXgolgi_count', 'mitoXgolgi_volume', 
+                 'mitoXperox', 'mitoXperox_count', 'mitoXperox_volume', 'peroxXER', 'peroxXER_count', 'peroxXER_volume', 
+                 'peroxXLD', 'peroxXLD_count', 'peroxXLD_volume']
+    new_cols = org_final.columns.reindex(new_col_order, level=0)
+    org_final = org_final.reindex(columns=new_cols[0])
+    org_final.columns = ["_".join((col_name[-1], col_name[1], col_name[0])) for col_name in org_final.columns.to_flat_index()]
+
+    #renaming, filling "NaN" with 0 when needed, and removing ER_std columns
+    for col in org_final.columns:
+        if '_count_in_' or '_fraction_in_' in col:
+            org_final[col] = org_final[col].fillna(0)
+        if col.endswith(("_count_volume","_sum_volume", "_mean_volume", "_median_volume")):
+            org_final[col] = org_final[col].fillna(0)
+        if col.endswith("_count_volume"):
+            org_final.rename(columns={col:col.split("_")[0]+"_count"}, inplace=True)
+        if col.startswith("ER_std_"):
+            org_final.drop(columns=[col], inplace=True)
+    org_final = org_final.reset_index()
+
+    # contacts flattened
+    contact_final = contact_summary.unstack(-1)
+    contact_final.columns = ["_".join((col_name[-1], col_name[1], col_name[0])) for col_name in contact_final.columns.to_flat_index()]
+
+    #renaming and filling "NaN" with 0 when needed
+    for col in contact_final.columns:
+        if col.endswith(("_count_volume","_sum_volume", "_mean_volume", "_median_volume")):
+            contact_final[col] = contact_final[col].fillna(0)
+        if col.endswith("_count_volume"):
+            contact_final.rename(columns={col:col.split("_")[0]+"_count"}, inplace=True)
+    contact_final = contact_final.reset_index()
+
+    # distributions flattened
+    dist_final = dist_summary.unstack(-1)
+    dist_final.columns = ["_".join((col_name[1], col_name[0])) for col_name in dist_final.columns.to_flat_index()]
+    dist_final = dist_final.reset_index()
+
+    # regions flattened & normalization added
+    regions_final = regions_summary.unstack(-1)
+    regions_final.columns = ["_".join((col_name[1], col_name[0])) for col_name in regions_final.columns.to_flat_index()]
+    regions_final['nuc_area_fraction'] = regions_final['nuc_volume'] / regions_final['cell_volume']
+    regions_final = regions_final.reset_index()
+
+    # combining them all
+    combined = pd.merge(org_final, contact_final, on=["dataset", "image_name"], how="outer")
+    combined = pd.merge(combined, dist_final, on=["dataset", "image_name"], how="outer")
+    combined = pd.merge(combined, regions_final, on=["dataset", "image_name"], how="outer").set_index(["dataset", "image_name"])
+    combined.columns = [col.replace('sum', 'total') for col in combined.columns]
+
+    ###################
+    # export summary sheets
+    ###################
+    org_summary.to_csv(out_path + f"/{out_preffix}per_org_summarystats.csv")
+    contact_summary.to_csv(out_path + f"/{out_preffix}per_contact_summarystats.csv")
+    dist_summary.to_csv(out_path + f"/{out_preffix}distribution_summarystats.csv")
+    regions_summary.to_csv(out_path + f"/{out_preffix}per_region_summarystats.csv")
+    combined.to_csv(out_path + f"/{out_preffix}summarystats_combined.csv")
+
+    print(f"Processing of {fl_count} files from {ds_count} dataset(s) is complete.")
+    return f"{fl_count} files from {ds_count} dataset(s) were processed"
 
 
 
