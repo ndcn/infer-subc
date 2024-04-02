@@ -1,0 +1,148 @@
+{
+    "1":{
+        "category": "extraction",
+        "function": "membrane_composite",
+        "parameter_values": {
+            "weight_ch0": 0,
+            "weight_ch1": 0,
+            "weight_ch2": 0,
+            "weight_ch3": 0,
+            "weight_ch4": 0,
+            "weight_ch5": 0,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0,
+            "Invert_PM": false,
+            "PM_Channel": 0
+        },
+        "parent": 0,
+        "annotation": " this creates an aggregate signal for the cellmask"
+    },
+    "2":{
+        "category": "extraction",
+        "function": "membrane_composite",
+        "parameter_values": {
+            "weight_ch0": 0,
+            "weight_ch1": 0,
+            "weight_ch2": 0,
+            "weight_ch3": 0,
+            "weight_ch4": 0,
+            "weight_ch5": 0,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0,
+            "Invert_PM": false,
+            "PM_Channel": 0
+        },
+        "parent": 0,
+        "annotation": " this creates an aggregate signal for the cellmask"
+    },
+    "3":{
+        "category": "preprocessing",
+        "function": "close_and_filter",
+        "parameter_values": {
+            "Method": "Disk",
+            "Size": 15
+        },
+        "parent": 1,
+        "annotation": " closes composite A prior to thresholding"
+    },
+    "4":{
+        "category": "preprocessing",
+        "function": "close_and_filter",
+        "parameter_values": {
+            "Method": "Disk",
+            "Size": 15
+        },
+        "parent": 2,
+        "annotation": " closes composite B prior to thresholding"
+    },
+    "5":{
+        "category": "core",
+        "function": "masked_object_thresh_bind_pm",
+        "parameter_values": {
+            "Global_Method": "ave_tri_med",
+            "Cutoff_Size": 0,
+            "Local_Adjust": 1,
+            "Bind_to_PM": false,            
+            "PM_Channel": 0,
+            "Thresh_Adj": 1.0
+        },
+        "parent": [0,3],
+        "annotation": " thresholding to find the mask A"
+    },
+    "6":{
+        "category": "core",
+        "function": "masked_object_thresh_bind_pm",
+        "parameter_values": {
+            "Global_Method": "ave_tri_med",
+            "Cutoff_Size": 0,
+            "Local_Adjust": 1,
+            "Bind_to_PM": false,            
+            "PM_Channel": 0,
+            "Thresh_Adj": 1.0
+        },
+        "parent": [0,4],
+        "annotation": " thresholding to find the mask B"
+    },
+    "7":{
+        "category": "postprocessing",
+        "function": "find_nuc",
+        "parameter_values": {
+            "Nuc_Channel": 0,
+            "Median_Size": 4,
+            "Gauss_Sigma": 1.34,
+            "Thresh_Factor": 0.9,
+            "Thresh_Min": 0.1,
+            "Thresh_Max": 1.0,
+            "Min_Hole_Width": 0,
+            "Max_Hole_Width": 25,
+            "Small_Obj_Width": 15,
+            "Fill_Filter_Method": "3D",
+            "Search_Img": "Img 5"
+        },
+        "parent": [0,5,6],
+        "annotation": " finds the nucleus involved with the cell"
+    },
+    "8":{
+        "category": "postprocessing",
+        "function": "fill_filter_and_mix_nuc",
+        "parameter_values": {
+            "Method": "Disk",
+            "Size": 0,
+            "Min_Hole_Width": 0,
+            "Max_Hole_Width": 25,
+            "Small_Obj_Width": 1
+        },
+        "parent": [7,5],
+        "annotation": " adds nucleus to threshold A"
+    },
+    "9": {
+        "category": "postprocessing",
+        "function": "fill_filter_and_mix_nuc",
+        "parameter_values": {
+            "Method": "Disk",
+            "Size": 0,
+            "Min_Hole_Width": 0,
+            "Max_Hole_Width": 25,
+            "Small_Obj_Width": 1
+        },
+        "parent": [7,6],
+        "annotation": " adds nucleus to threshold B"
+    },
+    "10": {
+        "category": "postpostprocessing",
+        "function": "double_watershed_closing",
+        "parameter_values":{
+            "Watershed_Method": "3D",
+            "Min_Hole_Width": 0,
+            "Max_Hole_Width": 25,
+            "Method": "Disk",
+            "Size": 15
+        },
+        "parent": [7,5,6,8,9],
+        "annotation": " performs a combined watershed"
+    }
+}
