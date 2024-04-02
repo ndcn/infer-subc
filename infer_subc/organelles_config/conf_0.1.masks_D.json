@@ -1,0 +1,57 @@
+{
+    "1":{
+        "category": "extraction",
+        "function": "membrane_composite",
+        "parameter_values": {
+            "weight_ch0": 0,
+            "weight_ch1": 0,
+            "weight_ch2": 0,
+            "weight_ch3": 0,
+            "weight_ch4": 0,
+            "weight_ch5": 0,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0,
+            "Invert_PM": false,
+            "PM_Channel": 0
+        },
+        "parent": 0,
+        "annotation": " this creates an aggregate signal for the cellmask"
+    },
+    "2":{
+        "category": "extraction",
+        "function": "infer_nuclei_fromlabel",
+        "parameter_values":{
+            "nuc_ch": 0,
+            "median_size": 4,
+            "gauss_sigma": 1.34,
+            "thresh_factor": 0.9,
+            "thresh_min": 0.1,
+            "thresh_max": 1.0,
+            "min_hole_width": 0,
+            "max_hole_width": 25,
+            "small_obj_width": 15,
+            "fill_filter_method": "3D"
+        },
+        "parent": 0,
+        "annotation": "segments the nuclei labels"
+    },
+    "3":{
+        "category": "core",
+        "function": "invert_pm_watershed",
+        "parameter_values":{
+            "PM_Channel": 0,
+            "Method": "3D"
+        },
+        "parent": [0,2],
+        "annotation": "generates watershed with nuclei as seeds"
+    },
+    "4":{
+        "category": "postprocessing",
+        "function": "choose_cell",
+        "parameter_values": null,
+        "parent": [1,2,3],
+        "annotation": "singles out one cell from the watershed"
+    }
+}
