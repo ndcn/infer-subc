@@ -4,18 +4,6 @@ from infer_subc.core.img import fill_and_filter_linear_size, get_interior_labels
 from aicssegmentation.core.utils import hole_filling
 from infer_subc.organelles.nuclei import infer_nuclei_fromlabel
 from infer_subc.organelles.cellmask import non_linear_cellmask_transform
-from infer_subc.constants import (
-    TEST_IMG_N,
-    NUC_CH,
-    LYSO_CH,
-    MITO_CH,
-    GOLGI_CH,
-    PEROX_CH,
-    ER_CH,
-    LD_CH,
-    PM_CH,
-    RESIDUAL_CH,
-)
 
 def membrane_composite(in_img: np.ndarray,
                        weight_ch0: int = 0,
