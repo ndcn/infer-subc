@@ -53,5 +53,12 @@
         "parameter_values": null,
         "parent": [1,2,3],
         "annotation": "singles out one cell from the watershed"
+    },
+    "5":{
+        "category": "export",
+        "function": "stack_layers",
+        "parameter_values": null,
+        "parent": [2, 4],
+        "annotation": "stacks nuclei and cellmask for batch processing and export"
     }
 }
