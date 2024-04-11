@@ -2221,7 +2221,7 @@
             "Thresh_Adj": {
                 "data_type": "float",
                 "increment": 0.1,
-                "max": 5,
+                "max": 10,
                 "min": 0,
                 "widget_type": "slider"
             }
@@ -2286,14 +2286,14 @@
             "Min_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 1000,
                 "min": 0,
                 "widget_type": "slider"
             },
             "Max_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 1000,
                 "min": 4,
                 "widget_type": "slider"
             },
@@ -2344,14 +2344,14 @@
             "Min_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 1000,
                 "min": 0,
                 "widget_type": "slider"
             },
             "Max_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 1000,
                 "min": 4,
                 "widget_type": "slider"
             },
@@ -2380,14 +2380,14 @@
             "Min_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 10000,
                 "min": 0,
                 "widget_type": "slider"
             },
             "Max_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 40,
+                "max": 10000,
                 "min": 4,
                 "widget_type": "slider"
             },
