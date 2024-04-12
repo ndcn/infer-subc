@@ -235,11 +235,13 @@ def double_watershed(nuc: np.ndarray,
                                      method=Watershed_Method)
     
     cm_combo = cm_A.astype(bool) + cm_B.astype(bool)
-    out_img = close_and_fill(in_img=cm_combo,
+    cm_out = close_and_fill(in_img=cm_combo,
                              Min_Hole_Width=Min_Hole_Width,
                              Max_Hole_Width=Max_Hole_Width,
                              Method=Method,
                              Size=Size)
+    
+    out_img = np.stack([nuc, cm_out], axis=0)
 
     return out_img
 
