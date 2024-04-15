@@ -2286,14 +2286,14 @@
             "Min_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 1000,
+                "max": 10000,
                 "min": 0,
                 "widget_type": "slider"
             },
             "Max_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 1000,
+                "max": 10000,
                 "min": 4,
                 "widget_type": "slider"
             },
@@ -2344,14 +2344,14 @@
             "Min_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 1000,
+                "max": 10000,
                 "min": 0,
                 "widget_type": "slider"
             },
             "Max_Hole_Width": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 1000,
+                "max": 10000,
                 "min": 4,
                 "widget_type": "slider"
             },
