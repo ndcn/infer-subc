@@ -288,6 +288,12 @@ def make_all_metrics_tables(source_file: str,
     #######################################
     # collect non-redundant contact metrics 
     #######################################
+    #   ||
+    #  _||_
+    # \ || /  
+    #  \  / 
+    #   \/
+    
     # list the non-redundant organelle pairs
     contact_combos = list(itertools.combinations(list_obj_names, 2))
 
