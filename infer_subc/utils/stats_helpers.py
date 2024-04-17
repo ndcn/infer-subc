@@ -21,6 +21,86 @@ from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
+from skimage.measure import label
+
+#Use following to organize segmentations into dictionary:
+def make_dict(obj_names: list[str],                                 #Intakes list of object names
+              obj_segs: list[np.ndarray],                           #Intakes list of object segmentations
+              also_binary: bool=True):                              #Determines whether to output only labeled or include a binary dictionary as an output
+    objs_labeled = {}                                               #Initialize dictionary
+    objs_binary = {}                                                #Initialize dictionary
+    for idx, name in enumerate(obj_names):                          #Loop across each organelle name
+        if also_binary:                                             #Proceed if also_binary is true
+            objs_binary[name]=(obj_segs[idx]>0).astype(np.uint16)   #Set the organelle name as the key for the corresponding binary object segmentation
+        if name == 'ER':                                            #Proceed only for ER
+            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)  #Ensures ER is labeled only as one object & sets it as key for its object segmentation
+        else:                                                       #Proceed for other organelles
+            objs_labeled[name]=obj_segs[idx]                        #Set the organelle name as the key for the corresponding object segmentation
+    if also_binary:                                                 #Proceed if also_binary is true
+        return objs_labeled, objs_binary                            #Return a dictionary of segmented objects with keys as the organelle name and a binary version
+    else:                                                           #Proceed if also_binary is false
+        return objs_labeled                                         #Return a dictionary of segmented objects with keys as the organelle name
+
+#checks if a string can be turned into a list that is equal to any preexisting lists in an input dictionary
+def inkeys(dic: dict[str],                      #Takes in dictionary to search through
+           s:str,                               #Takes in string being searched for
+           splitter:str="_") -> bool:           #Takes in character strings are split by, defaults to "_"
+    a = sorted(s.split(splitter))               #Normalizes the way the string is written
+    for key in dic.keys():                      #Iterates through each key in dictionary
+        if (a == sorted(key.split(splitter))):  #Checks if key has same vals as string
+            return True                         #Returns true if any key is same as string
+    return False                                #Returns false if no keys are same as string
+
+#Finds areas in contact sites between 2 or more organelles that also have contacts with an additional organelle
+#and assigns those areas as new contact sites to a dictionary, and returns the dictionary. 
+#Works for contacts of 3 or more organelles
+def contacting(binary: dict[str], 
+               iterated:dict[str],
+               splitter:str="_") -> dict: 
+    contact={}                                                                          #Creates empty dictionary
+    for c in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
+        for b in binary:                                                                #Iterates through labeled organelles list (b)
+            if(np.any((iterated[c]*binary[b])>0) and not                                #Proceeds if there are contacts present 
+               ((b+splitter in c)or(splitter+b in c)or(splitter+b+splitter in c)) and   #Proceeds if organelle is not already in previous contact set
+               (not inkeys(contact,(c+splitter+b),splitter=splitter))):                 #Proceeds if contact between organelle and previous contact set is not already made  
+                contact[(c+splitter+b)]=((iterated[c]*binary[b])>0)                     #Adds new binary contact
+    return contact                                                                      #Returns contacts
+
+#Finds contact sites between 2 organelles and assigns them to a dictionary, and returns the dictionary
+def two_contact(binary: dict[str], 
+                contact:dict[str]={},
+                splitter:str="_") -> dict:
+    for a in (binary.keys()):                              #Iterates across all labeled organelle images (a)
+        for b in (binary.keys()):                          #Iterates across all labeled organelle images (b)
+            b_a=b+splitter+a                               #Creates string to check for found a & b contact
+            a_b=a+splitter+b                               #Creates new potential key for a & b contact
+            if ((a!=b) and not                             #Ensures a is not the same as b
+                (b_a in contact.keys()) and                #Ensures no contacts of a & b are already found
+                np.any((binary[a]*binary[b]))):            #Ensures contact is between a & b
+                contact[a_b]=(label(binary[a]*binary[b]))  #Assigns contact of a & b to dictionary
+    return contact                                         #Returns the dictionary
+
+#Assigns all contacts of 2 or more organelles to a dictionary, and returns the dictionary
+def multi_contact(binary:dict[str:np.ndarray], 
+                  organelles:list[str],
+                  splitter:str="_") -> dict:
+    contacts=two_contact(binary, splitter=splitter)             #Dictionary for ALL contacts
+    iterated={}                                                 #Iterated Dictionary
+    contact={}                                                  #Contact Dictionary
+
+    #Repeat # of times equal to max # of contacts in one contact site
+    for n in (range(len(organelles)-1)): 
+        iterated.clear()                                        #Clears iterated dictionary
+        contact.clear()                                         #Clears contact dictionary
+        num=n+3                                                 #Number of contacts
+        for key in contacts:                                    #Iterates over every key in contacts
+            if (len(key.split(splitter)) == (num-1)):           #Selects for last set of contacts
+                iterated[key]=contacts[key]                     #Adds each key from last set of contacts to iterated
+        contact=contacting(binary,iterated,splitter=splitter)   #Collects higher order contact sites
+        for d in contact:                                       #Iterates across the new contact sites 
+            contacts[d]=label(contact[d])                       #Labels & assigns higher order contact to dictionary
+    return contacts                                             #Returns with dictionary of all levels of contacts
+
 
 def make_all_metrics_tables(source_file: str,
                              list_obj_names: List[str],
