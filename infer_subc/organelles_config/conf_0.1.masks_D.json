@@ -55,10 +55,21 @@
         "annotation": "singles out one cell from the watershed"
     },
     "5":{
+        "category": "postpostprocessing",
+        "function": "hole_filling",
+        "parameter_values":{
+            "hole_min": 0,
+            "hole_max": 25,
+            "fill_2d": false
+        },
+        "parent": 4,
+        "annotation": "fills holes in watershed for export"
+    },
+    "6":{
         "category": "export",
         "function": "stack_layers",
         "parameter_values": null,
-        "parent": [2, 4],
+        "parent": [2, 5],
         "annotation": "stacks nuclei and cellmask for batch processing and export"
     }
 }
