@@ -217,6 +217,8 @@ def make_all_metrics_tables(source_file: str,
                                             intensity_img=org_img, 
                                             mask=mask,
                                             scale=scale)
+        
+        #DOES ABOVE ORG METRICS LOOK INTO CONTACTS?
 
         ### org_metrics.insert(loc=0,column='cell',value=1) 
         # ^^^ saving this thought for later when someone might have more than one cell per image.
@@ -340,7 +342,19 @@ def make_all_metrics_tables(source_file: str,
                                                  include_dist=include_contact_dist)
         contact_tabs.append(contact_tab)
 
-
+    #   /\
+    #  /  \
+    # /_||_\    
+    #   ||
+    #   ||
+    # END OF CONTACTS METRICS
+    # ZSC Notes:
+    # - Contacts are currently looping across each contact pair
+    # - Likely need to rewrite entire contact metrics function from scratch
+    # - contact_tabs are appending the new contacts after adding each new contact
+    #    + with multiple contacts method, all contact information is stored as dictionary
+    # - need to better understand how table is created and organized in stats.py
+    # - list_obj_segs is the list of all the organelles segmented in order of list_obj_names
     ###########################################
     # combine all tabs into one table per type:
     ###########################################

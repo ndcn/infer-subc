@@ -522,11 +522,11 @@ def get_contact_metrics_3D(a: np.ndarray,
         volume = labels[props["slice"][index]]
         la = a[props["slice"][index]]
         lb = b[props["slice"][index]]
-        volume = volume == lab
-        la = la[volume]
-        lb = lb[volume]
+        volume = volume == lab                          #Unsure what the following is doing
+        la = la[volume]                                 #Selects for all "true" objects in label a?
+        lb = lb[volume]                                 #Selects for all "true" objects in label b?
 
-        all_as = np.unique(la[la>0]).tolist()
+        all_as = np.unique(la[la>0]).tolist()           
         all_bs = np.unique(lb[lb>0]).tolist()
         if len(all_as) != 1:
             print(f"we have an error.  as-> {all_as}")
