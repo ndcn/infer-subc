@@ -8,7 +8,7 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import (get_contact_metrics_3D, 
+from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, 
                     get_org_morphology_3D, 
                     get_simple_stats_3D, 
                     get_XY_distribution, 
@@ -24,22 +24,36 @@ from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_C
 from skimage.measure import label
 
 #Use following to organize segmentations into dictionary:
-def make_dict(obj_names: list[str],                                 #Intakes list of object names
-              obj_segs: list[np.ndarray],                           #Intakes list of object segmentations
-              also_binary: bool=True):                              #Determines whether to output only labeled or include a binary dictionary as an output
-    objs_labeled = {}                                               #Initialize dictionary
-    objs_binary = {}                                                #Initialize dictionary
-    for idx, name in enumerate(obj_names):                          #Loop across each organelle name
-        if also_binary:                                             #Proceed if also_binary is true
-            objs_binary[name]=(obj_segs[idx]>0).astype(np.uint16)   #Set the organelle name as the key for the corresponding binary object segmentation
-        if name == 'ER':                                            #Proceed only for ER
-            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)  #Ensures ER is labeled only as one object & sets it as key for its object segmentation
-        else:                                                       #Proceed for other organelles
-            objs_labeled[name]=obj_segs[idx]                        #Set the organelle name as the key for the corresponding object segmentation
-    if also_binary:                                                 #Proceed if also_binary is true
-        return objs_labeled, objs_binary                            #Return a dictionary of segmented objects with keys as the organelle name and a binary version
-    else:                                                           #Proceed if also_binary is false
-        return objs_labeled                                         #Return a dictionary of segmented objects with keys as the organelle name
+def make_dict(obj_names: list[str],                                         #Intakes list of object names
+              obj_segs: list[np.ndarray],                                   #Intakes list of object segmentations
+              also_binary: bool=True):                                      #Determines whether to output only labeled or include a binary dictionary as an output
+    objs_labeled = {}                                                       #Initialize dictionary
+    objs_binary = {}                                                        #Initialize dictionary
+    for idx, name in enumerate(obj_names):                                  #Loop across each organelle name
+        if also_binary:                                                     #Proceed if also_binary is true
+            objs_binary[name]=(obj_segs[idx]>0).astype(np.uint16) #Set the organelle name as the key for the corresponding binary object segmentation
+        if name == 'ER':                                                    #Proceed only for ER
+            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)#Ensures ER is labeled only as one object & sets it as key for its object segmentation
+        else:                                                               #Proceed for other organelles
+            objs_labeled[name]=obj_segs[idx]                      #Set the organelle name as the key for the corresponding object segmentation
+    if also_binary:                                                         #Proceed if also_binary is true
+        return objs_labeled, objs_binary                                    #Return a dictionary of segmented objects with keys as the organelle name and a binary version
+    else:                                                                   #Proceed if also_binary is false
+        return objs_labeled                                                 #Return a dictionary of segmented objects with keys as the organelle name
+
+def _make_dict(obj_names: list[str],
+               obj_segs: list[np.ndarray],
+               also_binary: bool=True):
+    new_dict = dict(zip(obj_names, obj_segs))
+    if 'ER' in new_dict.keys():
+        new_dict['ER'] = (new_dict['ER']>0).astype(np.uint16)
+    if also_binary:
+        binary_dict = {}
+        for key in new_dict:
+            binary_dict[key] = (new_dict[key]>0).astype(np.uint16)
+        return new_dict, binary_dict
+    else:
+        return new_dict
 
 #checks if a string can be turned into a list that is equal to any preexisting lists in an input dictionary
 def inkeys(dic: dict[str],                      #Takes in dictionary to search through
@@ -115,7 +129,8 @@ def make_all_metrics_tables(source_file: str,
                              dist_keep_center_as_bin: bool=True,
                              dist_zernike_degrees: Union[int, None]=None,
                              scale: Union[tuple,None] = None,
-                             include_contact_dist:bool=True):
+                             include_contact_dist:bool=True,
+                             splitter:str="_"):
     """
     Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
 
@@ -286,7 +301,56 @@ def make_all_metrics_tables(source_file: str,
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
+    
+    #######################################
+    # collect non-redundant contact metrics 
+    ########################################
+    #   ||
+    #  _||_
+    # \ || /  
+    #  \  / 
+    #   \/
+    labeled_dict, binary_dict = make_dict(obj_names=list_obj_names,
+                                          obj_segs=list_obj_segs)
+    
+    contacts = multi_contact(binary=binary_dict,
+                             organelles=list_obj_names,
+                             splitter=splitter)
+    
+    #add in image exports here 
+    #   - separate image for 2-ways all stacked together
+    #   - separate image for 3-ways all stacked together
+    #   - separate image for 4-ways all stacked together, etc.
+    #print orders of exported images to console
 
+    if include_contact_dist:
+        contact_tabs, dist_tab = get_contact_metrics(contacts_dict=contacts,
+                                                     organelle_segs=labeled_dict,
+                                                     mask=mask,
+                                                     splitter=splitter,
+                                                     scale=scale,
+                                                     include_dist=include_contact_dist,
+                                                     dist_centering_obj=centering,
+                                                     dist_num_bins=dist_num_bins,
+                                                     dist_zernike_degrees=dist_zernike_degrees,
+                                                     dist_center_on=dist_center_on,
+                                                     dist_keep_center_as_bin=dist_keep_center_as_bin)
+        for tabs in dist_tab:
+            dist_tabs.append(tabs)
+    else:
+        contact_tabs = get_contact_metrics(contacts_dict=contacts,
+                                           organelle_segs=labeled_dict,
+                                           mask=mask,
+                                           splitter=splitter,
+                                           scale=scale,
+                                           include_dist=include_contact_dist)
+
+    #   /\
+    #  /  \
+    # /_||_\    
+    #   ||
+    #   ||
+    # END OF NEW CONTACT METRICS
     #######################################
     # collect non-redundant contact metrics 
     #######################################
@@ -296,58 +360,58 @@ def make_all_metrics_tables(source_file: str,
     #  \  / 
     #   \/
     
-    # list the non-redundant organelle pairs
-    contact_combos = list(itertools.combinations(list_obj_names, 2))
+    ## list the non-redundant organelle pairs
+    #contact_combos = list(itertools.combinations(list_obj_names, 2))
 
-    # container to keep contact data in
-    contact_tabs = []
+    ## container to keep contact data in
+    #contact_tabs = []
 
-    # loop through each pair and measure contacts
-    for pair in contact_combos:
-        # pair names
-        a_name = pair[0]
-        b_name = pair[1]
-
-        # segmentations to measure
-        if a_name == 'ER':
-            # ensure ER is only one object
-            a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
-        else:
-            a = list_obj_segs[list_obj_names.index(a_name)]
-        
-        if b_name == 'ER':
-            # ensure ER is only one object
-            b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
-        else:
-            b = list_obj_segs[list_obj_names.index(b_name)]
-        
-
-        if include_contact_dist == True:
-            contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
-                                                                   b, b_name, 
-                                                                   mask, 
-                                                                   scale, 
-                                                                   include_dist=include_contact_dist,
-                                                                   dist_centering_obj=centering,
-                                                                   dist_num_bins=dist_num_bins,
-                                                                   dist_zernike_degrees=dist_zernike_degrees,
-                                                                   dist_center_on=dist_center_on,
-                                                                   dist_keep_center_as_bin=dist_keep_center_as_bin)
-            dist_tabs.append(contact_dist_tab)
-        else:
-            contact_tab = get_contact_metrics_3D(a, a_name, 
-                                                 b, b_name, 
-                                                 mask, 
-                                                 scale, 
-                                                 include_dist=include_contact_dist)
-        contact_tabs.append(contact_tab)
-
+    ## loop through each pair and measure contacts
+    #for pair in contact_combos:
+    #    # pair names
+    #    a_name = pair[0]
+    #    b_name = pair[1]
+    #
+    #    # segmentations to measure
+    #    if a_name == 'ER':
+    #        # ensure ER is only one object
+    #        a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
+    #    else:
+    #        a = list_obj_segs[list_obj_names.index(a_name)]
+    #    
+    #    if b_name == 'ER':
+    #        # ensure ER is only one object
+    #        b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
+    #    else:
+    #        b = list_obj_segs[list_obj_names.index(b_name)]
+    #    
+    #
+    #    if include_contact_dist == True:
+    #        contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
+    #                                                               b, b_name, 
+    #                                                               mask, 
+    #                                                               scale, 
+    #                                                               include_dist=include_contact_dist,
+    #                                                               dist_centering_obj=centering,
+    #                                                               dist_num_bins=dist_num_bins,
+    #                                                               dist_zernike_degrees=dist_zernike_degrees,
+    #                                                               dist_center_on=dist_center_on,
+    #                                                               dist_keep_center_as_bin=dist_keep_center_as_bin)
+    #        dist_tabs.append(contact_dist_tab)
+    #    else:
+    #        contact_tab = get_contact_metrics_3D(a, a_name, 
+    #                                             b, b_name, 
+    #                                             mask, 
+    #                                             scale, 
+    #                                             include_dist=include_contact_dist)
+    #    contact_tabs.append(contact_tab)
+    #
     #   /\
     #  /  \
     # /_||_\    
     #   ||
     #   ||
-    # END OF CONTACTS METRICS
+    # END OF ORIGINAL CONTACTS METRICS
     # ZSC Notes:
     # - Contacts are currently looping across each contact pair
     # - Likely need to rewrite entire contact metrics function from scratch
