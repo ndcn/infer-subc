@@ -4,6 +4,7 @@ from infer_subc.core.img import fill_and_filter_linear_size, get_interior_labels
 from aicssegmentation.core.utils import hole_filling
 from infer_subc.organelles.nuclei import infer_nuclei_fromlabel
 from infer_subc.organelles.cellmask import non_linear_cellmask_transform
+from skimage.filters import threshold_otsu
 
 def membrane_composite(in_img: np.ndarray,
                        weight_ch0: int = 0,
@@ -51,7 +52,7 @@ def masked_object_thresh_bind_pm(raw_img: np.ndarray,
     if Bind_to_PM:
         pm_img = select_channel_from_raw(raw_img, PM_Channel)
         pm_image, d = log_transform(pm_img.copy())
-        pm_thresh = threshold_otsu_log(pm_image) 
+        pm_thresh = threshold_otsu(pm_image) 
         invert_pm_obj = np.invert(pm_img > (inverse_log_transform(pm_thresh, d) * Thresh_Adj))
         mask = np.zeros_like(invert_pm_obj)
         mask[(invert_pm_obj == threshed) & 
