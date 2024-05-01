@@ -511,7 +511,7 @@ def get_contact_metrics(contacts_dict: dict[str:np.ndarray],
                                                                     #   This variable is a list of the labels of each organelle involved in one contact site between those organelles
         involved = orgs.split(splitter)                             #creates list of all involved organelles in the contact
         indexes = dict.fromkeys(involved, [])                       #A dictionary of indexes of site involved in the contact
-        indexes[org] = []                                           #   str = "contact" or "organelle", may have multiple different organelles
+        indexes[orgs] = []                                           #   str = "contact" or "organelle", may have multiple different organelles
                                                                     #   list = contact or organelle number in image corresponding to the same contact in the other keys
                                                                     #   a 2-way contact will have 3 keys, a 3-way contact will have 4 keys, etc
         for index, l in enumerate(props["label"]):
