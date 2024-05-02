@@ -145,7 +145,12 @@ def find_segmentation_tiff_files(prototype:Union[Path,str],
             out_files[org_n] = org_name
         else: 
             print(f"{org_n} .tiff file not found in {seg_path} returning")
-            out_files[org_n] = None
+            org_name = Path(seg_path) / f"{prototype.stem}{suffix}{org_n}.tif"
+            if org_name.exists():
+                out_files[org_n] = org_name
+            else:
+                print(f"{org_n} .tif file not found in {seg_path} returning")
+                out_files[org_n] = None
     
     return out_files 
 

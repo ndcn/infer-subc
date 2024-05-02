@@ -130,7 +130,8 @@ def make_all_metrics_tables(source_file: str,
                              dist_zernike_degrees: Union[int, None]=None,
                              scale: Union[tuple,None] = None,
                              include_contact_dist:bool=True,
-                             splitter:str="_"):
+                             splitter:str="_",
+                             out_path: Union[Path,None]= None):
     """
     Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
 
@@ -220,6 +221,9 @@ def make_all_metrics_tables(source_file: str,
         # organelle segmentation
         if target == 'ER':
             # ensure ER is only one object
+            org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
+        elif target == 'Nuc':
+            # ensure Nuc is only one object
             org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
         else:
             org_obj = list_obj_segs[j]
