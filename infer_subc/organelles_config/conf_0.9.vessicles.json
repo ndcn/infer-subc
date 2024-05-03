@@ -1,0 +1,35 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 0
+        },
+        "parent": 0,
+        "annotation": "basic PM segmentation: 1"
+    },
+    "2": {
+        "category": "core",
+        "function": "apply_otsu",
+        "parameter_values": {
+            "Thresh_Adj": 1
+        },
+        "parent": 2,
+        "annotation": "apply an otsu threshold: 2"
+    },
+    "3": {
+        "category": "postprocessing",
+        "function": "remove_small_objects",
+        "parameter_values": {
+            "min_size": 25
+        },
+        "parent": 3,
+        "annotation": "remove vessicles from image: 3"
+    },
+    "4": {
+        "category": "postpostprocessing",
+        "function": "invert_collection",
+        "parent": [3,4],
+        "annotation": "use images with and without vessicles to find only vessicles: 4"
+    }
+}

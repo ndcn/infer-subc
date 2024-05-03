@@ -1,10 +1,28 @@
 import numpy as np
 from skimage.morphology import disk, ball, binary_closing, closing, binary_dilation, dilation, binary_erosion
-from infer_subc.core.img import fill_and_filter_linear_size, get_interior_labels, get_max_label, inverse_log_transform, log_transform, masked_inverted_watershed, masked_object_thresh, min_max_intensity_normalization, select_channel_from_raw, threshold_otsu_log
+from skimage import feature
+from infer_subc.core.img import fill_and_filter_linear_size, get_interior_labels, get_max_label, inverse_log_transform, log_transform, masked_inverted_watershed, masked_object_thresh, min_max_intensity_normalization, select_channel_from_raw, threshold_otsu
 from aicssegmentation.core.utils import hole_filling
 from infer_subc.organelles.nuclei import infer_nuclei_fromlabel
 from infer_subc.organelles.cellmask import non_linear_cellmask_transform
-from skimage.filters import threshold_otsu
+
+def non_linear_cellmask_canny(in_img:np.ndarray):
+    log_img, d = log_transform(in_img.copy())
+    log_img = min_max_intensity_normalization(log_img)
+    out_img = np.zeros_like(in_img)
+    for z in range(len(in_img)):
+        out_img[z] = feature.canny(log_img[z], sigma=1)
+    out = min_max_intensity_normalization(in_img) - min_max_intensity_normalization(out_img)
+    out[out < 0] = 0
+    return out
+
+def apply_otsu(in_img: np.ndarray, Thresh_Adj: float):
+    pm_image, d = log_transform(in_img.copy())
+    threshold = threshold_otsu(pm_image) 
+    return in_img > ((inverse_log_transform(threshold, d) * Thresh_Adj))
+
+def invert_collection(pm_img: np.ndarray, only_pm: np.ndarray):
+    return pm_img * np.invert(only_pm)
 
 def membrane_composite(in_img: np.ndarray,
                        weight_ch0: int = 0,
@@ -169,7 +187,7 @@ def fill_and_bind(raw_img: np.ndarray,
     if Bind_to_PM:
         pm_img = select_channel_from_raw(raw_img, PM_Channel)
         pm_image, d = log_transform(pm_img.copy())
-        pm_thresh = threshold_otsu_log(pm_image) 
+        pm_thresh = threshold_otsu(pm_image) 
         invert_pm_obj = np.invert(pm_img > (inverse_log_transform(pm_thresh, d) * Thresh_Adj))
         mask = np.zeros_like(invert_pm_obj)
         mask[(binary_dilation(invert_pm_obj) > 0) & 

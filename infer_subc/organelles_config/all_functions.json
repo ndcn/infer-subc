@@ -2445,5 +2445,45 @@
         "python::module": "infer_subc.organelles.membrane",
         "python::function": "choose_cell",
         "parameters": null
+    },
+    "canny_transform":{
+        "name": "Outline edges",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "non_linear_cellmask_canny",
+        "parameters": null
+    },
+    "apply_otsu":{
+        "name": "Threshold image",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "apply_otsu",
+        "parameters": {
+            "Thresh_Adj": {
+                "data_type": "float",
+                "increment": 0.1,
+                "max": 10,
+                "min": 0,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "remove_small_objects":{
+        "name": "Remove small objects",
+        "python::module": "infer_subc.core.img",
+        "python::function": "size_filter_linear_size",
+        "parameters": {
+            "min_size": {
+                "data_type": "int",
+                "increment": 1,
+                "max": 50,
+                "min": 1,
+                "widget_type": "slider"
+            }
+        }
+    },
+    "invert_collection":{
+        "name": "Collect small objects",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "invert_collection",
+        "parameters": null
     }
 }
