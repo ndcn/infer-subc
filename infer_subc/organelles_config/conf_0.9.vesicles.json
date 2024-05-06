@@ -21,7 +21,8 @@
         "category": "postprocessing",
         "function": "remove_small_objects",
         "parameter_values": {
-            "min_size": 25
+            "min_size": 25,
+            "method": "3D"
         },
         "parent": 3,
         "annotation": "remove vessicles from image: 3"

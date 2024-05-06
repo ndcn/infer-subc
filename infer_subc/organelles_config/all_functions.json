@@ -2474,9 +2474,17 @@
             "min_size": {
                 "data_type": "int",
                 "increment": 1,
-                "max": 50,
+                "max": 1000,
                 "min": 1,
                 "widget_type": "slider"
+            },
+            "method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "slice-by-slice",
+                    "3D"
+                ]
             }
         }
     },
