@@ -9,22 +9,56 @@
         "annotation": "basic PM segmentation: 1"
     },
     "2": {
+        "category": "preprocessing",
+        "function": "linear_scharr_membrane",
+        "parameter_values": {
+            "execute": true
+        },
+        "parent": 1,
+        "annotation": "lower effect of edges of plasma membrane: 2"
+    },
+    "3": {
+        "category": "preprocessing",
+        "function": "non_linear_scharr_membrane",
+        "parameter_values": {
+            "execute": true
+        },
+        "parent": 1,
+        "annotation": "lower effect of edges of plasma membrane: 3"
+    },
+    "4": {
         "category": "core",
         "function": "apply_otsu",
         "parameter_values": {
             "Thresh_Adj": 1
         },
-        "parent": 1,
-        "annotation": "apply an otsu threshold: 2"
+        "parent": 2,
+        "annotation": "apply an otsu threshold to linear: 4"
     },
-    "3": {
+    "5": {
+        "category": "core",
+        "function": "apply_otsu",
+        "parameter_values": {
+            "Thresh_Adj": 1
+        },
+        "parent": 3,
+        "annotation": "apply an otsu threshold to non linear: 5"
+    },
+    "6": {
         "category": "postprocessing",
+        "function": "logical_or",
+        "parameter_values": null,
+        "parent": [4,5],
+        "annotation": "combine two thresholded objects: 6"
+    },
+    "7": {
+        "category": "postpostprocessing",
         "function": "remove_small_objects",
         "parameter_values": {
             "min_size": 25,
             "method": "3D"
         },
-        "parent": 2,
-        "annotation": "remove small objects from image: 3"
+        "parent": 6,
+        "annotation": "remove small objects from image: 7"
     }
 }

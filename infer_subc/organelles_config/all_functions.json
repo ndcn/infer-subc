@@ -2446,11 +2446,35 @@
         "python::function": "choose_cell",
         "parameters": null
     },
-    "canny_transform":{
-        "name": "Outline edges",
+    "linear_scharr_membrane":{
+        "name": "Linear Enhance Peaks",
         "python::module": "infer_subc.organelles.membrane",
-        "python::function": "non_linear_cellmask_canny",
-        "parameters": null
+        "python::function": "linear_membrane_scharr",
+        "parameters": {
+            "execute": {
+                "data_type": "bool",
+                "widget_type": "drop-down",
+                "options":[
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "non_linear_scharr_membrane":{
+        "name": "Non Linear Enhance Peaks",
+        "python::module": "infer_subc.organelles.membrane",
+        "python::function": "non_linear_membrane_scharr",
+        "parameters": {
+            "execute": {
+                "data_type": "bool",
+                "widget_type": "drop-down",
+                "options":[
+                    true,
+                    false
+                ]
+            }
+        }
     },
     "apply_otsu":{
         "name": "Threshold image",

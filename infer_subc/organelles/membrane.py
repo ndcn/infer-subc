@@ -1,25 +1,35 @@
 import numpy as np
 from skimage.morphology import disk, ball, binary_closing, closing, binary_dilation, dilation, binary_erosion
-from skimage import feature
+from skimage.filters import scharr
 from infer_subc.core.img import fill_and_filter_linear_size, get_interior_labels, get_max_label, inverse_log_transform, log_transform, masked_inverted_watershed, masked_object_thresh, min_max_intensity_normalization, select_channel_from_raw, threshold_otsu
 from aicssegmentation.core.utils import hole_filling
 from infer_subc.organelles.nuclei import infer_nuclei_fromlabel
 from infer_subc.organelles.cellmask import non_linear_cellmask_transform
 
-def non_linear_cellmask_canny(in_img:np.ndarray):
-    log_img, d = log_transform(in_img.copy())
-    log_img = min_max_intensity_normalization(log_img)
-    out_img = np.zeros_like(in_img)
-    for z in range(len(in_img)):
-        out_img[z] = feature.canny(log_img[z], sigma=1)
-    out = min_max_intensity_normalization(in_img) - min_max_intensity_normalization(out_img)
-    out[out < 0] = 0
-    return out
+def non_linear_membrane_scharr(in_img:np.ndarray, execute: bool=True):
+    if execute:
+        log_img, d = log_transform(in_img.copy())
+        log_img = min_max_intensity_normalization(log_img)
+        out_img = scharr(log_img)
+        out = log_img - min_max_intensity_normalization(out_img)
+        out[out < 0] = 0
+        return out
+    else:
+        return np.zeros_like(in_img)
+
+def linear_membrane_scharr(in_img:np.ndarray, execute: bool=True):
+    if execute:
+        out_img = scharr(in_img)
+        out = in_img - min_max_intensity_normalization(out_img)
+        out[out < 0] = 0
+        return out
+    else:
+        return np.zeros_like(in_img)
 
 def apply_otsu(in_img: np.ndarray, Thresh_Adj: float):
     pm_image, d = log_transform(in_img.copy())
     threshold = threshold_otsu(pm_image) 
-    return in_img > ((inverse_log_transform(threshold, d) * Thresh_Adj))
+    return in_img >= ((inverse_log_transform(threshold, d) * Thresh_Adj))
 
 def invert_collection(pm_img: np.ndarray, only_pm: np.ndarray):
     return pm_img * np.invert(only_pm)
