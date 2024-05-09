@@ -130,7 +130,7 @@ def make_all_metrics_tables(source_file: str,
                              dist_zernike_degrees: Union[int, None]=None,
                              scale: Union[tuple,None] = None,
                              include_contact_dist:bool=True,
-                             splitter:str="_",
+                             splitter:str="X",
                              out_path: Union[Path,None]= None):
     """
     Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
@@ -204,6 +204,7 @@ def make_all_metrics_tables(source_file: str,
                                                   mask=mask,
                                                   scale=scale)
         region_tabs.append(region_metrics)
+    del region_metrics
 
     ##############################################################
     # loop through all organelles to collect measurements for each
@@ -280,6 +281,7 @@ def make_all_metrics_tables(source_file: str,
         #         org_metrics[f"{nmi}_labels"] = b_labs 
 
         org_tabs.append(org_metrics)
+        del org_metrics
 
         ################################
         # measure organelle distribution 
@@ -305,6 +307,10 @@ def make_all_metrics_tables(source_file: str,
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
+        del org_distribution_metrics
+        del XY_bin_masks
+        del XY_wedge_masks
+        
     
     #######################################
     # collect non-redundant contact metrics 
@@ -316,11 +322,10 @@ def make_all_metrics_tables(source_file: str,
     #   \/
     labeled_dict, binary_dict = make_dict(obj_names=list_obj_names,
                                           obj_segs=list_obj_segs)
-    
     contacts = multi_contact(binary=binary_dict,
                              organelles=list_obj_names,
                              splitter=splitter)
-    
+    del binary_dict
     #add in image exports here 
     #   - separate image for 2-ways all stacked together
     #   - separate image for 3-ways all stacked together
@@ -348,6 +353,8 @@ def make_all_metrics_tables(source_file: str,
                                            splitter=splitter,
                                            scale=scale,
                                            include_dist=include_contact_dist)
+    del contacts
+    del labeled_dict
 
     #   /\
     #  /  \
