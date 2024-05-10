@@ -214,7 +214,8 @@ def make_all_metrics_tables(source_file: str,
     dist_tabs = []
     XY_bins = []
     XY_wedges = []
-
+    centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+    
     for j, target in enumerate(list_obj_names):
         # organelle intensity image
         org_img = list_intensity_img[j]
@@ -286,7 +287,7 @@ def make_all_metrics_tables(source_file: str,
         ################################
         # measure organelle distribution 
         ################################
-        centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+
         XY_org_distribution, XY_bin_masks, XY_wedge_masks = get_XY_distribution(mask=mask,
                                                                                 centering_obj=centering,
                                                                                 obj=org_obj,
