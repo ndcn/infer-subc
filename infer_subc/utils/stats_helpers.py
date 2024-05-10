@@ -223,7 +223,7 @@ def make_all_metrics_tables(source_file: str,
         if target == 'ER':
             # ensure ER is only one object
             org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
-        elif target == 'Nuc':
+        elif target == 'nuc':
             # ensure Nuc is only one object
             org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
         else:
