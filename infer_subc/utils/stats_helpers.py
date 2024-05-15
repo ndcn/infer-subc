@@ -8,13 +8,14 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, 
+from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, get_dict_contact_metrics, 
                     get_org_morphology_3D, 
                     get_simple_stats_3D, 
                     get_XY_distribution, 
                     get_Z_distribution, 
                     _assert_uint16_labels,
-                    get_region_morphology_3D)
+                    get_region_morphology_3D,
+                    get_empty_contact_dist_tabs)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
@@ -74,7 +75,7 @@ def contacting(binary: dict[str],
     contact={}                                                                          #Creates empty dictionary
     for c in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
         for b in binary:                                                                #Iterates through labeled organelles list (b)
-            if(np.any((iterated[c]*binary[b])>0) and not                                #Proceeds if there are contacts present 
+            if(np.any((iterated[c]*binary[b])>0) and not
                ((b+splitter in c)or(splitter+b in c)or(splitter+b+splitter in c)) and   #Proceeds if organelle is not already in previous contact set
                (not inkeys(contact,(c+splitter+b),splitter=splitter))):                 #Proceeds if contact between organelle and previous contact set is not already made  
                 contact[(c+splitter+b)]=((iterated[c]*binary[b])>0)                     #Adds new binary contact
@@ -233,6 +234,7 @@ def make_all_metrics_tables(source_file: str,
         ##########################################################
         # measure organelle morphology & number of objs contacting
         ##########################################################
+
         org_metrics = get_org_morphology_3D(segmentation_img=org_obj, 
                                             seg_name=target,
                                             intensity_img=org_img, 
@@ -304,13 +306,11 @@ def make_all_metrics_tables(source_file: str,
                                                 scale=scale)
         
         org_distribution_metrics = pd.merge(XY_org_distribution, Z_org_distribution,on=["object", "scale"])
-
+        del XY_org_distribution, Z_org_distribution
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
-        del org_distribution_metrics
-        del XY_bin_masks
-        del XY_wedge_masks
+        del org_distribution_metrics, XY_bin_masks, XY_wedge_masks
         
     
     #######################################
@@ -333,6 +333,37 @@ def make_all_metrics_tables(source_file: str,
     #   - separate image for 4-ways all stacked together, etc.
     #print orders of exported images to console
 
+    # contact_tabs = []
+    # if include_contact_dist:
+    #     for orgs, site in contacts.items():
+    #         contact_tab, dist_tab = get_dict_contact_metrics(orgs=orgs,
+    #                                                          site=site,
+    #                                                          organelle_segs=labeled_dict,
+    #                                                          mask=mask,
+    #                                                          splitter=splitter,
+    #                                                          scale=scale,
+    #                                                          include_dist=include_contact_dist,
+    #                                                          dist_centering_obj=centering,
+    #                                                          dist_num_bins=dist_num_bins,
+    #                                                          dist_zernike_degrees=dist_zernike_degrees,
+    #                                                          dist_center_on=dist_center_on,
+    #                                                          dist_keep_center_as_bin=dist_keep_center_as_bin)
+    #         contact_tabs.append(contact_tab)
+    #         dist_tabs.append(dist_tab)
+    #     print("finished contacts analysis")
+    #     possib = [splitter.join(cont) for cont in list(itertools.combinations(list_obj_names, (range(len(list_obj_names)-2)+2))) if splitter.join(cont) not in list(contacts.keys())]
+    #     del contacts
+    #     for con in possib:
+    #         dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
+    #                                                      name=con,
+    #                                                      dist_centering_obj=centering,
+    #                                                      scale=scale,
+    #                                                      dist_zernike_degrees=dist_zernike_degrees,
+    #                                                      dist_center_on=dist_center_on,
+    #                                                      dist_keep_center_as_bin=dist_keep_center_as_bin,
+    #                                                      dist_num_bins=dist_num_bins))
+    #     del possib
+
     if include_contact_dist:
         contact_tabs, dist_tab = get_contact_metrics(contacts_dict=contacts,
                                                      organelle_segs=labeled_dict,
@@ -347,6 +378,25 @@ def make_all_metrics_tables(source_file: str,
                                                      dist_keep_center_as_bin=dist_keep_center_as_bin)
         for tabs in dist_tab:
             dist_tabs.append(tabs)
+        del dist_tab
+        print("Completed found contact segmentation")
+        all_pos = []
+        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
+            all_pos += itertools.combinations(list_obj_names, n)
+        possib = [splitter.join(cont) for cont in all_pos if splitter.join(cont) not in list(contacts.keys())]
+        print(f"Searching for {possib}")
+        del contacts
+        for con in possib:
+            print(f"{con} contacts not found")
+            dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
+                                                         name=con,
+                                                         dist_centering_obj=centering,
+                                                         scale=scale,
+                                                         dist_zernike_degrees=dist_zernike_degrees,
+                                                         dist_center_on=dist_center_on,
+                                                         dist_keep_center_as_bin=dist_keep_center_as_bin,
+                                                         dist_num_bins=dist_num_bins))
+        del possib
     else:
         contact_tabs = get_contact_metrics(contacts_dict=contacts,
                                            organelle_segs=labeled_dict,
@@ -354,7 +404,7 @@ def make_all_metrics_tables(source_file: str,
                                            splitter=splitter,
                                            scale=scale,
                                            include_dist=include_contact_dist)
-    del contacts
+        del contacts
     del labeled_dict
 
     #   /\
