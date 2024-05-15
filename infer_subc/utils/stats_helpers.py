@@ -316,11 +316,6 @@ def make_all_metrics_tables(source_file: str,
     #######################################
     # collect non-redundant contact metrics 
     ########################################
-    #   ||
-    #  _||_
-    # \ || /  
-    #  \  / 
-    #   \/
     labeled_dict, binary_dict = make_dict(obj_names=list_obj_names,
                                           obj_segs=list_obj_segs)
     contacts = multi_contact(binary=binary_dict,
@@ -376,80 +371,6 @@ def make_all_metrics_tables(source_file: str,
         del contacts
     del labeled_dict
 
-    #   /\
-    #  /  \
-    # /_||_\    
-    #   ||
-    #   ||
-    # END OF NEW CONTACT METRICS
-    #######################################
-    # collect non-redundant contact metrics 
-    #######################################
-    #   ||
-    #  _||_
-    # \ || /  
-    #  \  / 
-    #   \/
-    
-    ## list the non-redundant organelle pairs
-    #contact_combos = list(itertools.combinations(list_obj_names, 2))
-
-    ## container to keep contact data in
-    #contact_tabs = []
-
-    ## loop through each pair and measure contacts
-    #for pair in contact_combos:
-    #    # pair names
-    #    a_name = pair[0]
-    #    b_name = pair[1]
-    #
-    #    # segmentations to measure
-    #    if a_name == 'ER':
-    #        # ensure ER is only one object
-    #        a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
-    #    else:
-    #        a = list_obj_segs[list_obj_names.index(a_name)]
-    #    
-    #    if b_name == 'ER':
-    #        # ensure ER is only one object
-    #        b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
-    #    else:
-    #        b = list_obj_segs[list_obj_names.index(b_name)]
-    #    
-    #
-    #    if include_contact_dist == True:
-    #        contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
-    #                                                               b, b_name, 
-    #                                                               mask, 
-    #                                                               scale, 
-    #                                                               include_dist=include_contact_dist,
-    #                                                               dist_centering_obj=centering,
-    #                                                               dist_num_bins=dist_num_bins,
-    #                                                               dist_zernike_degrees=dist_zernike_degrees,
-    #                                                               dist_center_on=dist_center_on,
-    #                                                               dist_keep_center_as_bin=dist_keep_center_as_bin)
-    #        dist_tabs.append(contact_dist_tab)
-    #    else:
-    #        contact_tab = get_contact_metrics_3D(a, a_name, 
-    #                                             b, b_name, 
-    #                                             mask, 
-    #                                             scale, 
-    #                                             include_dist=include_contact_dist)
-    #    contact_tabs.append(contact_tab)
-    #
-    #   /\
-    #  /  \
-    # /_||_\    
-    #   ||
-    #   ||
-    # END OF ORIGINAL CONTACTS METRICS
-    # ZSC Notes:
-    # - Contacts are currently looping across each contact pair
-    # - Likely need to rewrite entire contact metrics function from scratch
-    # - contact_tabs are appending the new contacts after adding each new contact
-    #    + with multiple contacts method, all contact information is stored as dictionary
-    # - need to better understand how table is created and organized in stats.py
-    # - list_obj_segs is the list of all the organelles segmented in order of list_obj_names
     ###########################################
     # combine all tabs into one table per type:
     ###########################################
