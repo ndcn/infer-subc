@@ -333,37 +333,6 @@ def make_all_metrics_tables(source_file: str,
     #   - separate image for 4-ways all stacked together, etc.
     #print orders of exported images to console
 
-    # contact_tabs = []
-    # if include_contact_dist:
-    #     for orgs, site in contacts.items():
-    #         contact_tab, dist_tab = get_dict_contact_metrics(orgs=orgs,
-    #                                                          site=site,
-    #                                                          organelle_segs=labeled_dict,
-    #                                                          mask=mask,
-    #                                                          splitter=splitter,
-    #                                                          scale=scale,
-    #                                                          include_dist=include_contact_dist,
-    #                                                          dist_centering_obj=centering,
-    #                                                          dist_num_bins=dist_num_bins,
-    #                                                          dist_zernike_degrees=dist_zernike_degrees,
-    #                                                          dist_center_on=dist_center_on,
-    #                                                          dist_keep_center_as_bin=dist_keep_center_as_bin)
-    #         contact_tabs.append(contact_tab)
-    #         dist_tabs.append(dist_tab)
-    #     print("finished contacts analysis")
-    #     possib = [splitter.join(cont) for cont in list(itertools.combinations(list_obj_names, (range(len(list_obj_names)-2)+2))) if splitter.join(cont) not in list(contacts.keys())]
-    #     del contacts
-    #     for con in possib:
-    #         dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
-    #                                                      name=con,
-    #                                                      dist_centering_obj=centering,
-    #                                                      scale=scale,
-    #                                                      dist_zernike_degrees=dist_zernike_degrees,
-    #                                                      dist_center_on=dist_center_on,
-    #                                                      dist_keep_center_as_bin=dist_keep_center_as_bin,
-    #                                                      dist_num_bins=dist_num_bins))
-    #     del possib
-
     if include_contact_dist:
         contact_tabs, dist_tab = get_contact_metrics(contacts_dict=contacts,
                                                      organelle_segs=labeled_dict,
