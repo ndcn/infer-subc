@@ -8,18 +8,113 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import (get_contact_metrics_3D, 
+from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, 
                     get_org_morphology_3D, 
                     get_simple_stats_3D, 
                     get_XY_distribution, 
                     get_Z_distribution, 
                     _assert_uint16_labels,
-                    get_region_morphology_3D)
+                    get_region_morphology_3D,
+                    get_empty_contact_dist_tabs)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
+
+from skimage.measure import label
+
+#Use following to organize segmentations into dictionary:
+def make_dict(obj_names: list[str],                                         #Intakes list of object names
+              obj_segs: list[np.ndarray],                                   #Intakes list of object segmentations
+              also_binary: bool=True):                                      #Determines whether to output only labeled or include a binary dictionary as an output
+    objs_labeled = {}                                                       #Initialize dictionary
+    objs_binary = {}                                                        #Initialize dictionary
+    for idx, name in enumerate(obj_names):                                  #Loop across each organelle name
+        if also_binary:                                                     #Proceed if also_binary is true
+            objs_binary[name]=(obj_segs[idx]>0).astype(np.uint16) #Set the organelle name as the key for the corresponding binary object segmentation
+        if name == 'ER':                                                    #Proceed only for ER
+            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)#Ensures ER is labeled only as one object & sets it as key for its object segmentation
+        else:                                                               #Proceed for other organelles
+            objs_labeled[name]=obj_segs[idx]                      #Set the organelle name as the key for the corresponding object segmentation
+    if also_binary:                                                         #Proceed if also_binary is true
+        return objs_labeled, objs_binary                                    #Return a dictionary of segmented objects with keys as the organelle name and a binary version
+    else:                                                                   #Proceed if also_binary is false
+        return objs_labeled                                                 #Return a dictionary of segmented objects with keys as the organelle name
+
+def _make_dict(obj_names: list[str],
+               obj_segs: list[np.ndarray],
+               also_binary: bool=True):
+    new_dict = dict(zip(obj_names, obj_segs))
+    if 'ER' in new_dict.keys():
+        new_dict['ER'] = (new_dict['ER']>0).astype(np.uint16)
+    if also_binary:
+        binary_dict = {}
+        for key in new_dict:
+            binary_dict[key] = (new_dict[key]>0).astype(np.uint16)
+        return new_dict, binary_dict
+    else:
+        return new_dict
+
+#checks if a string can be turned into a list that is equal to any preexisting lists in an input dictionary
+def inkeys(dic: dict[str],                      #Takes in dictionary to search through
+           s:str,                               #Takes in string being searched for
+           splitter:str="_") -> bool:           #Takes in character strings are split by, defaults to "_"
+    a = sorted(s.split(splitter))               #Normalizes the way the string is written
+    for key in dic.keys():                      #Iterates through each key in dictionary
+        if (a == sorted(key.split(splitter))):  #Checks if key has same vals as string
+            return True                         #Returns true if any key is same as string
+    return False                                #Returns false if no keys are same as string
+
+#Finds areas in contact sites between 2 or more organelles that also have contacts with an additional organelle
+#and assigns those areas as new contact sites to a dictionary, and returns the dictionary. 
+#Works for contacts of 3 or more organelles
+def contacting(binary: dict[str], 
+               iterated:dict[str],
+               splitter:str="_") -> dict: 
+    contact={}                                                                          #Creates empty dictionary
+    for c in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
+        for b in binary:                                                                #Iterates through labeled organelles list (b)
+            if(np.any((iterated[c]*binary[b])>0) and not
+               ((b+splitter in c)or(splitter+b in c)or(splitter+b+splitter in c)) and   #Proceeds if organelle is not already in previous contact set
+               (not inkeys(contact,(c+splitter+b),splitter=splitter))):                 #Proceeds if contact between organelle and previous contact set is not already made  
+                contact[(c+splitter+b)]=((iterated[c]*binary[b])>0)                     #Adds new binary contact
+    return contact                                                                      #Returns contacts
+
+#Finds contact sites between 2 organelles and assigns them to a dictionary, and returns the dictionary
+def two_contact(binary: dict[str], 
+                contact:dict[str]={},
+                splitter:str="_") -> dict:
+    for a in (binary.keys()):                              #Iterates across all labeled organelle images (a)
+        for b in (binary.keys()):                          #Iterates across all labeled organelle images (b)
+            b_a=b+splitter+a                               #Creates string to check for found a & b contact
+            a_b=a+splitter+b                               #Creates new potential key for a & b contact
+            if ((a!=b) and not                             #Ensures a is not the same as b
+                (b_a in contact.keys()) and                #Ensures no contacts of a & b are already found
+                np.any((binary[a]*binary[b]))):            #Ensures contact is between a & b
+                contact[a_b]=(label(binary[a]*binary[b]))  #Assigns contact of a & b to dictionary
+    return contact                                         #Returns the dictionary
+
+#Assigns all contacts of 2 or more organelles to a dictionary, and returns the dictionary
+def multi_contact(binary:dict[str:np.ndarray], 
+                  organelles:list[str],
+                  splitter:str="_") -> dict:
+    contacts=two_contact(binary, splitter=splitter)             #Dictionary for ALL contacts
+    iterated={}                                                 #Iterated Dictionary
+    contact={}                                                  #Contact Dictionary
+
+    #Repeat # of times equal to max # of contacts in one contact site
+    for n in (range(len(organelles)-1)): 
+        iterated.clear()                                        #Clears iterated dictionary
+        contact.clear()                                         #Clears contact dictionary
+        num=n+3                                                 #Number of contacts
+        for key in contacts:                                    #Iterates over every key in contacts
+            if (len(key.split(splitter)) == (num-1)):           #Selects for last set of contacts
+                iterated[key]=contacts[key]                     #Adds each key from last set of contacts to iterated
+        contact=contacting(binary,iterated,splitter=splitter)   #Collects higher order contact sites
+        for d in contact:                                       #Iterates across the new contact sites 
+            contacts[d]=label(contact[d])                       #Labels & assigns higher order contact to dictionary
+    return contacts                                             #Returns with dictionary of all levels of contacts
 
 
 def make_all_metrics_tables(source_file: str,
@@ -35,7 +130,9 @@ def make_all_metrics_tables(source_file: str,
                              dist_keep_center_as_bin: bool=True,
                              dist_zernike_degrees: Union[int, None]=None,
                              scale: Union[tuple,None] = None,
-                             include_contact_dist:bool=True):
+                             include_contact_dist:bool=True,
+                             splitter:str="X",
+                             out_path: Union[Path,None]= None):
     """
     Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
 
@@ -108,6 +205,7 @@ def make_all_metrics_tables(source_file: str,
                                                   mask=mask,
                                                   scale=scale)
         region_tabs.append(region_metrics)
+    del region_metrics
 
     ##############################################################
     # loop through all organelles to collect measurements for each
@@ -117,7 +215,8 @@ def make_all_metrics_tables(source_file: str,
     dist_tabs = []
     XY_bins = []
     XY_wedges = []
-
+    centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+    
     for j, target in enumerate(list_obj_names):
         # organelle intensity image
         org_img = list_intensity_img[j]
@@ -126,17 +225,23 @@ def make_all_metrics_tables(source_file: str,
         if target == 'ER':
             # ensure ER is only one object
             org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
+        elif target == 'nuc':
+            # ensure Nuc is only one object
+            org_obj = (list_obj_segs[j] > 0).astype(np.uint16)
         else:
             org_obj = list_obj_segs[j]
 
         ##########################################################
         # measure organelle morphology & number of objs contacting
         ##########################################################
+
         org_metrics = get_org_morphology_3D(segmentation_img=org_obj, 
                                             seg_name=target,
                                             intensity_img=org_img, 
                                             mask=mask,
                                             scale=scale)
+        
+        #DOES ABOVE ORG METRICS LOOK INTO CONTACTS?
 
         ### org_metrics.insert(loc=0,column='cell',value=1) 
         # ^^^ saving this thought for later when someone might have more than one cell per image.
@@ -179,11 +284,12 @@ def make_all_metrics_tables(source_file: str,
         #         org_metrics[f"{nmi}_labels"] = b_labs 
 
         org_tabs.append(org_metrics)
+        del org_metrics
 
         ################################
         # measure organelle distribution 
         ################################
-        centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+
         XY_org_distribution, XY_bin_masks, XY_wedge_masks = get_XY_distribution(mask=mask,
                                                                                 centering_obj=centering,
                                                                                 obj=org_obj,
@@ -200,60 +306,70 @@ def make_all_metrics_tables(source_file: str,
                                                 scale=scale)
         
         org_distribution_metrics = pd.merge(XY_org_distribution, Z_org_distribution,on=["object", "scale"])
-
+        del XY_org_distribution, Z_org_distribution
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
-
+        del org_distribution_metrics, XY_bin_masks, XY_wedge_masks
+        
+    
     #######################################
     # collect non-redundant contact metrics 
-    #######################################
-    # list the non-redundant organelle pairs
-    contact_combos = list(itertools.combinations(list_obj_names, 2))
+    ########################################
+    labeled_dict, binary_dict = make_dict(obj_names=list_obj_names,
+                                          obj_segs=list_obj_segs)
+    contacts = multi_contact(binary=binary_dict,
+                             organelles=list_obj_names,
+                             splitter=splitter)
+    del binary_dict
+    #add in image exports here 
+    #   - separate image for 2-ways all stacked together
+    #   - separate image for 3-ways all stacked together
+    #   - separate image for 4-ways all stacked together, etc.
+    #print orders of exported images to console
 
-    # container to keep contact data in
-    contact_tabs = []
-
-    # loop through each pair and measure contacts
-    for pair in contact_combos:
-        # pair names
-        a_name = pair[0]
-        b_name = pair[1]
-
-        # segmentations to measure
-        if a_name == 'ER':
-            # ensure ER is only one object
-            a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
-        else:
-            a = list_obj_segs[list_obj_names.index(a_name)]
-        
-        if b_name == 'ER':
-            # ensure ER is only one object
-            b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
-        else:
-            b = list_obj_segs[list_obj_names.index(b_name)]
-        
-
-        if include_contact_dist == True:
-            contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
-                                                                   b, b_name, 
-                                                                   mask, 
-                                                                   scale, 
-                                                                   include_dist=include_contact_dist,
-                                                                   dist_centering_obj=centering,
-                                                                   dist_num_bins=dist_num_bins,
-                                                                   dist_zernike_degrees=dist_zernike_degrees,
-                                                                   dist_center_on=dist_center_on,
-                                                                   dist_keep_center_as_bin=dist_keep_center_as_bin)
-            dist_tabs.append(contact_dist_tab)
-        else:
-            contact_tab = get_contact_metrics_3D(a, a_name, 
-                                                 b, b_name, 
-                                                 mask, 
-                                                 scale, 
-                                                 include_dist=include_contact_dist)
-        contact_tabs.append(contact_tab)
-
+    if include_contact_dist:
+        contact_tabs, dist_tab = get_contact_metrics(contacts_dict=contacts,
+                                                     organelle_segs=labeled_dict,
+                                                     mask=mask,
+                                                     splitter=splitter,
+                                                     scale=scale,
+                                                     include_dist=include_contact_dist,
+                                                     dist_centering_obj=centering,
+                                                     dist_num_bins=dist_num_bins,
+                                                     dist_zernike_degrees=dist_zernike_degrees,
+                                                     dist_center_on=dist_center_on,
+                                                     dist_keep_center_as_bin=dist_keep_center_as_bin)
+        for tabs in dist_tab:
+            dist_tabs.append(tabs)
+        del dist_tab
+        print("Completed found contact segmentation")
+        all_pos = []
+        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
+            all_pos += itertools.combinations(list_obj_names, n)
+        possib = [splitter.join(cont) for cont in all_pos if not inkeys(contacts, splitter.join(cont), splitter)]
+        print(f"Searching for {possib}")
+        del contacts
+        for con in possib:
+            print(f"{con} contacts not found")
+            dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
+                                                         name=con,
+                                                         dist_centering_obj=centering,
+                                                         scale=scale,
+                                                         dist_zernike_degrees=dist_zernike_degrees,
+                                                         dist_center_on=dist_center_on,
+                                                         dist_keep_center_as_bin=dist_keep_center_as_bin,
+                                                         dist_num_bins=dist_num_bins))
+        del possib
+    else:
+        contact_tabs = get_contact_metrics(contacts_dict=contacts,
+                                           organelle_segs=labeled_dict,
+                                           mask=mask,
+                                           splitter=splitter,
+                                           scale=scale,
+                                           include_dist=include_contact_dist)
+        del contacts
+    del labeled_dict
 
     ###########################################
     # combine all tabs into one table per type:
