@@ -8,7 +8,7 @@ from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
-from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, get_dict_contact_metrics, 
+from infer_subc.utils.stats import (get_contact_metrics, get_contact_metrics_3D, 
                     get_org_morphology_3D, 
                     get_simple_stats_3D, 
                     get_XY_distribution, 
@@ -347,7 +347,7 @@ def make_all_metrics_tables(source_file: str,
         all_pos = []
         for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
             all_pos += itertools.combinations(list_obj_names, n)
-        possib = [splitter.join(cont) for cont in all_pos if splitter.join(cont) not in list(contacts.keys())]
+        possib = [splitter.join(cont) for cont in all_pos if not inkeys(contacts, splitter.join(cont), splitter)]
         print(f"Searching for {possib}")
         del contacts
         for con in possib:

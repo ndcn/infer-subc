@@ -553,7 +553,7 @@ def get_contact_metrics(contacts_dict: dict[str:np.ndarray],
                     print(f"we have an error.  as-> {all_inv}")     #informs the console or any errors and the reasoing for it
                 indexes[org].append(f"{all_inv[0]}")                #adds the label of the organelle involved in the contact to the organelle's key's list
                 cont_inv.append(f"{all_inv[0]}")                    #adds the label of the organelle involved in the contact to the list of involved organelle labels
-            indexes[orgs].append(splitter.join(cont_inv))           #adds the combination of all the organelle's labels involved in the contact to the contact key's list
+            indexes[orgs].append("_".join(cont_inv))           #adds the combination of all the organelle's labels involved in the contact to the contact key's list
         ######################################################
         ## CREATE COMBINED DATAFRAME OF THE QUANTIFICATION
         ######################################################
