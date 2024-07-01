@@ -4,6 +4,9 @@ from pathlib import Path
 import itertools 
 import time
 
+from skimage.measure import label
+from skimage.segmentation import watershed
+
 from infer_subc.core.img import apply_mask
 
 import pandas as pd
@@ -31,6 +34,15 @@ def make_dict(obj_names: list[str],                                 #Intakes lis
             objs_labeled[name]=obj_segs[idx]                        #Set the organelle name as the key for the corresponding object segmentation
     return objs_labeled                                             #Return a dictionary of segmented objects with keys as the organelle name
 
+def inkeys(dic: dict[str],                      #Takes in dictionary to search through
+           s:str,                               #Takes in string being searched for
+           splitter:str="_") -> bool:           #Takes in character strings are split by, defaults to "_"
+    a = sorted(s.split(splitter))               #Normalizes the way the string is written
+    for key in dic.keys():                      #Iterates through each key in dictionary
+        if (a == sorted(key.split(splitter))):  #Checks if key has same vals as string
+            return True                         #Returns true if any key is same as string
+    return False                                #Returns false if no keys are same as string
+
 def contacting(segs: dict[str], 
                iterated:dict[str],
                splitter:str="_") -> dict:
@@ -42,6 +54,65 @@ def contacting(segs: dict[str],
                (not inkeys(conts,(a+splitter+b),splitter=splitter))):                   #Proceeds if contact between organelle and lower ordercontact set is not already made  
                 conts[(a+splitter+b)]=label((iterated[a]*segs[b])>0)                    #Adds new labeled contact
     return conts                                                                        #Returns contacts
+
+def multi_contact(org_segs:dict[str:np.ndarray], 
+                  organelles:list[str],
+                  splitter:str="_",
+                  redundancy:bool=True) -> dict:
+    contacts=contacting(org_segs, org_segs, splitter=splitter)     #Dictionary for ALL contacts, starts with 2nd Order                                     #Returns with dictionary of all levels of 
+
+    iterated={}                            #Iterated Dictionary
+    contact={}                             #Contact Dictionary
+    if not redundancy:                     #Only initialize if looking for non-redundant contacts
+        HO_conts={}                        #Highest order contact dictionary
+    
+    for n in (range(len(organelles)-1)): 
+        iterated.clear()                   #Clears iterated dictionary
+        contact.clear()                    #Clears contact dictionary
+        num=n+3                            #Number of contacts in lower order number
+
+    ##########################
+    # Finding nLO Contacts
+    ##########################
+        for key in contacts:                                    #Iterates over every key in contacts
+            if (len(key.split(splitter)) == (num-1)):           #Selects for last set of contacts
+                iterated[key]=contacts[key]                     #Adds each key from last set of contacts to iterated
+
+    ###########################
+    # Making the n-Way Contact
+    ###########################
+        for c in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
+            for d in org_segs:                                                              #Iterates through labeled organelles list (b)
+                if(np.any((iterated[c]*org_segs[d])>0) and not
+                   ((d+splitter in c)or(splitter+d in c)or(splitter+d+splitter in c)) and   #Proceeds if organelle is not already in previous contact set
+                   (not inkeys(contact,(c+splitter+d),splitter=splitter))):                 #Proceeds if contact between organelle and previous contact set is not already made  
+                    contact[(c+splitter+d)]=label((iterated[c]*org_segs[d])>0)              #Adds new binary contact
+
+    ################################################
+    # Adding n-Way contacts to contacts Dictionary
+    ################################################
+        for key in contact:              #Iterates across the new contact sites 
+            contacts[key]=(contact[key])   #Labels & assigns higher order contact to 
+
+    ################################################
+    # Dictionary of Non-Redundant Contacts
+    ################################################
+        if not redundancy:
+            while len(iterated) != 0:
+                key = list(iterated.keys())[0]
+                ara = iterated[key]>0
+                HO_conts[key] = ara
+                for ki in contact.keys():
+                    if (set(ki.split(splitter)).issuperset(key.split(splitter))):
+                        HO_conts[key] = HO_conts[key]*(np.invert(watershed(image=(np.invert(ara)),                           #Watershed with the map of the nLO image
+                                                                                  markers=contact[ki],                       #Watershed with the markers of the nO's superstr
+                                                                                  mask=ara,                                  #Watershed unable to proceed beyond the nLO image
+                                                                                  connectivity=np.ones((3, 3, 3), bool))>0)) #Watershed with 3D connectivity
+                del iterated[key]
+    if not redundancy:
+        return contacts, HO_conts
+    else:
+        return contacts
                                                                    
 def make_all_metrics_tables(source_file: str,
                              list_obj_names: List[str],
@@ -112,17 +183,16 @@ def make_all_metrics_tables(source_file: str,
     # segmentation image for all masking steps below
     mask = list_region_segs[list_region_names.index(mask)]
 
+    ##############################################################
+    # Measure Organelle Contacts
+    ##############################################################
+    
+
     ######################
     # measure cell regions
     ######################
     # create np.ndarray of intensity images
     raw_image = np.stack(list_intensity_img)
-    
-    ##############################################################
-    # Contacts
-    ##############################################################
-
-
 
     # container for region data
     region_tabs = []
