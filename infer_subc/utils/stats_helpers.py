@@ -21,7 +21,28 @@ from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
+def make_dict(obj_names: list[str],                                 #Intakes list of object names
+              obj_segs: list[np.ndarray]):                          #Intakes list of object segmentations
+    objs_labeled = {}                                               #Initialize dictionary
+    for idx, name in enumerate(obj_names):                          #Loop across each organelle name
+        if name == 'ER':                                            #Proceed only for ER
+            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)  #Ensures ER is labeled only as one object & sets it as key for its object segmentation
+        else:                                                       #Proceed for other organelles
+            objs_labeled[name]=obj_segs[idx]                        #Set the organelle name as the key for the corresponding object segmentation
+    return objs_labeled                                             #Return a dictionary of segmented objects with keys as the organelle name
 
+def contacting(segs: dict[str], 
+               iterated:dict[str],
+               splitter:str="_") -> dict:
+    conts = {} 
+    for a in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
+        for b in segs:                                                                  #Iterates through labeled organelles list (b)
+            if(np.any(((iterated[a]>0)*(segs[b]>0))>0) and not (a==b) and not           #Proceeds if there is a contact between the lower order contact and the other organelle
+               ((b+splitter in a)or(splitter+b in a)or(splitter+b+splitter in a)) and   #Proceeds if organelle is not already in lower order contact set
+               (not inkeys(conts,(a+splitter+b),splitter=splitter))):                   #Proceeds if contact between organelle and lower ordercontact set is not already made  
+                conts[(a+splitter+b)]=label((iterated[a]*segs[b])>0)                    #Adds new labeled contact
+    return conts                                                                        #Returns contacts
+                                                                   
 def make_all_metrics_tables(source_file: str,
                              list_obj_names: List[str],
                              list_obj_segs: List[np.ndarray],
@@ -97,6 +118,12 @@ def make_all_metrics_tables(source_file: str,
     # create np.ndarray of intensity images
     raw_image = np.stack(list_intensity_img)
     
+    ##############################################################
+    # Contacts
+    ##############################################################
+
+
+
     # container for region data
     region_tabs = []
     for r, r_name in enumerate(list_region_names):
