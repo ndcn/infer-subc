@@ -398,6 +398,32 @@ def get_region_morphology_3D(region_seg: np.ndarray,
 
     return props_table
 
+def get_empty_contact_dist_tabs(mask: np.ndarray,
+                            name: str,
+                            dist_centering_obj: np.ndarray,
+                            scale: Union[tuple, None]=None,
+                            dist_zernike_degrees: Union[int,None] = None,
+                            dist_center_on: Union[bool, None]=None,
+                            dist_keep_center_as_bin: Union[bool, None]=None,
+                            dist_num_bins: Union[int, None]=None):
+    XY_contact_dist, XY_bins, XY_wedges = get_XY_distribution(mask=mask, 
+                                                              obj=np.zeros_like(mask),
+                                                              obj_name=name,
+                                                              centering_obj=dist_centering_obj,
+                                                              scale=scale,
+                                                              center_on=dist_center_on,
+                                                              keep_center_as_bin=dist_keep_center_as_bin,
+                                                              num_bins=dist_num_bins,
+                                                              zernike_degrees=dist_zernike_degrees)
+        
+    Z_contact_dist = get_Z_distribution(mask=mask,
+                                        obj=np.zeros_like(mask),
+                                        obj_name=name,
+                                        center_obj=dist_centering_obj,
+                                        scale=scale)
+        
+    return pd.merge(XY_contact_dist, Z_contact_dist, on=["object", "scale"])
+
 
 def get_contact_metrics_3D(a: np.ndarray,
                             a_name: str, 
