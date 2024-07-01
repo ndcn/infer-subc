@@ -191,63 +191,65 @@ def make_all_metrics_tables(source_file: str,
     XY_bins = []
     XY_wedges = []
 
-    ##############################################################
-    # Measure Organelle Contacts
-    ##############################################################
-    contact_tabs = []
-    org_dict = make_dict(obj_names=list_obj_names,
-                         obj_segs=list_obj_segs)
-    all_conts, non_red_conts=multi_contact(org_segs=org_dict,
-                                           organelles=list_obj_names,
-                                           splitter=splitter,
-                                           redundancy=False)
-    if include_contact_dist:
-        for orgs, site in all_conts.items():
-            cont_tab, dist_tab = get_contact_metrics_3D(orgs=orgs,
-                                                        site=site,
-                                                        HO = non_red_conts[orgs],
-                                                        organelle_segs=org_dict,
-                                                        mask=mask,
-                                                        splitter=splitter,
-                                                        scale=scale,
-                                                        include_dist=include_contact_dist,
-                                                        dist_centering_obj=centering,
-                                                        dist_num_bins=dist_num_bins,
-                                                        dist_zernike_degrees=dist_zernike_degrees,
-                                                        dist_center_on=dist_center_on,
-                                                        dist_keep_center_as_bin=dist_keep_center_as_bin)
-            for d_tabs,c_tabs in dist_tab,cont_tab:
-                dist_tabs.append(d_tabs)
-                contact_tabs.append(c_tabs)
-        ##########################################
-        # Collecting empty distance table metrics
-        ##########################################
-        all_pos = []
-        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
-            all_pos += itertools.combinations(list_obj_names, n)
-        possib = [splitter.join(cont) for cont in all_pos if not inkeys(all_conts, splitter.join(cont), splitter)]
-        del all_conts, non_red_conts
-        for con in possib:
-            dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
-                                                         name=con,
-                                                         dist_centering_obj=centering,
-                                                         scale=scale,
-                                                         dist_zernike_degrees=dist_zernike_degrees,
-                                                         dist_center_on=dist_center_on,
-                                                         dist_keep_center_as_bin=dist_keep_center_as_bin,
-                                                         dist_num_bins=dist_num_bins))
-        del possib
-    else:
-        for orgs, site in all_conts.items():
-            cont_tab = get_contact_metrics_3D(orgs=orgs,
-                                              site=site,
-                                              HO = non_red_conts[orgs],
-                                              organelle_segs=org_dict,
-                                              mask=mask,
-                                              splitter=splitter,
-                                              scale=scale,
-                                              include_dist=False)
-        del all_conts, non_red_conts
+    #############################
+    # Measure Organelle Contacts 
+    #############################
+    if len(list_obj_names) >=2:
+        contact_tabs = []
+        org_dict = make_dict(obj_names=list_obj_names,
+                             obj_segs=list_obj_segs)
+        all_conts, non_red_conts=multi_contact(org_segs=org_dict,
+                                               organelles=list_obj_names,
+                                               splitter=splitter,
+                                               redundancy=False)
+        if include_contact_dist:
+            for orgs, site in all_conts.items():
+                cont_tab, dist_tab = get_contact_metrics_3D(orgs=orgs,
+                                                            site=site,
+                                                            HO = non_red_conts[orgs],
+                                                            organelle_segs=org_dict,
+                                                            mask=mask,
+                                                            splitter=splitter,
+                                                            scale=scale,
+                                                            include_dist=include_contact_dist,
+                                                            dist_centering_obj=centering,
+                                                            dist_num_bins=dist_num_bins,
+                                                            dist_zernike_degrees=dist_zernike_degrees,
+                                                            dist_center_on=dist_center_on,
+                                                            dist_keep_center_as_bin=dist_keep_center_as_bin)
+                for d_tabs,c_tabs in dist_tab,cont_tab:
+                    dist_tabs.append(d_tabs)
+                    contact_tabs.append(c_tabs)
+            ##########################################
+            # Collecting empty distance table metrics
+            ##########################################
+            all_pos = []
+            for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
+                all_pos += itertools.combinations(list_obj_names, n)
+            possib = [splitter.join(cont) for cont in all_pos if not inkeys(all_conts, splitter.join(cont), splitter)]
+            del all_conts, non_red_conts
+            for con in possib:
+                dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
+                                                             name=con,
+                                                             dist_centering_obj=centering,
+                                                             scale=scale,
+                                                             dist_zernike_degrees=dist_zernike_degrees,
+                                                             dist_center_on=dist_center_on,
+                                                             dist_keep_center_as_bin=dist_keep_center_as_bin,
+                                                             dist_num_bins=dist_num_bins))
+            del possib
+        else:
+            for orgs, site in all_conts.items():
+                cont_tab = get_contact_metrics_3D(orgs=orgs,
+                                                  site=site,
+                                                  HO = non_red_conts[orgs],
+                                                  organelle_segs=org_dict,
+                                                  mask=mask,
+                                                  splitter=splitter,
+                                                  scale=scale,
+                                                  include_dist=False)
+            del all_conts, non_red_conts
+
     ######################
     # measure cell regions
     ######################
@@ -282,7 +284,7 @@ def make_all_metrics_tables(source_file: str,
             org_obj = list_obj_segs[j]
 
         ##########################################################
-        # measure organelle morphology & number of objs contacting
+        # measure organelle morphology
         ##########################################################
         org_metrics = get_org_morphology_3D(segmentation_img=org_obj, 
                                             seg_name=target,
@@ -357,9 +359,6 @@ def make_all_metrics_tables(source_file: str,
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
 
-    # #######################################
-    # # collect non-redundant contact metrics 
-    # #######################################
     # # list the non-redundant organelle pairs
     # contact_combos = list(itertools.combinations(list_obj_names, 2))
 
