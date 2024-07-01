@@ -17,7 +17,8 @@ from infer_subc.utils.stats import (get_contact_metrics_3D,
                     get_XY_distribution, 
                     get_Z_distribution, 
                     _assert_uint16_labels,
-                    get_region_morphology_3D)
+                    get_region_morphology_3D,
+                    get_empty_contact_dist_tabs)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
@@ -204,7 +205,7 @@ def make_all_metrics_tables(source_file: str,
         for orgs, site in all_conts.items():
             cont_tab, dist_tab = get_contact_metrics_3D(orgs=orgs,
                                                         site=site,
-                                                        HO = non_red_conts,
+                                                        HO = non_red_conts[orgs],
                                                         organelle_segs=org_dict,
                                                         mask=mask,
                                                         splitter=splitter,
@@ -240,7 +241,7 @@ def make_all_metrics_tables(source_file: str,
         for orgs, site in all_conts.items():
             cont_tab = get_contact_metrics_3D(orgs=orgs,
                                               site=site,
-                                              HO = non_red_conts,
+                                              HO = non_red_conts[orgs],
                                               organelle_segs=org_dict,
                                               mask=mask,
                                               splitter=splitter,
