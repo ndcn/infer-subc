@@ -200,35 +200,36 @@ def make_all_metrics_tables(source_file: str,
     contacts_tabs = []
     all_pos =[]
     labeled_dict = make_dict(list_obj_names, list_obj_segs)
-    for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
+    if len(list_obj_names) >= 2:
+        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
             all_pos += itertools.combinations(list_obj_names, n)
-    possib = [splitter.join(cont) for cont in all_pos]
-    if include_contact_dist:
-        for conts in possib:
-            print(conts)
-            cont_tab, dist_tab = get_contact_metrics_3D(orgs=conts,
-                                                        organelle_segs=labeled_dict,
-                                                        mask=mask,
-                                                        splitter=splitter,
-                                                        scale=scale,
-                                                        include_dist=include_contact_dist,
-                                                        dist_centering_obj=centering,
-                                                        dist_num_bins=dist_num_bins,
-                                                        dist_zernike_degrees=dist_zernike_degrees,
-                                                        dist_center_on=dist_center_on,
-                                                        dist_keep_center_as_bin=dist_keep_center_as_bin)
-            for tabs in dist_tab:
-                distance_tabs.append(tabs)
-            contacts_tabs.append(cont_tab)
-    else:
-        for conts in all_pos:
-            cont_tab = get_contact_metrics_3D(orgs=conts,
-                                               organelle_segs=labeled_dict,
-                                               mask=mask,
-                                               splitter=splitter,
-                                               scale=scale,
-                                               include_dist=include_contact_dist)
-            contacts_tabs.append(cont_tab)
+        possib = [splitter.join(cont) for cont in all_pos]
+        if include_contact_dist:
+            for conts in possib:
+                print(conts)
+                cont_tab, dist_tab = get_contact_metrics_3D(orgs=conts,
+                                                            organelle_segs=labeled_dict,
+                                                            mask=mask,
+                                                            splitter=splitter,
+                                                            scale=scale,
+                                                            include_dist=include_contact_dist,
+                                                            dist_centering_obj=centering,
+                                                            dist_num_bins=dist_num_bins,
+                                                            dist_zernike_degrees=dist_zernike_degrees,
+                                                            dist_center_on=dist_center_on,
+                                                            dist_keep_center_as_bin=dist_keep_center_as_bin)
+                for tabs in dist_tab:
+                    distance_tabs.append(tabs)
+                contacts_tabs.append(cont_tab)
+        else:
+            for conts in all_pos:
+                cont_tab = get_contact_metrics_3D(orgs=conts,
+                                                   organelle_segs=labeled_dict,
+                                                       mask=mask,
+                                                   splitter=splitter,
+                                                   scale=scale,
+                                                   include_dist=include_contact_dist)
+                contacts_tabs.append(cont_tab)
 
     ######################
     # measure cell regions
