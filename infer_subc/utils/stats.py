@@ -4,6 +4,7 @@ import pandas as pd
 from skimage.measure import regionprops_table, regionprops, mesh_surface_area, marching_cubes, label
 from skimage.morphology import binary_erosion
 from skimage.measure._regionprops import _props_to_dict
+from skimage.segmentation import watershed
 from typing import Tuple, Any, Union
 import itertools
 
@@ -17,7 +18,27 @@ import centrosome.zernike
 
 from infer_subc.core.img import apply_mask
 
-
+def _contact(orgs:str,
+             organelle_segs: dict[str:np.ndarray],
+             splitter: str="_") -> tuple[np.ndarray, np.ndarray]: 
+    ##########################################
+    ## CREATE CONTACT
+    ##########################################
+    site = np.ones_like(organelle_segs[orgs.split(splitter)[0]])
+    for org in orgs.split(splitter):
+        site = site*(organelle_segs[org]>0)
+        
+    ##########################################
+    ## DETERMINE REDUNDANT CONTACTS
+    ##########################################
+    HOc = site.copy()
+    for org, val in organelle_segs.items():
+        if (org not in orgs.split(splitter)) and np.any(site*val):
+            HOc = HOc*(np.invert(watershed(image=(np.invert(site)),
+                                           markers=(site*val),
+                                            mask=site,
+                                           connectivity=np.ones((3, 3, 3), bool))>0))
+    return site, HOc
 
 def _my_props_to_dict(
     rp, label_image, intensity_image=None, properties=("label", "area", "centroid", "bbox"), extra_properties=None, spacing: Union[tuple, None] = None):
@@ -425,8 +446,6 @@ def get_empty_contact_dist_tabs(mask: np.ndarray,
     return pd.merge(XY_contact_dist, Z_contact_dist, on=["object", "scale"])
 
 def get_contact_metrics_3D(orgs: str,
-                        site: np.ndarray,
-                        HO: np.ndarray,
                         organelle_segs: dict[str:np.ndarray],
                         mask: np.ndarray,
                         splitter: str="_",
@@ -437,9 +456,14 @@ def get_contact_metrics_3D(orgs: str,
                         dist_zernike_degrees: Union[int, None]=None,
                         dist_center_on: Union[bool, None]=None,
                         dist_keep_center_as_bin: Union[bool, None]=None) -> list:
+    ##########################################
+    ## PREPARING CONTACT METRICS
+    ##########################################
+    site, HOc = _contact(orgs, organelle_segs, splitter)    
     dist_tabs =[]
     labels = label(apply_mask(site, mask)).astype("int")    #Isolate to only contact sites found within the cell of interest
-    para_labels = apply_mask((HO>0), mask).astype("int") * labels #copy labels found in labels to para_labels
+    para_labels = apply_mask((HOc>0), mask).astype("int") * labels #copy labels found in labels to para_labels
+    
     ##########################################
     ## CREATE LIST OF REGIONPROPS MEASUREMENTS
     ##########################################
@@ -484,15 +508,15 @@ def get_contact_metrics_3D(orgs: str,
         redundancy.append(redundant)
         for org in involved:                                    #iterates across list of involved organelles
             volume = labels[props["slice"][index]]
-            lorg = organelle_segs[org][props["slice"][index]]
-            volume = volume==l
-            lorg = lorg[volume]
-            all_inv = np.unique(lorg[lorg>0]).tolist()
+            lorg = organelle_segs[org][props["slice"][index]]   
+            volume = volume==l                                  
+            lorg = lorg[volume]                                 
+            all_inv = np.unique(lorg[lorg>0]).tolist()          
             if len(all_inv) != 1:                               #ensures only one label is involved in the contact site
                 print(f"we have an error.  as-> {all_inv}")     #informs the console of any errors and the reasoing for it
             indexes[org].append(f"{all_inv[0]}")                #adds the label of the organelle involved in the contact to the organelle's key's list
             cont_inv.append(f"{all_inv[0]}")                    #adds the label of the organelle involved in the contact to the list of involved organelle labels
-        indexes[orgs].append("_".join(cont_inv))                #adds the combination of all the organelle's labels involved in the contact to the contact key's list                                                
+        indexes[orgs].append('_'.join(cont_inv))           #adds the combination of all the organelle's labels involved in the contact to the contact key's list                                                
     ######################################################
     ## CREATE COMBINED DATAFRAME OF THE QUANTIFICATION
     ######################################################
@@ -535,7 +559,6 @@ def get_contact_metrics_3D(orgs: str,
         contact_dist_tab = pd.merge(XY_contact_dist, Z_contact_dist, on=["object", "scale"])
         dist_tabs.append(contact_dist_tab)
     indexes.clear()
-
     if include_dist:
         return props_table, dist_tabs
     else:
