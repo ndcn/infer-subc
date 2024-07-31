@@ -4,9 +4,6 @@ from pathlib import Path
 import itertools 
 import time
 
-from skimage.measure import label
-from skimage.segmentation import watershed
-
 from infer_subc.core.img import apply_mask
 
 import pandas as pd
@@ -17,104 +14,14 @@ from infer_subc.utils.stats import (get_contact_metrics_3D,
                     get_XY_distribution, 
                     get_Z_distribution, 
                     _assert_uint16_labels,
-                    get_region_morphology_3D,
-                    get_empty_contact_dist_tabs)
+                    get_region_morphology_3D)
 
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
 from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
-def make_dict(obj_names: list[str],                                 #Intakes list of object names
-              obj_segs: list[np.ndarray]):                          #Intakes list of object segmentations
-    objs_labeled = {}                                               #Initialize dictionary
-    for idx, name in enumerate(obj_names):                          #Loop across each organelle name
-        if name == 'ER':                                            #Proceed only for ER
-            objs_labeled[name]=(obj_segs[idx]>0).astype(np.uint16)  #Ensures ER is labeled only as one object & sets it as key for its object segmentation
-        else:                                                       #Proceed for other organelles
-            objs_labeled[name]=obj_segs[idx]                        #Set the organelle name as the key for the corresponding object segmentation
-    return objs_labeled                                             #Return a dictionary of segmented objects with keys as the organelle name
 
-def inkeys(dic: dict[str],                      #Takes in dictionary to search through
-           s:str,                               #Takes in string being searched for
-           splitter:str="_") -> bool:           #Takes in character strings are split by, defaults to "_"
-    a = sorted(s.split(splitter))               #Normalizes the way the string is written
-    for key in dic.keys():                      #Iterates through each key in dictionary
-        if (a == sorted(key.split(splitter))):  #Checks if key has same vals as string
-            return True                         #Returns true if any key is same as string
-    return False                                #Returns false if no keys are same as string
-
-def contacting(segs: dict[str], 
-               iterated:dict[str],
-               splitter:str="_") -> dict:
-    conts = {} 
-    for a in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
-        for b in segs:                                                                  #Iterates through labeled organelles list (b)
-            if(np.any(((iterated[a]>0)*(segs[b]>0))>0) and not (a==b) and not           #Proceeds if there is a contact between the lower order contact and the other organelle
-               ((b+splitter in a)or(splitter+b in a)or(splitter+b+splitter in a)) and   #Proceeds if organelle is not already in lower order contact set
-               (not inkeys(conts,(a+splitter+b),splitter=splitter))):                   #Proceeds if contact between organelle and lower ordercontact set is not already made  
-                conts[(a+splitter+b)]=label((iterated[a]*segs[b])>0)                    #Adds new labeled contact
-    return conts                                                                        #Returns contacts
-
-def multi_contact(org_segs:dict[str:np.ndarray], 
-                  organelles:list[str],
-                  splitter:str="_",
-                  redundancy:bool=True) -> dict:
-    contacts=contacting(org_segs, org_segs, splitter=splitter)     #Dictionary for ALL contacts, starts with 2nd Order                                     #Returns with dictionary of all levels of 
-
-    iterated={}                            #Iterated Dictionary
-    contact={}                             #Contact Dictionary
-    if not redundancy:                     #Only initialize if looking for non-redundant contacts
-        HO_conts={}                        #Highest order contact dictionary
-    
-    for n in (range(len(organelles)-1)): 
-        iterated.clear()                   #Clears iterated dictionary
-        contact.clear()                    #Clears contact dictionary
-        num=n+3                            #Number of contacts in lower order number
-
-    ##########################
-    # Finding nLO Contacts
-    ##########################
-        for key in contacts:                                    #Iterates over every key in contacts
-            if (len(key.split(splitter)) == (num-1)):           #Selects for last set of contacts
-                iterated[key]=contacts[key]                     #Adds each key from last set of contacts to iterated
-
-    ###########################
-    # Making the n-Way Contact
-    ###########################
-        for c in iterated:                                                                  #Iterates through preexisting dictionary of contact sites
-            for d in org_segs:                                                              #Iterates through labeled organelles list (b)
-                if(np.any((iterated[c]*org_segs[d])>0) and not
-                   ((d+splitter in c)or(splitter+d in c)or(splitter+d+splitter in c)) and   #Proceeds if organelle is not already in previous contact set
-                   (not inkeys(contact,(c+splitter+d),splitter=splitter))):                 #Proceeds if contact between organelle and previous contact set is not already made  
-                    contact[(c+splitter+d)]=label((iterated[c]*org_segs[d])>0)              #Adds new binary contact
-
-    ################################################
-    # Adding n-Way contacts to contacts Dictionary
-    ################################################
-        for key in contact:              #Iterates across the new contact sites 
-            contacts[key]=(contact[key])   #Labels & assigns higher order contact to 
-
-    ################################################
-    # Dictionary of Non-Redundant Contacts
-    ################################################
-        if not redundancy:
-            while len(iterated) != 0:
-                key = list(iterated.keys())[0]
-                ara = iterated[key]>0
-                HO_conts[key] = ara
-                for ki in contact.keys():
-                    if (set(ki.split(splitter)).issuperset(key.split(splitter))):
-                        HO_conts[key] = HO_conts[key]*(np.invert(watershed(image=(np.invert(ara)),                           #Watershed with the map of the nLO image
-                                                                                  markers=contact[ki],                       #Watershed with the markers of the nO's superstr
-                                                                                  mask=ara,                                  #Watershed unable to proceed beyond the nLO image
-                                                                                  connectivity=np.ones((3, 3, 3), bool))>0)) #Watershed with 3D connectivity
-                del iterated[key]
-    if not redundancy:
-        return contacts, HO_conts
-    else:
-        return contacts
-                                                                   
 def make_all_metrics_tables(source_file: str,
                              list_obj_names: List[str],
                              list_obj_segs: List[np.ndarray],
@@ -128,8 +35,7 @@ def make_all_metrics_tables(source_file: str,
                              dist_keep_center_as_bin: bool=True,
                              dist_zernike_degrees: Union[int, None]=None,
                              scale: Union[tuple,None] = None,
-                             include_contact_dist:bool=True,
-                             splitter:str="_"):
+                             include_contact_dist:bool=True):
     """
     Measure the composition, morphology, distribution, and contacts of multiple organelles in a cell
 
@@ -185,58 +91,12 @@ def make_all_metrics_tables(source_file: str,
     # segmentation image for all masking steps below
     mask = list_region_segs[list_region_names.index(mask)]
 
-    # containers to collect per organelle information
-    org_tabs = []
-    dist_tabs = []
-    XY_bins = []
-    XY_wedges = []
-
-    centering = list_region_segs[list_region_names.index(dist_centering_obj)]
-
-    #############################
-    # Measure Organelle Contacts 
-    #############################
-    distance_tabs = []
-    contacts_tabs = []
-    all_pos =[]
-    labeled_dict = make_dict(list_obj_names, list_obj_segs)
-    if len(list_obj_names) >= 2:
-        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
-            all_pos += itertools.combinations(list_obj_names, n)
-        possib = [splitter.join(cont) for cont in all_pos]
-        if include_contact_dist:
-            for conts in possib:
-                print(conts)
-                cont_tab, dist_tab = get_contact_metrics_3D(orgs=conts,
-                                                            organelle_segs=labeled_dict,
-                                                            mask=mask,
-                                                            splitter=splitter,
-                                                            scale=scale,
-                                                            include_dist=include_contact_dist,
-                                                            dist_centering_obj=centering,
-                                                            dist_num_bins=dist_num_bins,
-                                                            dist_zernike_degrees=dist_zernike_degrees,
-                                                            dist_center_on=dist_center_on,
-                                                            dist_keep_center_as_bin=dist_keep_center_as_bin)
-                for tabs in dist_tab:
-                    distance_tabs.append(tabs)
-                contacts_tabs.append(cont_tab)
-        else:
-            for conts in all_pos:
-                cont_tab = get_contact_metrics_3D(orgs=conts,
-                                                   organelle_segs=labeled_dict,
-                                                       mask=mask,
-                                                   splitter=splitter,
-                                                   scale=scale,
-                                                   include_dist=include_contact_dist)
-                contacts_tabs.append(cont_tab)
-
     ######################
     # measure cell regions
     ######################
     # create np.ndarray of intensity images
     raw_image = np.stack(list_intensity_img)
-
+    
     # container for region data
     region_tabs = []
     for r, r_name in enumerate(list_region_names):
@@ -252,6 +112,11 @@ def make_all_metrics_tables(source_file: str,
     ##############################################################
     # loop through all organelles to collect measurements for each
     ##############################################################
+    # containers to collect per organelle information
+    org_tabs = []
+    dist_tabs = []
+    XY_bins = []
+    XY_wedges = []
 
     for j, target in enumerate(list_obj_names):
         # organelle intensity image
@@ -265,7 +130,7 @@ def make_all_metrics_tables(source_file: str,
             org_obj = list_obj_segs[j]
 
         ##########################################################
-        # measure organelle morphology
+        # measure organelle morphology & number of objs contacting
         ##########################################################
         org_metrics = get_org_morphology_3D(segmentation_img=org_obj, 
                                             seg_name=target,
@@ -273,11 +138,52 @@ def make_all_metrics_tables(source_file: str,
                                             mask=mask,
                                             scale=scale)
 
+        ### org_metrics.insert(loc=0,column='cell',value=1) 
+        # ^^^ saving this thought for later when someone might have more than one cell per image.
+        # Not sure how they analysis process would fit in our pipelines as they exist now. 
+        # Maybe here, iterating though the index of the masks above all of this and using that index as the cell number?
+
+        # TODO: find a better way to quantify the number and area of contacts per organelle
+            # I think it can be done during summarizing based on the label and object values in the contact sheet
+        # for i, nmi in enumerate(list_obj_names):
+        #     if i != j:
+        #         if target == 'ER':
+        #             b = (list_obj_segs[i] > 0).astype(np.uint16)
+        #         else:
+        #             b = list_obj_segs[i]
+            
+        #         ov = []
+        #         b_labs = []
+        #         labs = []
+        #         for idx, lab in enumerate(org_metrics["label"]):
+        #             xyz = tuple(rp[idx].coords.T)
+        #             cmp_org = b[xyz]
+                    
+        #             # total area (in voxels or real world units) where these two orgs overlap within the cell
+        #             if scale != None:
+        #                 overlap = sum(cmp_org > 0)*scale[0]*scale[1]*scale[2]
+        #             else:
+        #                 # total number of overlapping pixels
+        #                 overlap = sum(cmp_org > 0)
+        #                 # overlap?
+                    
+        #             # which b organelles are involved in that overlap
+        #             labs_b = cmp_org[cmp_org > 0]
+        #             b_js = np.unique(labs_b).tolist()
+
+        #             # if overlap > 0:
+        #             labs.append(lab) # labs.append(lab)
+        #             ov.append(overlap)
+        #             b_labs.append(b_js)
+        #         org_metrics[f"{nmi}_overlap"] = ov
+        #         org_metrics[f"{nmi}_labels"] = b_labs 
+
         org_tabs.append(org_metrics)
 
         ################################
         # measure organelle distribution 
         ################################
+        centering = list_region_segs[list_region_names.index(dist_centering_obj)]
         XY_org_distribution, XY_bin_masks, XY_wedge_masks = get_XY_distribution(mask=mask,
                                                                                 centering_obj=centering,
                                                                                 obj=org_obj,
@@ -298,14 +204,64 @@ def make_all_metrics_tables(source_file: str,
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
+
+    #######################################
+    # collect non-redundant contact metrics 
+    #######################################
+    # list the non-redundant organelle pairs
+    contact_combos = list(itertools.combinations(list_obj_names, 2))
+
+    # container to keep contact data in
+    contact_tabs = []
+
+    # loop through each pair and measure contacts
+    for pair in contact_combos:
+        # pair names
+        a_name = pair[0]
+        b_name = pair[1]
+
+        # segmentations to measure
+        if a_name == 'ER':
+            # ensure ER is only one object
+            a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
+        else:
+            a = list_obj_segs[list_obj_names.index(a_name)]
+        
+        if b_name == 'ER':
+            # ensure ER is only one object
+            b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
+        else:
+            b = list_obj_segs[list_obj_names.index(b_name)]
+        
+
+        if include_contact_dist == True:
+            contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
+                                                                   b, b_name, 
+                                                                   mask, 
+                                                                   scale, 
+                                                                   include_dist=include_contact_dist,
+                                                                   dist_centering_obj=centering,
+                                                                   dist_num_bins=dist_num_bins,
+                                                                   dist_zernike_degrees=dist_zernike_degrees,
+                                                                   dist_center_on=dist_center_on,
+                                                                   dist_keep_center_as_bin=dist_keep_center_as_bin)
+            dist_tabs.append(contact_dist_tab)
+        else:
+            contact_tab = get_contact_metrics_3D(a, a_name, 
+                                                 b, b_name, 
+                                                 mask, 
+                                                 scale, 
+                                                 include_dist=include_contact_dist)
+        contact_tabs.append(contact_tab)
+
+
     ###########################################
     # combine all tabs into one table per type:
     ###########################################
     final_org_tab = pd.concat(org_tabs, ignore_index=True)
     final_org_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
-    final_contact_tab = pd.concat(contacts_tabs, ignore_index=True)
-    final_contact_tab['redundant'] = final_contact_tab['redundant'].astype(bool)
+    final_contact_tab = pd.concat(contact_tabs, ignore_index=True)
     final_contact_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
     combined_dist_tab = pd.concat(dist_tabs, ignore_index=True)
