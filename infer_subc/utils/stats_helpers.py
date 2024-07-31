@@ -191,23 +191,24 @@ def make_all_metrics_tables(source_file: str,
     XY_bins = []
     XY_wedges = []
 
+    centering = list_region_segs[list_region_names.index(dist_centering_obj)]
+
     #############################
     # Measure Organelle Contacts 
     #############################
-    if len(list_obj_names) >=2:
-        contact_tabs = []
-        org_dict = make_dict(obj_names=list_obj_names,
-                             obj_segs=list_obj_segs)
-        all_conts, non_red_conts=multi_contact(org_segs=org_dict,
-                                               organelles=list_obj_names,
-                                               splitter=splitter,
-                                               redundancy=False)
+    distance_tabs = []
+    contacts_tabs = []
+    all_pos =[]
+    labeled_dict = make_dict(list_obj_names, list_obj_segs)
+    if len(list_obj_names) >= 2:
+        for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
+            all_pos += itertools.combinations(list_obj_names, n)
+        possib = [splitter.join(cont) for cont in all_pos]
         if include_contact_dist:
-            for orgs, site in all_conts.items():
-                cont_tab, dist_tab = get_contact_metrics_3D(orgs=orgs,
-                                                            site=site,
-                                                            HO = non_red_conts[orgs],
-                                                            organelle_segs=org_dict,
+            for conts in possib:
+                print(conts)
+                cont_tab, dist_tab = get_contact_metrics_3D(orgs=conts,
+                                                            organelle_segs=labeled_dict,
                                                             mask=mask,
                                                             splitter=splitter,
                                                             scale=scale,
@@ -217,38 +218,18 @@ def make_all_metrics_tables(source_file: str,
                                                             dist_zernike_degrees=dist_zernike_degrees,
                                                             dist_center_on=dist_center_on,
                                                             dist_keep_center_as_bin=dist_keep_center_as_bin)
-                for d_tabs,c_tabs in dist_tab,cont_tab:
-                    dist_tabs.append(d_tabs)
-                    contact_tabs.append(c_tabs)
-            ##########################################
-            # Collecting empty distance table metrics
-            ##########################################
-            all_pos = []
-            for n in list(map(lambda x:x+2, (range(len(list_obj_names)-1)))):
-                all_pos += itertools.combinations(list_obj_names, n)
-            possib = [splitter.join(cont) for cont in all_pos if not inkeys(all_conts, splitter.join(cont), splitter)]
-            del all_conts, non_red_conts
-            for con in possib:
-                dist_tabs.append(get_empty_contact_dist_tabs(mask=mask,
-                                                             name=con,
-                                                             dist_centering_obj=centering,
-                                                             scale=scale,
-                                                             dist_zernike_degrees=dist_zernike_degrees,
-                                                             dist_center_on=dist_center_on,
-                                                             dist_keep_center_as_bin=dist_keep_center_as_bin,
-                                                             dist_num_bins=dist_num_bins))
-            del possib
+                for tabs in dist_tab:
+                    distance_tabs.append(tabs)
+                contacts_tabs.append(cont_tab)
         else:
-            for orgs, site in all_conts.items():
-                cont_tab = get_contact_metrics_3D(orgs=orgs,
-                                                  site=site,
-                                                  HO = non_red_conts[orgs],
-                                                  organelle_segs=org_dict,
-                                                  mask=mask,
-                                                  splitter=splitter,
-                                                  scale=scale,
-                                                  include_dist=False)
-            del all_conts, non_red_conts
+            for conts in all_pos:
+                cont_tab = get_contact_metrics_3D(orgs=conts,
+                                                   organelle_segs=labeled_dict,
+                                                       mask=mask,
+                                                   splitter=splitter,
+                                                   scale=scale,
+                                                   include_dist=include_contact_dist)
+                contacts_tabs.append(cont_tab)
 
     ######################
     # measure cell regions
@@ -292,52 +273,11 @@ def make_all_metrics_tables(source_file: str,
                                             mask=mask,
                                             scale=scale)
 
-        ### org_metrics.insert(loc=0,column='cell',value=1) 
-        # ^^^ saving this thought for later when someone might have more than one cell per image.
-        # Not sure how they analysis process would fit in our pipelines as they exist now. 
-        # Maybe here, iterating though the index of the masks above all of this and using that index as the cell number?
-
-        # TODO: find a better way to quantify the number and area of contacts per organelle
-            # I think it can be done during summarizing based on the label and object values in the contact sheet
-        # for i, nmi in enumerate(list_obj_names):
-        #     if i != j:
-        #         if target == 'ER':
-        #             b = (list_obj_segs[i] > 0).astype(np.uint16)
-        #         else:
-        #             b = list_obj_segs[i]
-            
-        #         ov = []
-        #         b_labs = []
-        #         labs = []
-        #         for idx, lab in enumerate(org_metrics["label"]):
-        #             xyz = tuple(rp[idx].coords.T)
-        #             cmp_org = b[xyz]
-                    
-        #             # total area (in voxels or real world units) where these two orgs overlap within the cell
-        #             if scale != None:
-        #                 overlap = sum(cmp_org > 0)*scale[0]*scale[1]*scale[2]
-        #             else:
-        #                 # total number of overlapping pixels
-        #                 overlap = sum(cmp_org > 0)
-        #                 # overlap?
-                    
-        #             # which b organelles are involved in that overlap
-        #             labs_b = cmp_org[cmp_org > 0]
-        #             b_js = np.unique(labs_b).tolist()
-
-        #             # if overlap > 0:
-        #             labs.append(lab) # labs.append(lab)
-        #             ov.append(overlap)
-        #             b_labs.append(b_js)
-        #         org_metrics[f"{nmi}_overlap"] = ov
-        #         org_metrics[f"{nmi}_labels"] = b_labs 
-
         org_tabs.append(org_metrics)
 
         ################################
         # measure organelle distribution 
         ################################
-        centering = list_region_segs[list_region_names.index(dist_centering_obj)]
         XY_org_distribution, XY_bin_masks, XY_wedge_masks = get_XY_distribution(mask=mask,
                                                                                 centering_obj=centering,
                                                                                 obj=org_obj,
@@ -358,61 +298,14 @@ def make_all_metrics_tables(source_file: str,
         dist_tabs.append(org_distribution_metrics)
         XY_bins.append(XY_bin_masks)
         XY_wedges.append(XY_wedge_masks)
-
-    # # list the non-redundant organelle pairs
-    # contact_combos = list(itertools.combinations(list_obj_names, 2))
-
-    # # container to keep contact data in
-    # contact_tabs = []
-
-    # # loop through each pair and measure contacts
-    # for pair in contact_combos:
-    #     # pair names
-    #     a_name = pair[0]
-    #     b_name = pair[1]
-
-    #     # segmentations to measure
-    #     if a_name == 'ER':
-    #         # ensure ER is only one object
-    #         a = (list_obj_segs[list_obj_names.index(a_name)] > 0).astype(np.uint16)
-    #     else:
-    #         a = list_obj_segs[list_obj_names.index(a_name)]
-        
-    #     if b_name == 'ER':
-    #         # ensure ER is only one object
-    #         b = (list_obj_segs[list_obj_names.index(b_name)] > 0).astype(np.uint16)
-    #     else:
-    #         b = list_obj_segs[list_obj_names.index(b_name)]
-        
-
-    #     if include_contact_dist == True:
-    #         contact_tab, contact_dist_tab = get_contact_metrics_3D(a, a_name, 
-    #                                                                b, b_name, 
-    #                                                                mask, 
-    #                                                                scale, 
-    #                                                                include_dist=include_contact_dist,
-    #                                                                dist_centering_obj=centering,
-    #                                                                dist_num_bins=dist_num_bins,
-    #                                                                dist_zernike_degrees=dist_zernike_degrees,
-    #                                                                dist_center_on=dist_center_on,
-    #                                                                dist_keep_center_as_bin=dist_keep_center_as_bin)
-    #         dist_tabs.append(contact_dist_tab)
-    #     else:
-    #         contact_tab = get_contact_metrics_3D(a, a_name, 
-    #                                              b, b_name, 
-    #                                              mask, 
-    #                                              scale, 
-    #                                              include_dist=include_contact_dist)
-    #     contact_tabs.append(contact_tab)
-
-
     ###########################################
     # combine all tabs into one table per type:
     ###########################################
     final_org_tab = pd.concat(org_tabs, ignore_index=True)
     final_org_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
-    final_contact_tab = pd.concat(contact_tabs, ignore_index=True)
+    final_contact_tab = pd.concat(contacts_tabs, ignore_index=True)
+    final_contact_tab['redundant'] = final_contact_tab['redundant'].astype(bool)
     final_contact_tab.insert(loc=0,column='image_name',value=source_file.stem)
 
     combined_dist_tab = pd.concat(dist_tabs, ignore_index=True)
