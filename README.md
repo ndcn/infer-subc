@@ -2,24 +2,25 @@
 ### A python-based image analysis tool to segment and quantify the morphology, interactions, and distribution of organelles.
 
 <img src="infer_subc\assets\README.png" width="800">
+<p>
 
 # 📒 About this project
 
 ### `infer-subc` 
-- aims to create a <ins>simple</ins>, <ins>extensible</ins>, and <ins>reproducible</ins> pipeline to segment (or infer) and measure the shape, position, size, and interaction of multiple intracellular organelles from confocal microscopy 🔬 images. 
+- aims to create a <ins>simple</ins>, <ins>extensible</ins>, and <ins>reproducible</ins> pipeline to segment (or infer) and quantify the shape, position, size, and interaction of multiple intracellular organelles from confocal microscopy 🔬 images. 
 - is <ins>modular</ins> 🔢 to support a diversity of organelle-focused research questions. 
-- can be <ins>applied broadly</ins> to many types of in vitro 🧫 and in vivo models 🐁🧬 to better understand the spatial coordination and interactome of organelles during key biological processes or in disease. 
+- can be <ins>applied broadly</ins> to many types of in vitro 🧫 and in vivo models 🐁🧬 to better understand the spatial coordination and interactome of organelles during key biological processes or disease. 
 
 > ### Compatable Organelles 🔓🗝️
 > 
-> - `Cell`
-> - `Nucleus`
 > - `Lysosomes`
 > - `Mitochondria`
 > - `Golgi`
 > - `Peroxisomes`
 > - `Endoplasmic reticulum` 
 > - `Lipid droplets`
+> - `Cell`
+> - `Nucleus`
 >
 >
 >  *Outside segmentation methods can also be used to incorporate additional oragnelles.*
@@ -40,9 +41,9 @@ A full list of dependencies and recommended setup steps are included in [env_cre
 
 > ***NOTE**: Proceed to the Organelle Quantification section below if you have already created instance segmentations using a separate method.*
 
-The starting point for `infer-subc` analysis pipeline is to perform instance segmentation on single or multichannel confocal microscopy images, where each channel labels a different intracellular component. Each channel or organelle will be segmented from a single intensity channel. The subsequent analysis is performed at a single-cell level, so a mask of the cell area is required.
+The starting point for `infer-subc` analysis pipeline is to perform instance segmentation on single or multichannel confocal microscopy images, where each channel labels a different intracellular component. Each channel or organelle will be segmented from a single intensity channel. The subsequent analysis is performed at a single-cell level, so a mask of the cell area will also be carried out.
 
-We recommend that you use our `infer-subc` implementation for Napari called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin). This will allow users to systematically test segmentation settings for each organelles, then batch process all organelles of interest across multiple cells at a time. Alternatively, you can utilize the included set of Jupter Notebooks to work through the segmentation process step by step for each cell.
+We recommend that you use our `infer-subc` implementation for Napari called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin). This will allow users to systematically test segmentation settings for each organelles, then batch process all organelles of interest across multiple cells at a time within the Napari GUI. Alternatively, you can utilize the included set of Jupter Notebooks or your own python script to work through the segmentation process step by step for each cell.
 
 ### <ins>Option A:</ins> [Napari Plugin](https://github.com/ndcn/organelle-segmenter-plugin) 🔌
 

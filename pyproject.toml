@@ -9,13 +9,13 @@ readme = "README.md"
 authors = [
     {name = "Andy Henrie", email = "ergonyc@gmail.com"},
     {name = "Shannon Rhoads", email = "rhoads.shannon@gmail.com"},
-    {name = "Rene Mfulama", email = ""},
+    {name = "Rene Mfulama", email = "mfulamangudiankama@gmail.com"},
     {name = "Zach coman", email = "zachcoman@gmail.com"}
 ]
 
 maintainers = [
     {name = "Shannon Rhoads", email = "rhoads.shannon@gmail.com"},
-    {name = "Rene Mfulama", email = ""},
+    {name = "Rene Mfulama", email = "mfulamangudiankama@gmail.com"},
     {name = "Zach coman", email = "zachcoman@gmail.com"}
 
 classifiers = [

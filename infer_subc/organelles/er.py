@@ -3,7 +3,6 @@ from typing import Dict
 from pathlib import Path
 import time
 
-from infer_subc.constants import ER_CH
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
 
 from infer_subc.core.img import (
@@ -131,112 +130,125 @@ def infer_ER(in_img: np.ndarray,
     return struct_obj 
 
 
-##########################
-#  fixed_infer_ER
-##########################
-def fixed_infer_ER(in_img: np.ndarray ) -> np.ndarray:
-    """
-    Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
-
-    Parameters
-    ------------
-    in_img: 
-        a 3d image containing all the channels
-
-    Returns
-    -------------
-    ER_object
-        mask defined extent of ER object
-    """
-    ER_ch = 5
-    median_sz = 3
-    gauss_sig = 2.0
-    MO_thresh_method = 'tri'
-    MO_cutoff_size = 1200
-    MO_thresh_adj = 0.7
-    fil_scale_1 = 1
-    fil_cut_1 = 0.005
-    fil_scale_2 = 2
-    fil_cut_2 = 0.005
-    fil_scale_3 = 0
-    fil_cut_3 = 0
-    fil_method = "3D"
-    min_hole_w = 0
-    max_hole_w = 0
-    small_obj_w = 4
-    method = "3D"
-
-    return infer_ER(
-        in_img,
-        ER_ch,
-        median_sz,
-        gauss_sig,
-        MO_thresh_method,
-        MO_cutoff_size,
-        MO_thresh_adj,
-        fil_scale_1,
-        fil_cut_1,
-        fil_scale_2,
-        fil_cut_2,
-        fil_scale_3,
-        fil_cut_3,
-        fil_method,
-        min_hole_w,
-        max_hole_w,
-        small_obj_w,
-        method)
 
 
-def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    infer ER and write inferred ER to ome.tif file
-
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
-
-    Returns
-    -------------
-    exported file name
-
-    """
-    er = fixed_infer_ER(in_img)
-    out_file_n = export_inferred_organelle(er, "ER", meta_dict, out_data_path)
-    print(f"inferred ER. wrote {out_file_n}")
-    return er
 
 
-def get_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    load endoplasmic_reticulum if it exists, otherwise calculate and write to ome.tif file
 
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
 
-    Returns
-    -------------
-    exported file name
 
-    """
 
-    try:
-        er = import_inferred_organelle("ER", meta_dict, out_data_path)
-    except:
-        start = time.time()
-        print("starting segmentation...")
-        er = infer_and_export_ER(in_img, meta_dict, out_data_path)
-        end = time.time()
-        print(f"inferred (and exported) ER in ({(end - start):0.2f}) sec")
+#################################################################
+########################## DEPRICATING ##########################
+#################################################################
 
-    return er
+
+# ##########################
+# #  fixed_infer_ER
+# ##########################
+# def fixed_infer_ER(in_img: np.ndarray ) -> np.ndarray:
+#     """
+#     Procedure to infer endoplasmic rediculum from linearly unmixed input with *fixed parameters*
+
+#     Parameters
+#     ------------
+#     in_img: 
+#         a 3d image containing all the channels
+
+#     Returns
+#     -------------
+#     ER_object
+#         mask defined extent of ER object
+#     """
+#     ER_ch = 5
+#     median_sz = 3
+#     gauss_sig = 2.0
+#     MO_thresh_method = 'tri'
+#     MO_cutoff_size = 1200
+#     MO_thresh_adj = 0.7
+#     fil_scale_1 = 1
+#     fil_cut_1 = 0.005
+#     fil_scale_2 = 2
+#     fil_cut_2 = 0.005
+#     fil_scale_3 = 0
+#     fil_cut_3 = 0
+#     fil_method = "3D"
+#     min_hole_w = 0
+#     max_hole_w = 0
+#     small_obj_w = 4
+#     method = "3D"
+
+#     return infer_ER(
+#         in_img,
+#         ER_ch,
+#         median_sz,
+#         gauss_sig,
+#         MO_thresh_method,
+#         MO_cutoff_size,
+#         MO_thresh_adj,
+#         fil_scale_1,
+#         fil_cut_1,
+#         fil_scale_2,
+#         fil_cut_2,
+#         fil_scale_3,
+#         fil_cut_3,
+#         fil_method,
+#         min_hole_w,
+#         max_hole_w,
+#         small_obj_w,
+#         method)
+
+
+# def infer_and_export_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     infer ER and write inferred ER to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+#     er = fixed_infer_ER(in_img)
+#     out_file_n = export_inferred_organelle(er, "ER", meta_dict, out_data_path)
+#     print(f"inferred ER. wrote {out_file_n}")
+#     return er
+
+
+# def get_ER(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     load endoplasmic_reticulum if it exists, otherwise calculate and write to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+
+#     try:
+#         er = import_inferred_organelle("ER", meta_dict, out_data_path)
+#     except:
+#         start = time.time()
+#         print("starting segmentation...")
+#         er = infer_and_export_ER(in_img, meta_dict, out_data_path)
+#         end = time.time()
+#         print(f"inferred (and exported) ER in ({(end - start):0.2f}) sec")
+
+#     return er

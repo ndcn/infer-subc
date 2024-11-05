@@ -1,8 +1,8 @@
-from typing import List
+# from typing import List
 import numpy as np
 import pandas as pd
 from skimage.measure import regionprops_table, regionprops, mesh_surface_area, marching_cubes, label
-from skimage.morphology import binary_erosion
+# from skimage.morphology import binary_erosion
 from skimage.measure._regionprops import _props_to_dict
 from typing import Tuple, Any, Union
 import itertools
@@ -41,7 +41,7 @@ def _my_props_to_dict(
 
     return _props_to_dict(rp, properties=properties, separator="-")
 
-
+### USED ###
 def get_org_morphology_3D(segmentation_img: np.ndarray, 
                            seg_name: str, 
                            intensity_img, 
@@ -156,10 +156,7 @@ def get_org_morphology_3D(segmentation_img: np.ndarray,
     ################################################################
     ## ADD SKELETONIZATION OPTION FOR MEASURING LENGTH AND BRANCHING
     ################################################################
-    #  # ETC.  skeletonize via cellprofiler /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/morphologicalskeleton.py
-    #         if x.volumetric:
-    #             y_data = skimage.morphology.skeletonize_3d(x_data)
-    # /Users/ahenrie/Projects/Imaging/CellProfiler/cellprofiler/modules/measureobjectskeleton.py
+
 
     return props_table
 
@@ -227,6 +224,7 @@ def get_org_morphology_3D(segmentation_img: np.ndarray,
 
 # creating a function to measure the surface area of each object. This function utilizes "marching_cubes" to generate a mesh (non-pixelated object)
 
+### USED ###
 def surface_area_from_props(labels, props, scale: Union[tuple,None]=None):
     # SurfaceArea
     surface_areas = np.zeros(len(props["label"]))
@@ -262,7 +260,7 @@ def _assert_uint16_labels(inp: np.ndarray) -> np.ndarray:
         return label(inp > 0).astype(np.uint16)
     return inp
 
-
+### USED ###
 def get_region_morphology_3D(region_seg: np.ndarray, 
                               region_name: str,
                               intensity_img: np.ndarray, 
@@ -398,7 +396,7 @@ def get_region_morphology_3D(region_seg: np.ndarray,
 
     return props_table
 
-
+### USED ###
 def get_contact_metrics_3D(a: np.ndarray,
                             a_name: str, 
                             b: np.ndarray, 
@@ -646,7 +644,7 @@ def get_contact_metrics_3D(a: np.ndarray,
 
 #     return props_table
 
-
+### USED ###
 def create_masked_sum_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=None, to_bool:bool=True) -> np.ndarray:
     """
     Parameters:
@@ -713,7 +711,7 @@ def size_similarly(labels, secondary):
     mask[:i_max, :j_max] = 1
     return result, mask
 
-
+### USED ###
 def get_XY_distribution(        
         mask: np.ndarray,
         centering_obj: np.ndarray,
@@ -836,7 +834,8 @@ def get_XY_distribution(
 #                                       )
 
 #     return radial_stats,zernike_stats,radial_bin_mask
-    
+
+### USED ###
 def get_normalized_distance_and_mask(labels: np.ndarray, 
                                       center_objects: Union[np.ndarray, None], 
                                       center_on: bool):
@@ -1193,6 +1192,7 @@ def get_normalized_distance_and_mask(labels: np.ndarray,
 #     stats_tab = pd.DataFrame(stats_dict)  
 #     return stats_tab, bin_array
 
+### USED ###
 def get_concentric_distribution(
         mask_proj: np.ndarray,
         centering_proj: np.ndarray,
@@ -1634,7 +1634,7 @@ def get_concentric_distribution(
 #     stats_tab = pd.DataFrame(stats_dict)  
 #     return stats_tab, bin_indexes
 
-
+### USED ###
 def create_masked_depth_projection(img_in:np.ndarray, mask:Union[np.ndarray, None]=None, to_bool:bool=True) -> np.ndarray:
     """
     create a masked projection by summing together all XY pixels per Z plane/slice
@@ -1645,7 +1645,7 @@ def create_masked_depth_projection(img_in:np.ndarray, mask:Union[np.ndarray, Non
     
     return img_out.sum(axis=(1,2))
 
-
+### USED ###
 def get_Z_distribution(        
         mask: np.ndarray,
         obj:np.ndarray,
@@ -1733,6 +1733,7 @@ def get_Z_distribution(
     
 
 # Zernicke routines.  inspired by cellprofiler, but heavily simplified
+### USED ###
 def zernike_metrics(pixels,z):
     """
     
@@ -1745,7 +1746,7 @@ def zernike_metrics(pixels,z):
     return magnitude, phase
 
 
-
+## USED ###
 def zernike_polynomial(labels, zernike_is):
     """
     
@@ -1806,6 +1807,7 @@ def zernike_polynomial(labels, zernike_is):
 
 #     return stats_tab
 
+### USED ###
 def get_zernike_metrics(        
         cellmask_proj: np.ndarray,
         nucleus_proj: Union[np.ndarray, None], 
