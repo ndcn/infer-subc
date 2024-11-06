@@ -1,50 +1,32 @@
 # Welcome to infer_subc
 
- `infer_subc` aims to create a simple and extensible workflow of image analysis leveraging [scipy image](link), and [napari](link) for reproducable analysis with an intuitive interface. 
-
-This is a simple repo to collect code and documentations from the pilot project kicking off as part of the CZI Neurodegeneration Challenge Network [(NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/) Data Science Concierge program.  The PILOT study is a collaboration with Cohen lab at UNC [(website,](https://cohenlaboratory.web.unc.edu/) [github)](https://github.com/SCohenLab) to migrate a multispectral imaging dataset of iPSCs which identifies sub-cellular components to a scalable cloud-based pipeline.  
+### `infer-subc` 
+- aims to create a <ins>simple</ins>, <ins>extensible</ins>, and <ins>reproducible</ins> pipeline to segment (or infer) and quantify the shape, position, size, and interaction of multiple intracellular organelles from confocal microscopy 🔬 images. 
+- is <ins>modular</ins> 🔢 to support a diversity of organelle-focused research questions. 
+- can be <ins>applied broadly</ins> to many types of in vitro 🧫 and in vivo models 🐁🧬 to better understand the spatial coordination and interactome of organelles during key biological processes or disease. 
 
 ## Overview
-In general we ware interested in making segmentations which are the inferred organelles for each cell.   Procedurally we will need to define some masking ROIs which correspond to the cellmask, wholecell (cellmask + dendrites) and cytoplasm (cellmask minus nucleus.)  THerefore we need to first infer nuclei, cellmask, and cytoplasm as the first steps.  
+### Instance segmentation of organelles 🖍️
+The starting point for the `infer-subc` analysis pipeline is to perform instance segmentation on single or multichannel confocal microscopy images, where each channel labels a different intracellular component. Each organelle will be segmented from a single intensity channel. The subsequent analysis is performed at a single-cell level by also segmenting a mask the cell area.
 
-From there the organelle segmentations are largely independent, and we will employ the cytoplasm (or cellmask for the nucleus segmentation) as a mask when collecting statistics about the individual organelle objects. 
+**More information of the segmentation process can be found [here](/docs/segmentation.md).**
 
-Notebooks  found [here]( link ) provide the template
+### Organelle Quantification 🧮📐
+After each of the organelles of interest are segmented, single or multi-organelle analysis can be carried out using Jupyter Notebook-based pipeline(s). We incorporated quantification of the `morphology`, `interactions`, and `distribution` of any number of organelles within the same cell. Together these metrics summarize the *"Organelle Signature"* of a particular cell type or cellular condition. Examples of this method are cited below. 
 
-### Sub-Cellular object Inference PIPELINE OVERVIEW
+**Information on the organelle quantification pipeline can be found [here](/docs/quantification.md).**
 
-#### GOAL:  Infer sub-cellular components in order to understand interactome 
-
-To measure shape, position, size, and interaction of eight organelles/cellular components (Nuclei (NU), Lysosomes (LS),Mitochondria (MT), Golgi (GL), Peroxisomes (PO), Endoplasmic Reticulum (ER), Lipid Droplet (LD), and CELLMASK) during differentiation of iPSCs, in order to understand the Interactome / Spatiotemporal coordination.
-
-
-#### summary of _OBJECTIVES_ ✅
-- robust inference of subcellular objects:
-  - Nescessary masks and nuclei
-    -  #### 1️⃣. [infer NUCLEI ](./infer_subc/organelles.md)
-    -  #### 2️⃣. [Infer CELLMASK](./infer_subc/organelles.md) (🚨🚨🚨🚨 Steps 2-9 depend on establishing a good solution here.)
-    -  #### 3️⃣. [Infer CYTOPLASM](./infer_subc/organelles.md) 
-
-  - individual organelles
-    -  #### 4️⃣. [Infer LYSOSOMES](./infer_subc/organelles.md) 
-    -  #### 5️⃣. [Infer MITOCHONDRIA](./infer_subc/organelles.md)
-    -  #### 6️⃣. [Infer GOLGI complex](./infer_subc/organelles.md)
-    -  #### 7️⃣. [Infer PEROXISOMES](./infer_subc/organelles.md)
-    -  #### 8️⃣. [Infer ENDOPLASMIC RETICULUM ](./infer_subc/organelles.md)
-    -  #### 9️⃣. [Infer LB](./nbs/overview.md) 
+## Publications
+`infer-subc` analysis has been featured in:
+1. Shannon N. Rhoads, Weizhen Dong, Chih-Hsuan Hsu, Ngudiankama R. Mfulama, Joey V. Ragusa, Michael Ye, Andy Henrie, Maria Clara Zanellati, Graham H. Diering, Todd J. Cohen, Sarah Cohen. *Neurons and astrocytes have distinct organelle signatures and responses to stress.* bioRxiv 2024.10.30.621066; doi: https://doi.org/10.1101/2024.10.30.621066
 
 
-----------------------------
-## FRAMEWORKS & RESOURCES
+## FRAMEWORK, RESOURCES & CONTRIBUTIONS
 
-### NOTE: PIPELINE TOOL AND DESIGN CHOICES?
-Early in the develepmont we chose to leverage the Allen Cell & Structure Segmenter and [napari plugin](https://www.napari-hub.org/plugins/napari-allencell-segmenter).   Although the logic of our **multi-channel** organelle segmentations required us to fork and modify their code, we hope it porvides a stable, but evolving base which will help manage accumulationof technical debt.   In addition to the overall logic, we particulary leverage their `workflow` paradigm which is crucial for leveraging the napari plugin interface of widgets to the segmentation workflows.
+### Segmentation workflow & Napari plugin design:
+Early in the develepmont we chose to leverage methods created in the `Allen Cell & Structure Segmenter` and [`napari plugin`](https://www.napari-hub.org/plugins/napari-allencell-segmenter). Although the logic of our **multi-channel** organelle segmentations required us to fork and modify their code, we hope it porvides a stable, but evolving base which will help manage accumulation of technical debt. In addition to the overall logic, we particulary leverage their *workflow* paradigm which is integral in the use of the napari plugin interface. Implementation of `infer-subc` as a Napari plugin using this framework is called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin).
 
+​The `Allen Cell & Structure Segmenter` is a Python-based open source toolkit developed at the Allen Institute for Cell Science for 3D segmentation of intracellular structures in fluorescence microscope images: [`aicssegmentation`](https://github.com/AllenCell/aics-segmentation) package. This toolkit brings together classic image segmentation and iterative deep learning workflows first to generate initial high-quality 3D intracellular structure segmentations and then to easily curate these results to generate the ground truths for building robust and accurate deep learning models. The toolkit takes advantage of the high replicate 3D live cell image data collected at the Allen Institute for Cell Science of over 30 endogenous fluorescently tagged human induced pluripotent stem cell (hiPSC) lines. Each cell line represents a different intracellular structure with one or more distinct localization patterns within undifferentiated hiPS cells and hiPSC-derived cardiomyocytes. Here, we leveraged select segmentation methods specialized for a particular organelle shape (i.e., round versus tubular objects) to carried out segmentation states within the [`infer-subc` segmentation workflows]().
 
-#### ​The Allen Cell & Structure Segmenter 
-​The Allen Cell & Structure Segmenter is a Python-based open source toolkit developed at the Allen Institute for Cell Science for 3D segmentation of intracellular structures in fluorescence microscope images: `aicssegmentation` [package](https://github.com/AllenCell/aics-segmentation).  This toolkit brings together classic image segmentation and iterative deep learning workflows first to generate initial high-quality 3D intracellular structure segmentations and then to easily curate these results to generate the ground truths for building robust and accurate deep learning models. The toolkit takes advantage of the high replicate 3D live cell image data collected at the Allen Institute for Cell Science of over 30 endogenous fluorescently tagged human induced pluripotent stem cell (hiPSC) lines. Each cell line represents a different intracellular structure with one or more distinct localization patterns within undifferentiated hiPS cells and hiPSC-derived cardiomyocytes.
-
--------
-
-For full documentation visit [github.io.com/infer_subc](https://ndcn.github.io/infer-subc/).
-Robust inference of subcellular objects:
+### Support of this project includes:
+- [CZI Neurodegeneration Challenge Network (NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/)

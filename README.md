@@ -41,45 +41,63 @@ A full list of dependencies and recommended setup steps are included in [env_cre
 
 > ***NOTE**: Proceed to the Organelle Quantification section below if you have already created instance segmentations using a separate method.*
 
-The starting point for `infer-subc` analysis pipeline is to perform instance segmentation on single or multichannel confocal microscopy images, where each channel labels a different intracellular component. Each channel or organelle will be segmented from a single intensity channel. The subsequent analysis is performed at a single-cell level, so a mask of the cell area will also be carried out.
+The starting point for the `infer-subc` analysis pipeline is to perform instance segmentation on single or multichannel confocal microscopy images, where each channel labels a different intracellular component. Each organelle will be segmented from a single intensity channel. The subsequent analysis is performed at a single-cell level, so we have also developed several workflows to segement the cell area.
 
-We recommend that you use our `infer-subc` implementation for Napari called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin). This will allow users to systematically test segmentation settings for each organelles, then batch process all organelles of interest across multiple cells at a time within the Napari GUI. Alternatively, you can utilize the included set of Jupter Notebooks or your own python script to work through the segmentation process step by step for each cell.
+We recommend that you use our `infer-subc` implementation for Napari called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin) for segmentation. This will allow users to systematically test segmentation settings for each organelles, then batch process all organelles of interest across multiple cells. Alternatively, you can utilize the included set of Jupter Notebooks or your own python script calling functions from the infer_subc module to work through the segmentation process step by step for each cell.
 
 ### <ins>Option A:</ins> [Napari Plugin](https://github.com/ndcn/organelle-segmenter-plugin) 🔌
 
 You must have installed `organelle-segmenter-plugin` as described above to use this method. The order in which you run the workflows is not important, but for down stream quantification, you must include at least one organelle and the cell mask.
 
-1. Open Napari. Then drag-and-drop or use the `File` > `Open File(s)...` controls to open a single- or multi-channel confocal microscopy image. This image will be used to test the segmentation settings you want to use during batch processing.
+1. Open Napari. Then drag-and-drop or use the `File` > `Open File(s)...` controls to open a single- or multi-channel confocal microscopy image. This image will be used to test the segmentation settings you want to apply to many cells during batch processing.
 2. Start the plugin by navigating to `Plugin` > `Infer sub-Cellular Object Npe2 plugin` > `Workflow editor`. A right side panel will appear.
 3. In the Workflow editor, select the image to work on. 
-4. Select the workflow corresponding to your desired organelles/object. The order of channels/objects does not matter.
-5. Adjust the parameters for each step in order based on the intermediate results. If you need to return to a previous step, you must restart the workflow by pressing `Close Workflow` at the bottom of the panel.
-6. Save the workflow settings you like by using the `Save Workflow` option at the bottom of the panel. IMPORTANT: the file name should end with the same name as the workflow you are working on (e.g., 20241031_lysosomes.json can be saved from the 0.2.lysosome workflow). Save each of the settings files into the same location for batch processing.
+4. Select the workflow corresponding to your desired organelle(s)/masks.
+5. Adjust the parameters for each step based on the intermediate results. If you need to return to a previous step, you must restart the workflow by pressing `Close Workflow` at the bottom of the panel.
+6. Save the workflow settings that work for your image by using the `Save Workflow` option at the bottom of the panel. Save each of the settings files to process a single image into the same location for batch processing. *IMPORTANT: the file name should end with the same name as the workflow you are working on.*
+    > 
+    > <ins>**Naming Examples**</ins>: 
+    >
+    > For settings saved from the 0.2.lyso workflow, the following naming are **acceptable**:
+    > - "20241031_lyso.json"
+    > - "iPSCs_lyso.json"
+    > - "lyso.json"
+    > 
+    > Do **NOT** use names like:
+    > - "lysosomes.json"
+    > - "LS.json"
 7. Once all of the settings are saved, open the batch processor by going to `Plugins` > `Infer sub-Cellular Object Npe2 plugin` > `Batch processing`.
 8. Load the saved workflow settings for all channels and specify the input (intensity images) and output (desired location for segmentation files) folders.
 9. Click `Run`. A progress bar will allow you track your processing.
 
 
-### <ins>Option B:</ins> [Notebooks](./notebooks) 📚
+### <ins>Option B:</ins> [Notebooks](/docs/nbs/overview.md) 📚
+The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. 
+*The notesbooks below include sets to segment a single image. A batch processing workflow has not yet been created.*
 
-**Identify a single cell of interest:**
+**Step 1️⃣: Identify a single cell of interest**
 
-1. Infer `cellmask` and `nuclei` from an image with:
-    - [nuclei labels; one or more cells per field of view (FOV)](./notebooks/part_1_segmentation_workflows/01_infer_masks_from-composite_with_nuc.ipynb)
-    - [no cell or nuclei labels; one cell per field of view FOV](./notebooks/part_1_segmentation_workflows/01a_infer_masks_from-composite_single_cell.ipynb)
-    - [no cell or nuclei labels; multiple cells per FOV](./notebooks/part_1_segmentation_workflows/01b_infer_masks_from-composite_multiple-cells.ipynb) 
+Segment (or infer) the `cellmask` and `nuclei` from an image depending on the type of fluorescent labels used and the number of cells per field of view (FOV):
 
-**Segment each of the organelles:**
+- Fluorescently labeled nuclei (no cell or plasma membrane)
+    - [one or more cells per FOV](/notebooks/part_1_segmentation_workflows/1.1_infer_masks_from-composite_with_nuc.ipynb)
+- No cell, plasma membrane, or nuclei labels with
+    - [one cell per field of view FOV](/notebooks/part_1_segmentation_workflows/1.1a_infer_masks_from-composite_single_cell.ipynb)
+    - [one or more cells per FOV](/notebooks/part_1_segmentation_workflows/1.1b_infer_masks_from-composite_multiple-cells.ipynb)
 
-2. Infer [`lysosomes`](./notebooks\part_1_segmentation_workflows\02_infer_lysosome.ipynb)
-3. Infer [`mitochondria`](./notebooks\part_1_segmentation_workflows\03_infer_mitochondria.ipynb)
-4. Infer [`golgi`](./notebooks\part_1_segmentation_workflows\04_infer_golgi.ipynb)
-5. Infer [`peroxisomes`](./notebooks\part_1_segmentation_workflows\05_infer_peroxisome.ipynb)
-6. Infer [`endoplasmic reticulum (ER)`](./notebooks\part_1_segmentation_workflows\06_infer_ER.ipynb)
-7. Infer [`lipid droplets`](./notebooks\part_1_segmentation_workflows\07_infer_lipid_droplet.ipynb)
+**Step 2️⃣: Segment organelles**
+
+Each of the organelles you wish to include in your analysis should be segmented from a single fluorescently labeled structure.
+
+2. Infer [`lysosomes`](/notebooks/part_1_segmentation_workflows/1.2_infer_lysosome.ipynb)
+3. Infer [`mitochondria`](/notebooks/part_1_segmentation_workflows/1.3_infer_mitochondria.ipynb)
+4. Infer [`golgi`](/notebooks/part_1_segmentation_workflows/1.4_infer_golgi.ipynb)
+5. Infer [`peroxisomes`](/notebooks/part_1_segmentation_workflows/1.5_infer_peroxisome.ipynb)
+6. Infer [`endoplasmic reticulum (ER)`](/notebooks/part_1_segmentation_workflows/1.6_infer_ER.ipynb)
+7. Infer [`lipid droplets`](/notebooks/part_1_segmentation_workflows/1.7_infer_lipid_droplet.ipynb)
 
 ### <ins>Quality Check:</ins> [Validate segmentation results]()🔎
-After batch processing, we recommend you quality check your segmentation results by visually inspecting the images. The [Segmentation Validation Notebook]() is available to streamline the validation process.
+After processing all cells in your dataset, we recommend you quality check your segmentation results by visually inspecting the images. The Segmentation Validation pipeline is included in the [Full Quantification Pipeline Notebook](/notebooks/part_2_quantification/full_quantification_pipeline.ipynb) to streamline the validation process.
 
 🚧 *In a future verions, this notebook will also include quality checks for assumptions made during quantification (i.e., only one nucleus and ER per cell, etc.).*
 
@@ -88,11 +106,11 @@ After batch processing, we recommend you quality check your segmentation results
 After each of the organelles of interest are segmented, single or multi-organelle analysis can be carried out using Jupyter Notebook-based pipeline(s). Each of the following analysis types are modular and can be used in combination or separately.
 
 **Combined Analysis:** 
-- [__________]() quantification of the `morphology`, `interactions`, and `distribution` of any number of organelles within the same cell.
+- [Full Quantification Pipeline](./notebooks\part_2_quantification\full_quantification_pipeline.ipynb):  quantification of the `morphology`, `interactions`, and `distribution` of any number of organelles within the same cell. This pipeline incorporates batch processing within a single experiment and summarizes the results across multiple experimental replicates.
 
 **Individual analysis pipelines :**
 
-The following notebooks include steps to quantify features of single organelles or paris of organelles (interactions) from individual cells. These notebooks also act as a step-by-step guide to understanding each measurement type. 
+The following notebooks primarily act as a step-by-step guide to understanding each measurement type. However, they can also be used to quantify features of single organelles or pairs of organelles (interactions) from individual cells.  
 - [Organelle morphology](./notebooks\part_2_quantification\1.1_organelle_morphology.ipynb)
 - [Pairwise organelle interactions](./notebooks\part_2_quantification\1.2_organelle_interactions.ipynb)
 - [Subcellular distribution](./notebooks\part_2_quantification\1.3_distribution_measurements.ipynb)
@@ -100,7 +118,7 @@ The following notebooks include steps to quantify features of single organelles 
 - COMBINED ANAYSIS ONLY: [batch processing](./notebooks\part_2_quantification\1.5_combined_and_batch_processing.ipynb)
 - COMBINED ANAYSIS ONLY: [per-cell summary](./notebooks\part_2_quantification\1.6_summary_stats.ipynb)
 
-🚧 *Future implimentations of the notebooks will include batch processing capabilities (e.g., multiple cells, multiple organelles).*
+🚧 *Future implimentations of these notebooks will include batch processing capabilities (e.g., multiple cells, multiple organelles) for each quantification type separately.*
 
 # Additional Information
 ## Built With
@@ -113,6 +131,7 @@ A quick note on tools and resources used.
 - [`scikit-image`](https://scikit-image.org/) -- Image analysis
 - [`itk`](https://itkpythonpackage.readthedocs.io/en/master/Quick_start_guide.html) -- Image analysis
 - [`numpy`](https://numpy.org/) -- Under the hood computation
+- ['pandas'](https://pandas.pydata.org/) -- Quantitative data manipulation
 
 
 ## Issues
@@ -122,8 +141,9 @@ If you encounter any problems, please file an issue with a detailed description.
 Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## License
-Distributed under the terms of the [BSD-3] license,
-"organelle-segmenter-plugin" is free and open source software
+Distributed under the terms of the [BSD-3] license.
+
+`infer-subc` and `organelle-segmenter-plugin` are free and open source software.
 
 ## Support of this project includes:
 - [CZI Neurodegeneration Challenge Network (NDCN)](https://chanzuckerberg.com/science/programs-resources/neurodegeneration-challenge/)

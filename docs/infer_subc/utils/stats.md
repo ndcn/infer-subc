@@ -1,6 +1,5 @@
 # infer_subc/utils/stats.py
-These functions take the segmentations and produce summary statistics with the `skimage.regionprops` 
+These functions formulate the methods used to carry out organelle quantification.
 
 
-# infer_subc/utils/stats_helper.py
-These _helper_ functions bulk process the segmentations to produce the stats.
+::: infer_subc.utils.stats
