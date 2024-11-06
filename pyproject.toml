@@ -17,6 +17,7 @@ maintainers = [
     {name = "Shannon Rhoads", email = "rhoads.shannon@gmail.com"},
     {name = "Rene Mfulama", email = "mfulamangudiankama@gmail.com"},
     {name = "Zach coman", email = "zachcoman@gmail.com"}
+]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -48,14 +49,10 @@ dependencies = [
     'CellProfiler',
     'centrosome',
     'aicspylibczi>=3.1.1',
-    'vispy',
-    'matlab'
+#    'vispy',
+#    'matlab'
 ]
 
-[project.urls]
-Repository = ""
-Documentation = ""
-"Research Articles" = "https://doi.org/10.1101/2024.10.30.621066"
 
 [build-system]
 requires = ["setuptools", "wheel", "setuptools_scm"]

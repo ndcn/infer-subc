@@ -122,7 +122,7 @@ The following notebooks primarily act as a step-by-step guide to understanding e
 
 # Additional Information
 ## Built With
-A quick note on tools and resources used.
+A quick note on tools and resources used...
 
 - [`napari-allencell-segmenter`](https://github.com/AllenCell/napari-allencell-segmenter) -- We are leveraging the framework of the `napari-allencell-segmenter` plugin, which enables powerful 3D image segmentation while taking advantage of the `napari` graphical user interface. 
 - [`aicssegmentation`](https://github.com/AllenCell/aics-segmentation) -- We call the `aicssegmentation` package directly to access their advanced segmentation functions.
@@ -132,6 +132,11 @@ A quick note on tools and resources used.
 - [`itk`](https://itkpythonpackage.readthedocs.io/en/master/Quick_start_guide.html) -- Image analysis
 - [`numpy`](https://numpy.org/) -- Under the hood computation
 - ['pandas'](https://pandas.pydata.org/) -- Quantitative data manipulation
+
+### Segmentation workflow & Napari plugin design:
+Early in the develepmont we chose to leverage methods created in the `Allen Cell & Structure Segmenter` and [`napari plugin`](https://www.napari-hub.org/plugins/napari-allencell-segmenter). Although the logic of our **multi-channel** organelle segmentations required us to fork and modify their code, we hope it porvides a stable, but evolving base which will help manage accumulation of technical debt. In addition to the overall logic, we particulary leverage their *workflow* paradigm which is integral in the use of the napari plugin interface. Implementation of `infer-subc` as a Napari plugin using this framework is called [`organelle-segmenter-plugin`](https://github.com/ndcn/organelle-segmenter-plugin).
+
+​The `Allen Cell & Structure Segmenter` is a Python-based open source toolkit developed at the Allen Institute for Cell Science for 3D segmentation of intracellular structures in fluorescence microscope images: [`aicssegmentation`](https://github.com/AllenCell/aics-segmentation) package. This toolkit brings together classic image segmentation and iterative deep learning workflows first to generate initial high-quality 3D intracellular structure segmentations and then to easily curate these results to generate the ground truths for building robust and accurate deep learning models. The toolkit takes advantage of the high replicate 3D live cell image data collected at the Allen Institute for Cell Science of over 30 endogenous fluorescently tagged human induced pluripotent stem cell (hiPSC) lines. Each cell line represents a different intracellular structure with one or more distinct localization patterns within undifferentiated hiPS cells and hiPSC-derived cardiomyocytes. Here, we leveraged select segmentation methods specialized for a particular organelle shape (i.e., round versus tubular objects) to carried out segmentation states within the [`infer-subc` segmentation workflows](/docs/segmentation.md).
 
 
 ## Issues
