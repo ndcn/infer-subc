@@ -2,10 +2,21 @@
 name = "infer-subc"
 dynamic = ["version"]
 requires-python = ">=3.7"
-description = "A plugin that enables organelle segmentation"
+description = "A plugin that enables organelle segmentation and analysis"
+keywords = ["organelles", "segmentation", "morphology", "organelle contacts", "distribution", "ER", "lysosomes", "mitochondria", "peroxisomes", "Golgi", "lipid droplets"]
 readme = "README.md"
+
 authors = [
     {name = "Andy Henrie", email = "ergonyc@gmail.com"},
+    {name = "Shannon Rhoads", email = "rhoads.shannon@gmail.com"},
+    {name = "Rene Mfulama", email = "mfulamangudiankama@gmail.com"},
+    {name = "Zach coman", email = "zachcoman@gmail.com"}
+]
+
+maintainers = [
+    {name = "Shannon Rhoads", email = "rhoads.shannon@gmail.com"},
+    {name = "Rene Mfulama", email = "mfulamangudiankama@gmail.com"},
+    {name = "Zach coman", email = "zachcoman@gmail.com"}
 ]
 
 classifiers = [
@@ -22,21 +33,26 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
-license = {file = "BSD-3-Clause"}
 
+license = {file = "LICENSE"}
 
 dependencies = [
     'numpy',
     'napari',
+    'napari-aicsimageio',
     'aicssegmentation',
     'aicsimageio >= 4.7.0',
     'scipy',    #>=1.1.0
     'numpy',    #>=1.15.1
-    'scikit-image', #>=0.18.0,<0.19.0 
+    'scikit-learn', #>=0.18.0,<0.19.0 
     'pandas',   #>=0.23.4 
+    'CellProfiler',
     'centrosome',
-    'aicspylibczi>=3.1.1'
+    'aicspylibczi>=3.1.1',
+#    'vispy',
+#    'matlab'
 ]
+
 
 [build-system]
 requires = ["setuptools", "wheel", "setuptools_scm"]

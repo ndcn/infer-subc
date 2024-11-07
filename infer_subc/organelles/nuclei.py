@@ -10,7 +10,6 @@ from skimage.segmentation import clear_border
 from infer_subc.core.file_io import (
     export_inferred_organelle,
     import_inferred_organelle,
-    import_inferred_organelle_AICS,
 )
 from infer_subc.core.img import (
     fill_and_filter_linear_size,
@@ -18,13 +17,11 @@ from infer_subc.core.img import (
     select_channel_from_raw,
     scale_and_smooth,
     apply_mask,
-    get_interior_labels,
     label_uint16,
     stack_masks
 )
-from infer_subc.constants import NUC_CH
 
-
+### USED ###
 ##########################
 #  infer_nuclei_fromlabel
 ##########################
@@ -149,7 +146,7 @@ def fixed_infer_nuclei_fromlabel(in_img: np.ndarray) -> np.ndarray:
                                     small_obj_width,
                                     fill_filter_method)
 
-
+### USED ###
 ##########################
 #  infer_nuclei_fromcytoplasm
 ##########################
@@ -363,6 +360,7 @@ def get_nucleus(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.
 
 #     return nuclei
 
+### USED ###
 def segment_nuclei_seeds(cyto_seg: np.ndarray,
                           max_nuclei_width: int,
                           small_obj_width: int):
@@ -394,6 +392,7 @@ def segment_nuclei_seeds(cyto_seg: np.ndarray,
 
     return label(nuc_cleaned).astype(np.uint16)
 
+### USED ###
 def mask_cytoplasm_nuclei(cellmask: np.ndarray,
                            cyto_seg: np.ndarray,
                            small_obj_width: int):

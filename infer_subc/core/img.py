@@ -1,36 +1,17 @@
+from typing import Tuple, List, Union, Any
 import numpy as np
 from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
+from skimage.morphology import white_tophat, ball, disk, black_tophat, label
+from skimage.segmentation import clear_border, watershed
 
-# from skimage.filters import threshold_triangle, threshold_otsu, threshold_li, threshold_multiotsu, threshold_sauvola
 from scipy.ndimage import median_filter, extrema, distance_transform_edt, sum, minimum_filter, maximum_filter
 
 from aicssegmentation.core.utils import size_filter, hole_filling
 from aicssegmentation.core.vessel import vesselness2D
 from aicssegmentation.core.MO_threshold import MO
-
 from aicssegmentation.core.vessel import filament_2d_wrapper, filament_3d_wrapper
-from aicssegmentation.core.pre_processing_utils import (
-    image_smoothing_gaussian_slice_by_slice,
-    # edge_preserving_smoothing_3d,
-)
+from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper, dot_3d_wrapper
-
-from typing import Tuple, List, Union, Any
-
-from skimage.morphology import remove_small_objects, white_tophat, ball, disk, black_tophat, label
-from skimage.segmentation import clear_border, watershed
-
-from infer_subc.constants import (
-    TEST_IMG_N,
-    NUC_CH,
-    LYSO_CH,
-    MITO_CH,
-    GOLGI_CH,
-    PEROX_CH,
-    ER_CH,
-    LD_CH,
-    RESIDUAL_CH,
-)
 
 
 def stack_layers(*layers) -> np.ndarray:
@@ -38,7 +19,7 @@ def stack_layers(*layers) -> np.ndarray:
 
     return np.stack(layers, axis=0)
 
-
+### USED ###
 def stack_masks(nuc_mask: np.ndarray, cellmask: np.ndarray, cyto_mask: np.ndarray) -> np.ndarray:
     """stack canonical masks:  cellmask, nuc, cytoplasm as uint8 (never more than 255 nuclei)"""
     layers = [nuc_mask, cellmask, cyto_mask]
@@ -46,6 +27,7 @@ def stack_masks(nuc_mask: np.ndarray, cellmask: np.ndarray, cyto_mask: np.ndarra
 
 
 # TODO: check that the "noise" for the floor is correct... inverse_log should remove it?
+### USED ###
 def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:
     """Renormalize image intensities to log space
 
@@ -75,7 +57,7 @@ def log_transform(image: np.ndarray) -> Tuple[np.ndarray, dict]:
     d["log_max"] = log_max
     return stretch(limage), d
 
-
+### USED ###
 def inverse_log_transform(image: np.ndarray, d: dict) -> np.ndarray:
     """Convert the values in image back to the scale prior to log_transform
 
@@ -92,7 +74,7 @@ def inverse_log_transform(image: np.ndarray, d: dict) -> np.ndarray:
     """
     return np.exp(unstretch(image, d["log_min"], d["log_max"]))
 
-
+### USED ###
 def stretch(image: np.ndarray, mask: Union[np.ndarray, None] = None) -> np.ndarray:
     """Normalize an image to make the minimum zero and maximum one
 
@@ -155,7 +137,7 @@ def unstretch(image: np.ndarray, minval: Union[int, float], maxval: Union[int, f
     """
     return image * (maxval - minval) + minval
 
-
+### USED ###
 def threshold_li_log(image_in: np.ndarray) -> np.ndarray:
     """
     thin wrapper to log-scale and inverse log image for threshold finding using li minimum cross-entropy
@@ -213,7 +195,7 @@ def threshold_multiotsu_log(image_in):
     thresholds = inverse_log_transform(thresholds, d)
     return thresholds
 
-
+### USED ###
 def masked_object_thresh(
     structure_img_smooth: np.ndarray, global_method: str, cutoff_size: int, local_adjust: float
 ) -> np.ndarray:
@@ -275,7 +257,7 @@ def get_interior_labels(img_in: np.ndarray) -> np.ndarray:
     # relabel?
     # return label(interior).astype(np.uint16)
 
-
+### USED ###
 def label_uint16(in_obj: np.ndarray) -> np.ndarray:
     """
     label segmentation and return as uint16
@@ -295,7 +277,7 @@ def label_uint16(in_obj: np.ndarray) -> np.ndarray:
     else:  # in_obj.dtype == np.uint8:
         return label(in_obj > 0).astype(np.uint16)
 
-
+### USED ###
 def label_bool_as_uint16(in_obj: np.ndarray) -> np.ndarray:
     """
     label segmentation and return as uint16
@@ -338,7 +320,7 @@ def median_filter_slice_by_slice(struct_img: np.ndarray, size: int) -> np.ndarra
 
     return structure_img_denoise
 
-
+### USED ###
 def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
     """Normalize the intensity of input image so that the value range is from 0 to 1.
 
@@ -379,7 +361,7 @@ def min_max_intensity_normalization(struct_img: np.ndarray) -> np.ndarray:
 #     # 10 seconds!!!!  tooooo slow... for maybe no good reason
 #     return min_max_intensity_normalization(struct_img)
 
-
+### USED ###
 def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
     """
     helper to find weighted sum images
@@ -403,7 +385,7 @@ def weighted_aggregate(img_in: np.ndarray, *weights: int) -> np.ndarray:
 
     return img_out
 
-
+### USED ###
 def make_aggregate(
     img_in: np.ndarray,
     weight_ch0: int = 0,
@@ -440,7 +422,7 @@ def make_aggregate(
     else:
         return weighted_aggregate(img_in, *weights)
 
-
+### USED ###
 def apply_threshold(
     img_in: np.ndarray,
     method: str = "otsu",
@@ -493,7 +475,7 @@ def apply_threshold(
         threshold = min(threshold, thresh_max)
     return img_in > threshold
 
-
+### USED ###
 def apply_log_li_threshold(
     img_in: np.ndarray,
     thresh_factor: float = 1.0,
@@ -566,7 +548,7 @@ def vesselness_slice_by_slice(nd_array: np.ndarray, sigma: float, cutoff: float 
     else:
         return response > cutoff
 
-
+### USED ###
 def select_channel_from_raw(img_in: np.ndarray, chan: Union[int, Tuple[int]]) -> np.ndarray:
     """ "
     select channel from multi-channel 3D image (np.ndarray)
@@ -606,7 +588,7 @@ def select_z_from_raw(img_in: np.ndarray, z_slice: Union[int, Tuple[int]]) -> np
 
     return img_in[:, z_slice, :, :]
 
-
+### USED ###
 def scale_and_smooth(
     img_in: np.ndarray, median_size: int = 1, gauss_sigma: float = 1.34, slice_by_slice: bool = True
 ) -> np.ndarray:
@@ -699,7 +681,7 @@ def choose_agg_signal_zmax(img_in: np.ndarray, chs: List[int], ws=None, mask=Non
         total_florescence_[mask] = 0.0
     return int(total_florescence_.sum(axis=(1, 2)).argmax())
 
-
+### USED ###
 def masked_inverted_watershed(img_in: np.ndarray, 
                                      markers: np.ndarray, 
                                      mask: np.ndarray, 
@@ -762,7 +744,7 @@ def choose_max_label(
     labels_max[labels_in == keep_label] = 1
     return labels_max
 
-
+### USED ###
 def get_max_label(
     raw_signal: np.ndarray, labels_in: np.ndarray, target_labels: Union[np.ndarray, None] = None
 ) -> np.ndarray:
@@ -794,7 +776,7 @@ def get_max_label(
 
     return keep_label
 
-
+### USED ###
 def fill_and_filter_linear_size(
     img: np.ndarray, hole_min: int, hole_max: int, min_size: int, method: str = "slice_by_slice", connectivity: int = 1
 ) -> np.ndarray:
@@ -885,7 +867,7 @@ def hole_filling_linear_size(img: np.ndarray, hole_min: int, hole_max: int, fill
     else:
         return hole_filling(img, hole_min=hole_min**3, hole_max=hole_max**3, fill_2d=False)
 
-
+### USED ###
 def apply_mask(img_in: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """mask the image
 
@@ -974,7 +956,7 @@ def enhance_neurites(image: np.ndarray, radius: int, volumetric: bool = False) -
 
     return result
 
-
+### USED ###
 def filament_filter_3(in_img: np.ndarray, 
                        filament_scale_1: float, 
                        filament_cutoff_1: float,
@@ -1088,7 +1070,7 @@ def filament_filter(in_img: np.ndarray, filament_scale: float, filament_cut: flo
 #     # s2_param = [[dot_scale1, dot_cut1], [dot_scale2, dot_cut2], [dot_scale3, dot_cut3]]
 #     return dot_2d_slice_by_slice_wrapper(in_img, s2_param)
 
-
+### USED ###
 def dot_filter_3(
     in_img: np.ndarray,
     dot_scale_1: float,

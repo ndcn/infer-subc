@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List
 from infer_subc.utils.directories import Directories
 from infer_subc.workflow.segmenter_function import SegmenterFunction, FunctionParameter, WidgetType
-from infer_subc.workflow.workflow_definition import WorkflowDefinition  # , PrebuiltWorkflowDefinition
+from infer_subc.workflow.workflow_definition import WorkflowDefinition  , PrebuiltWorkflowDefinition
 from infer_subc.workflow.workflow_step import WorkflowStep, WorkflowStepCategory
 
 
@@ -180,7 +180,9 @@ class WorkflowConfig:
 
         steps.sort(key=lambda s: s.step_number)
 
-        return WorkflowDefinition(workflow_name, steps, prebuilt=prebuilt)
+        #TODO: change this to the prebuilt workflow definition to include info button text
+        # return WorkflowDefinition(workflow_name, steps, prebuilt=prebuilt)
+        return PrebuiltWorkflowDefinition(workflow_name, steps)#, prebuilt=prebuilt)
 
     def _workflow_encoder(self, workflow_definition: WorkflowDefinition) -> Dict:
         """

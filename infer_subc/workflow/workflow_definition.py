@@ -3,7 +3,7 @@ import numpy as np
 # from aicsimageio import imread
 from typing import Dict, Tuple, Any, Union, List
 from dataclasses import dataclass
-# from infer_subc.utils.lazy import lazy_property  # infer_subc.utils.lazy
+from infer_subc.utils.lazy import lazy_property  # infer_subc.utils.lazy
 from infer_subc.utils.directories import Directories  # infer_subc.utils.directories
 from infer_subc.workflow.workflow_step import WorkflowStep
 
@@ -65,6 +65,44 @@ class WorkflowDefinition:
         self.prebuilt = prebuilt
         self.from_file = True
 
+# TODO: modify the below to work with text instead of pictures.
+@dataclass
+class PrebuiltWorkflowDefinition(WorkflowDefinition):
+    """
+    Definition of a pre-built(default) aics-segmentation Workflow from our assets.
+
+    This class only defines the workflow (i.e. the workflow characteristics and steps)
+    and is used either for building an executable Workflow object
+    or to access information about the Workflow without needing to execute it
+    """
+
+    def __init__(self, name: str, steps: List[WorkflowStep]):
+        WorkflowDefinition.__init__(self, name=name, steps=steps)
+
+    # @lazy_property
+    # def thumbnail_pre(self) -> np.ndarray:
+    #     """
+    #     The Pre-segmentation thumbnail related to this workflow, as a numpy array
+    #     """
+    #     return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_pre.png"))
+
+    # @lazy_property
+    # def thumbnail_post(self) -> np.ndarray:
+    #     """
+    #     The Post-segmentation thumbnail related to this workflow, as a numpy array
+    #     """
+    #     return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_post.png"))
+
+    @lazy_property
+    def diagram_image(self) -> np.ndarray:
+        """
+        text describing workflow 
+        """
+        #TODO: modify to include a function to read in .md files instead of a .pgn image
+        # return np.squeeze(imread(Directories.get_assets_dir() / f"diagrams/{self.name.lower()}.png"))
+
+        txt_file = open(Directories.get_assets_dir() / f"{self.name.lower()}.md", 'r')
+        return txt_file.read()
 
 # depricate Prebuilt flavor.  we will not be calling the pictures at this point...
 # @dataclass
@@ -80,23 +118,23 @@ class WorkflowDefinition:
 #     def __init__(self, name: str, steps: List[WorkflowStep]):
 #         WorkflowDefinition.__init__(self, name=name, steps=steps)
 
-#     @lazy_property
-#     def thumbnail_pre(self) -> np.ndarray:
-#         """
-#         The Pre-segmentation thumbnail related to this workflow, as a numpy array
-#         """
-#         return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_pre.png"))
+    # @lazy_property
+    # def thumbnail_pre(self) -> np.ndarray:
+    #     """
+    #     The Pre-segmentation thumbnail related to this workflow, as a numpy array
+    #     """
+    #     return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_pre.png"))
 
-#     @lazy_property
-#     def thumbnail_post(self) -> np.ndarray:
-#         """
-#         The Post-segmentation thumbnail related to this workflow, as a numpy array
-#         """
-#         return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_post.png"))
+    # @lazy_property
+    # def thumbnail_post(self) -> np.ndarray:
+    #     """
+    #     The Post-segmentation thumbnail related to this workflow, as a numpy array
+    #     """
+    #     return np.squeeze(imread(Directories.get_assets_dir() / f"thumbnails/{self.name.lower()}_post.png"))
 
-#     @lazy_property
-#     def diagram_image(self) -> np.ndarray:
-#         """
-#         Diagram / flow chart image for this workflow, as a numpy array
-#         """
-#         return np.squeeze(imread(Directories.get_assets_dir() / f"diagrams/{self.name.lower()}.png"))
+    # @lazy_property
+    # def diagram_image(self) -> np.ndarray:
+    #     """
+    #     Diagram / flow chart image for this workflow, as a numpy array
+    #     """
+    #     return np.squeeze(imread(Directories.get_assets_dir() / f"diagrams/{self.name.lower()}.png"))

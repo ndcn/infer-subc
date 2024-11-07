@@ -3,9 +3,6 @@ from typing import Dict
 from pathlib import Path
 import time
 
-from aicssegmentation.core.seg_dot import dot_2d_slice_by_slice_wrapper
-
-from infer_subc.constants import PEROX_CH
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
 
 from infer_subc.core.img import (
@@ -20,6 +17,7 @@ from infer_subc.core.img import (
 ##########################
 #  infer_perox
 ##########################
+### USED ###
 def infer_perox( 
         in_img: np.ndarray,
         perox_ch: int,
@@ -114,113 +112,122 @@ def infer_perox(
 
 
 
-### CONVENIENCE / TESTING PROCEDURES
+
+
+
+
+
+
+
+#################################################################
+########################## DEPRICATING ##########################
+#################################################################
 
 
 ##########################
 #  fixed_infer_perox
 ##########################
-def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
-    """
-    Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
+# def fixed_infer_perox(in_img: np.ndarray) -> np.ndarray:
+#     """
+#     Procedure to infer peroxisome from linearly unmixed input with fixed parameters.
 
-   Parameters
-    ------------
-    in_img: np.ndarray
-        a 3d image containing all the channels
+#    Parameters
+#     ------------
+#     in_img: np.ndarray
+#         a 3d image containing all the channels
         
-    Returns
-    -------------
-    peroxi_object
-        mask defined extent of peroxisome object
-    """
-    peroxi_ch = 4
-    median_sz = 0
-    gauss_sig = 1.34
-    dot_scale_1 = 1
-    dot_cut_1 = 0.06
-    dot_scale_2 = 0
-    dot_cut_2 = 0
-    dot_scale_3 = 0
-    dot_cut_3 = 0
-    dot_method = "3D"
-    hole_min_width = 0
-    hole_max_width = 0
-    small_object_width = 2
-    fill_filter_method = "3D"
+#     Returns
+#     -------------
+#     peroxi_object
+#         mask defined extent of peroxisome object
+#     """
+#     peroxi_ch = 4
+#     median_sz = 0
+#     gauss_sig = 1.34
+#     dot_scale_1 = 1
+#     dot_cut_1 = 0.06
+#     dot_scale_2 = 0
+#     dot_cut_2 = 0
+#     dot_scale_3 = 0
+#     dot_cut_3 = 0
+#     dot_method = "3D"
+#     hole_min_width = 0
+#     hole_max_width = 0
+#     small_object_width = 2
+#     fill_filter_method = "3D"
 
-    return infer_perox(
-        in_img,
-        peroxi_ch,
-        median_sz,
-        gauss_sig,
-        dot_scale_1,
-        dot_cut_1,
-        dot_scale_2,
-        dot_cut_2, 
-        dot_scale_3,
-        dot_cut_3,
-        dot_method,
-        hole_min_width,
-        hole_max_width,
-        small_object_width,
-        fill_filter_method)
-
-
-
-def infer_and_export_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    infer peroxisome and write inferred peroxisome to ome.tif file
-
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
-
-    Returns
-    -------------
-    exported file name
-
-    """
-    peroxisome = fixed_infer_perox(in_img)
-    out_file_n = export_inferred_organelle(peroxisome, "perox", meta_dict, out_data_path)
-    print(f"inferred peroxisome. wrote {out_file_n}")
-    return peroxisome
+#     return infer_perox(
+#         in_img,
+#         peroxi_ch,
+#         median_sz,
+#         gauss_sig,
+#         dot_scale_1,
+#         dot_cut_1,
+#         dot_scale_2,
+#         dot_cut_2, 
+#         dot_scale_3,
+#         dot_cut_3,
+#         dot_method,
+#         hole_min_width,
+#         hole_max_width,
+#         small_object_width,
+#         fill_filter_method)
 
 
-def get_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    load peroxisome if it exists, otherwise calculate and write to ome.tif file
 
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
+# def infer_and_export_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     infer peroxisome and write inferred peroxisome to ome.tif file
 
-    Returns
-    -------------
-    exported file name
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
 
-    """
-    try:
-        start = time.time()
-        print("starting segmentation...")
-        peroxisome = import_inferred_organelle("perox", meta_dict, out_data_path)
-        end = time.time()
-        print(f"loaded peroxisome in ({(end - start):0.2f}) sec")
-    except:
-        start = time.time()
-        print("starting segmentation...")
-        peroxisome = infer_and_export_perox(in_img, meta_dict, out_data_path)
-        end = time.time()
-        print(f"inferred (and exported) peroxisome in ({(end - start):0.2f}) sec")
+#     Returns
+#     -------------
+#     exported file name
 
-    return peroxisome
+#     """
+#     peroxisome = fixed_infer_perox(in_img)
+#     out_file_n = export_inferred_organelle(peroxisome, "perox", meta_dict, out_data_path)
+#     print(f"inferred peroxisome. wrote {out_file_n}")
+#     return peroxisome
+
+
+# def get_perox(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     load peroxisome if it exists, otherwise calculate and write to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+#     try:
+#         start = time.time()
+#         print("starting segmentation...")
+#         peroxisome = import_inferred_organelle("perox", meta_dict, out_data_path)
+#         end = time.time()
+#         print(f"loaded peroxisome in ({(end - start):0.2f}) sec")
+#     except:
+#         start = time.time()
+#         print("starting segmentation...")
+#         peroxisome = infer_and_export_perox(in_img, meta_dict, out_data_path)
+#         end = time.time()
+#         print(f"inferred (and exported) peroxisome in ({(end - start):0.2f}) sec")
+
+#     return peroxisome

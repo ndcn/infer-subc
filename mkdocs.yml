@@ -1,56 +1,54 @@
 site_name: 'infer_subc'
 nav:
   - Home: 'index.md'
-  - frameworks: 
-    - 'reproducible imaging': 'framework.md'
-    - 'general workflow': 'pipeline.md'
-  - getting started: 
-    - 'install + config' : 'config.md'
-    - 'example notebooks' : 'nbs/overview.md'
+  - Getting Started: 
+    - 'Setup' : 'config.md'
+    - 'Segmentation Workflows' : 'segmentation.md'
+    - 'Quantification Pipeline' : 'quantification.md'
   - Napari:
     - 'infer_subc/napari/plugin.md'
-    - 'infer_subc/napari/organelle_config.md'
+    - 'organelles_config' : 'infer_subc/napari/organelle_config.md'
   - 'infer_subc module': 
     - 'overview': 'infer_subc/overview.md'
-    - 'organelles': 
-      - 'Overview' : 'infer_subc/organelles.md'
-      - 'cellmask' : 'infer_subc/organelles/cellmask.md'
-      - 'nuclei' : 'infer_subc/organelles/nuclei.md'
-      - 'cytoplasm' : 'infer_subc/organelles/cytoplasm.md'
-      - 'lysosome' : 'infer_subc/organelles/lysosome.md'
-      - 'mitochondria' : 'infer_subc/organelles/mitochondria.md'
-      - 'golgi' : 'infer_subc/organelles/golgi.md'
-      - 'peroxisome' : 'infer_subc/organelles/peroxisome.md'
-      - 'ER' : 'infer_subc/organelles/er.md'
-      - 'LD' : 'infer_subc/organelles/lipid.md' 
     - 'core': 
       - 'file_io' : 'infer_subc/core/file_io.md'
       - 'img' : 'infer_subc/core/img.md'
+    - 'organelles': 
+      - 'cellmask' : 'infer_subc/organelles/cellmask.md'
+      - 'cytoplasm' : 'infer_subc/organelles/cytoplasm.md'
+      - 'ER' : 'infer_subc/organelles/er.md'
+      - 'golgi' : 'infer_subc/organelles/golgi.md'
+      - 'lipid' : 'infer_subc/organelles/lipid.md' 
+      - 'lysosome' : 'infer_subc/organelles/lysosome.md'
+      - 'mitochondria' : 'infer_subc/organelles/mitochondria.md'
+      - 'nuclei' : 'infer_subc/organelles/nuclei.md'
+      - 'peroxisome' : 'infer_subc/organelles/peroxisome.md'
     - 'utils': 
-      - 'Overview' : 'infer_subc/utils/utils.md'
+      - 'batch' : 'infer_subc/utils/batch.md'
+      - 'stats_helpers' : 'infer_subc/utils/stats_helpers'
       - 'stats' : 'infer_subc/utils/stats.md'
-      - 'batch': 'infer_subc/utils/batch.md'
-      - 'etc' : 'infer_subc/utils/etc.md'
     - 'workflow': 'infer_subc/workflow.md'
-  # - Notebooks: 
-  #   - 'Overview' : notebooks/nbs_overview.md
-  #   - '00_setup' : 'notebooks/nbs/00.1_pipeline_setup.ipynb'
-  #   - '00_choose_Z' : 'notebooks/nbs/00.2_extract_optimal_Z.ipynb'
-  #   - '01_cellmask' : 'notebooks/nbs/01_infer_cellmask.ipynb'
-  #   - '02_nuclei' : 'notebooks/nbs/02_infer_nuclei.ipynb'
-  #   - '03_cytoplasm' : 'notebooks/nbs/03_infer_cytoplasm.ipynb'
-  #   - '04_lysosome' : 'notebooks/nbs/04_infer_lysosome.ipynb'
-  #   - '05_mitochondria' : 'notebooks/nbs/05_infer_mitochondria.ipynb'
-  #   - '06_golgi' : 'notebooks/nbs/06_infer_golgi.ipynb'
-  #   - '07_peroxisome' : 'notebooks/nbs/07_infer_peroxisome.ipynb'
-  #   - '08_endoplasmic_reticulum' : 'notebooks/nbs/08_infer_endoplasmic_reticulum.ipynb'
-  #   - '09_lipid_body' : 'notebooks/nbs/09_infer_lipid_body.ipynb'
-  #   # - 'batch processing' : 'notebooks/nbs/10_batch_processing.ipynb'
-  #   # # - 'workflows' : 'notebooks/nbs/11_workflows.ipynb'
-  #   # # - 'QC' : 'notebooks/nbs/12_QC.ipynb'
+  - Notebooks: 'nbs/overview.md'
+    - '1.0_image_setup' : 'notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb'
+    - '1.1_infer_masks_from-composite_with_nuc' : 'notebooks/part_1_segmentation_workflows/1.1_infer_masks_from-composite_with_nuc.ipynb'
+    - '1.1a_infer_masks_from-composite_single_cell' : 'notebooks/part_1_segmentation_workflows/1.1a_infer_masks_from-composite_single_cell.ipynb'
+    - '1.1b_infer_masks_from-composite_multiple-cells' : 'notebooks/part_1_segmentation_workflows/1.1b_infer_masks_from-composite_multiple-cells.ipynb'
+    - '1.2_infer_lysosome' : 'notebooks/part_1_segmentation_workflows/1.2_infer_lysosome.ipynb'
+    - '1.3_infer_mitochondria' : 'notebooks/part_1_segmentation_workflows/1.3_infer_mitochondria.ipynb'
+    - '1.4_infer_golgi' : 'notebooks/part_1_segmentation_workflows/1.4_infer_golgi.ipynb'
+    - '1.5_infer_peroxisome' : 'notebooks/part_1_segmentation_workflows/1.5_infer_peroxisome.ipynb'
+    - '1.6_infer_ER' : 'notebooks/part_1_segmentation_workflows/1.6_infer_ER.ipynb'
+    - '1.7_infer_lipid_droplet' : 'notebooks/part_1_segmentation_workflows/1.7_infer_lipid_droplet.ipynb'
+    - '2.1_organelle_morphology' : 'notebooks/part_2_quantification/2.1_organelle_morphology.ipynb'
+    - '2.2_organelle_interactions' : 'notebooks/part_2_quantification/2.2_organelle_interactions.ipynb'
+    - '2.3_distribution_measurements' : 'notebooks/part_2_quantification/2.3_distribution_measurements.ipynb'
+    - '2.4_cell_region_morphology' : 'notebooks/part_2_quantification/2.4_cell_region_morphology.ipynb'
+    - '2.5_combined_and_batch_processing' : 'notebooks/part_2_quantification/2.5_combined_and_batch_processing.ipynb'
+    - '2.6_summary_stats' : 'notebooks/part_2_quantification/2.6_summary_stats.ipynb'
+    - 'full_quantification_pipeline' : 'notebooks/part_2_quantification/full_quantification_pipeline.ipynb'
 plugins:
   # - mkdocs-jupyter:
-  #     theme: dark
+  #     theme: light
   - search
   - mkdocstrings
 

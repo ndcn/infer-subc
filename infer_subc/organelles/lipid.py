@@ -11,12 +11,12 @@ from infer_subc.core.img import (
     label_uint16,
 )
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
-from infer_subc.constants import LD_CH
 
 
 ##########################
 #  infer_LD
 ##########################
+### USED ###
 def infer_LD(
             in_img: np.ndarray,
             LD_ch: str,
@@ -105,102 +105,113 @@ def infer_LD(
     return struct_obj1
 
 
-##########################
-#  fixed_infer_LD
-##########################
-def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
-    """
-    Procedure to infer LD from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
-
-    Parameters
-    ------------
-    in_img: 
-        a 3d image containing all the channels
-
-    Returns
-    -------------
-    LD_object
-        mask defined extent of lipid droplets
-
-    """
-    LD_ch = 6
-    median_sz = 2   
-    gauss_sig = 1.34
-    method = "otsu"
-    threshold_factor = 0.8
-    thresh_min = 0.05
-    thresh_max = 1.0
-    min_hole_w = 0
-    max_hole_w = 2.5
-    small_obj_w = 1
-    fill_filter_method = "3D"
-
-    return infer_LD(
-        in_img,
-        LD_ch,  
-        median_sz, 
-        gauss_sig, 
-        method, 
-        threshold_factor, 
-        thresh_min, 
-        thresh_max, 
-        min_hole_w,
-        max_hole_w, 
-        small_obj_w,
-        fill_filter_method)
 
 
 
-def infer_and_export_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    infer lipid bodies and write inferred lipid to ome.tif file
-
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
-
-    Returns
-    -------------
-    exported file name
-
-    """
-    lipid = fixed_infer_LD(in_img)
-    out_file_n = export_inferred_organelle(lipid, "LD", meta_dict, out_data_path)
-    print(f"inferred lipid. wrote {out_file_n}")
-    return lipid
 
 
-def get_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
-    """
-    load lipid if it exists, otherwise calculate and write to ome.tif file
 
-    Parameters
-    ------------
-    in_img:
-        a 3d  np.ndarray image of the inferred organelle (labels or boolean)
-    meta_dict:
-        dictionary of meta-data (ome)
-    out_data_path:
-        Path object where tiffs are written to
 
-    Returns
-    -------------
-    exported file name
+#################################################################
+########################## DEPRICATING ##########################
+#################################################################
 
-    """
+# ##########################
+# #  fixed_infer_LD
+# ##########################
+# def fixed_infer_LD(in_img: np.ndarray) -> np.ndarray:
+#     """
+#     Procedure to infer LD from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    try:
-        lipid = import_inferred_organelle("LD", meta_dict, out_data_path)
-    except:
-        start = time.time()
-        print("starting segmentation...")
-        lipid = infer_and_export_LD(in_img, meta_dict, out_data_path)
-        end = time.time()
-        print(f"inferred (and exported) lipid in ({(end - start):0.2f}) sec")
+#     Parameters
+#     ------------
+#     in_img: 
+#         a 3d image containing all the channels
 
-    return lipid
+#     Returns
+#     -------------
+#     LD_object
+#         mask defined extent of lipid droplets
+
+#     """
+#     LD_ch = 6
+#     median_sz = 2   
+#     gauss_sig = 1.34
+#     method = "otsu"
+#     threshold_factor = 0.8
+#     thresh_min = 0.05
+#     thresh_max = 1.0
+#     min_hole_w = 0
+#     max_hole_w = 2.5
+#     small_obj_w = 1
+#     fill_filter_method = "3D"
+
+#     return infer_LD(
+#         in_img,
+#         LD_ch,  
+#         median_sz, 
+#         gauss_sig, 
+#         method, 
+#         threshold_factor, 
+#         thresh_min, 
+#         thresh_max, 
+#         min_hole_w,
+#         max_hole_w, 
+#         small_obj_w,
+#         fill_filter_method)
+
+
+
+# def infer_and_export_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     infer lipid bodies and write inferred lipid to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+#     lipid = fixed_infer_LD(in_img)
+#     out_file_n = export_inferred_organelle(lipid, "LD", meta_dict, out_data_path)
+#     print(f"inferred lipid. wrote {out_file_n}")
+#     return lipid
+
+
+# def get_LD(in_img: np.ndarray, meta_dict: Dict, out_data_path: Path) -> np.ndarray:
+#     """
+#     load lipid if it exists, otherwise calculate and write to ome.tif file
+
+#     Parameters
+#     ------------
+#     in_img:
+#         a 3d  np.ndarray image of the inferred organelle (labels or boolean)
+#     meta_dict:
+#         dictionary of meta-data (ome)
+#     out_data_path:
+#         Path object where tiffs are written to
+
+#     Returns
+#     -------------
+#     exported file name
+
+#     """
+
+#     try:
+#         lipid = import_inferred_organelle("LD", meta_dict, out_data_path)
+#     except:
+#         start = time.time()
+#         print("starting segmentation...")
+#         lipid = infer_and_export_LD(in_img, meta_dict, out_data_path)
+#         end = time.time()
+#         print(f"inferred (and exported) lipid in ({(end - start):0.2f}) sec")
+
+#     return lipid

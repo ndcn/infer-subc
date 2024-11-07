@@ -14,7 +14,7 @@ from infer_subc.core.img import (apply_mask,
                                  )
 from infer_subc.organelles.cellmask import non_linear_cellmask_transform
 
-
+### USED ###
 ##########################
 #  infer_cytoplasm
 ##########################
@@ -107,7 +107,7 @@ def get_cytoplasm(nuclei_obj: np.ndarray, cellmask: np.ndarray, meta_dict: Dict,
 
     return cytoplasm
 
-
+### USED ###
 ##########################
 # infer_cytoplasm_fromcomposite
 # alternative workflow "a" 
@@ -254,7 +254,7 @@ def fixed_infer_cytoplasm_fromcomposite(in_img: np.ndarray) -> np.ndarray:
 # fixed_infer_cytoplasm_fromcomposite
 # alternative workflow "b" for images wihtout nuclei labels and multiple cells per view
 ##########################
-
+### USED ###
 def segment_cytoplasm_area(in_img: np.ndarray, 
                            global_method: str,
                            cutoff_size: int,

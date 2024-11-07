@@ -1,32 +1,24 @@
 import numpy as np
-
+from typing import Dict, Union, List, Any, Tuple
+from dataclasses import dataclass
+import time
 from platform import system
-# import os
-# import pickle
 
 from pathlib import Path
 from collections import defaultdict
 
-from typing import Dict, Union, List, Any, Tuple
-
 from aicsimageio.writers import OmeTiffWriter
+from aicsimageio import AICSImage
+from tifffile import imwrite, imread
 
-# from napari_aicsimageio.core import reader_function
-from aicsimageio import AICSImage, exceptions
-
-# import ome_types
-from tifffile import imwrite, tiffcomment, imread
-import time
-
-# todo depricate wrapper
-from dataclasses import dataclass
-
-from infer_subc.utils._aicsimage_reader import reader_function, export_ome_tiff  # , export_tiff
+from infer_subc.utils._aicsimage_reader import reader_function, export_ome_tiff
 
 
-# TODO:  remove reader_function overhead for writting "intermediate" .tif files
+# TODO:  
+# remove reader_function overhead for writting "intermediate" .tif files ???
+# remove read_czi_image and replace it in every notebook with read_ome_image()
 
-
+### USED ###
 def read_ome_image(image_name):
     """
     return output from napari aiscioimage reader
@@ -36,28 +28,25 @@ def read_ome_image(image_name):
     meta_out["file_name"] = image_name
     return (data_out, meta_out)
 
-
+### USED ###
 def read_czi_image(image_name):
     """
     return output from napari aiscioimage reader (alias for read_ome_image)
     """
     return read_ome_image(image_name)
 
-
+### USED ###
 def read_tiff_image(image_name):
     """
     return tiff image with tifffile.imread.  Using the `reader_function` (vial read_ome_image) and AICSimage is too slow
         prsumably handling the OME meta data is what is so slow.
     """
-    # start = time.time()
     image = imread(
         image_name,
     )
-    # end = time.time()
-    # print(f">>>>>>>>>>>> tifffile.imread  (dtype={image.dtype} in ({(end - start):0.2f}) sec")
-    return image  # .get_image_data("CZYX")
+    return image
 
-
+### USED ###
 def export_tiff(
     data_in: np.ndarray,
     img_name: str,
@@ -116,7 +105,7 @@ def export_tiff(
     return ret
 
 
-# function to collect all the
+### USED ###
 def list_image_files(data_folder: Path, file_type: str, postfix: Union[str, None] = None) -> List:
     """
     get a list of all the filetypes
@@ -169,7 +158,7 @@ class AICSImageReaderWrap:
         self.meta = meta
         self.raw_meta = get_raw_meta_data(meta)
 
-
+### USED ###
 def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path, file_type: str) -> Union[np.ndarray, None]:
     """
     read inferred organelle from ome.tif file
@@ -210,44 +199,7 @@ def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path, f
             raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
 
 
-# TODO throw exception and call with try
-# def import_inferred_organelle(name: str, meta_dict: Dict, out_data_path: Path) -> Union[np.ndarray, None]:
-#     """
-#     read inferred organelle from ome.tif file
-
-#     Parameters
-#     ------------
-#     name: str
-#         name of organelle.  i.e. nuc, lyso, etc.
-#     meta_dict:
-#         dictionary of meta-data (ome) from original file
-#     out_data_path:
-#         Path object of directory where tiffs are read from
-
-#     Returns
-#     -------------
-#     exported file name
-
-#     """
-
-#     # copy the original file name to meta
-#     img_name = Path(meta_dict["file_name"])  #
-#     # add params to metadata
-
-#     organelle_fname = f"{img_name.stem}-{name}.tiff"
-
-#     organelle_path = out_data_path / organelle_fname
-
-#     if Path.exists(organelle_path):
-#         # organelle_obj, _meta_dict = read_ome_image(organelle_path)
-#         organelle_obj = read_tiff_image(organelle_path)  # .squeeze()
-#         print(f"loaded  inferred {len(organelle_obj.shape)}D `{name}`  from {out_data_path} ")
-#         return organelle_obj
-#     else:
-#         print(f"`{name}` object not found: {organelle_path}")
-#         raise FileNotFoundError(f"`{name}` object not found: {organelle_path}")
-
-
+### USED ###
 def export_inferred_organelle(img_out: np.ndarray, name: str, meta_dict: Dict, out_data_path: Path) -> str:
     """
     write inferred organelle to ome.tif file
@@ -311,31 +263,7 @@ def export_inferred_organelle_stack(img_out, layer_names, meta_dict, data_root_p
     print(f"saved file: {out_file_n}")
     return out_file_n
 
-
-
-# # DEPRICATE
-# def append_ome_metadata(filename, meta_add):
-#     filename = "test.ome.tif"
-
-#     imwrite(
-#         filename,
-#         np.random.randint(0, 1023, (4, 256, 256, 3), "uint16"),
-#         bigtiff=True,
-#         photometric="RGB",
-#         tile=(64, 64),
-#         metadata={
-#             "axes": "ZYXS",
-#             "SignificantBits": 10,
-#             "Plane": {"PositionZ": [0.0, 1.0, 2.0, 3.0]},
-#         },
-#     )
-
-#     ome_xml = tiffcomment(filename)
-#     ome = ome_types.from_xml(ome_xml)
-#     ome.images[0].description = "Image 0 description"
-#     ome_xml = ome.to_xml()
-#     tiffcomment(filename, ome_xml)
-
+###################
 
 ### UTILS
 def etree_to_dict(t):
@@ -512,34 +440,3 @@ def export_tiff_AICS(
     print(f">>>>>>>>>>>> export_tiff_AICS ({(end - start):0.2f}) sec")
     print(f"saved file AICS {out_name}")
     return out_name
-
-    # OmeTiffWriter.save(data=self._format_output(result), uri=output_path, dim_order="ZYX")
-
-    # DEPRICATED OMETIFFWRITER CODE
-    # dimension_order = ["CZYX"]
-    # if len(data_in.shape) == 3:  # single channel zstack
-    #     data_in = data_in[np.newaxis, :, :, :]
-    # elif len(data_in.shape) == 2:  # single channel , 1Z
-    #     dimension_order = ["YX"]
-    #     data_in = data_in[np.newaxis, np.newaxis, :, :]
-    #     physical_pixel_sizes = [meta_in["metadata"]["aicsimage"].physical_pixel_sizes]
-
-    # out_ome = OmeTiffWriter.build_ome(
-    #     [data_in.shape],
-    #     [data_in.dtype],
-    #     channel_names=channel_names,  # type: ignore
-    #     image_name=image_names,
-    #     physical_pixel_sizes=physical_pixel_sizes,
-    #     dimension_order=dimension_order,
-    # )
-
-    # OmeTiffWriter.save(
-    #     data_in,
-    #     out_name,
-    #     dim_order=dimension_order,
-    #     channel_names=channel_names,
-    #     image_names=image_names,
-    #     physical_pixel_sizes=physical_pixel_sizes,
-    #     ome_xml=None,
-    # )
-    # return out_name

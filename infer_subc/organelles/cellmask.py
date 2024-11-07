@@ -1,30 +1,16 @@
-from typing import Dict, Union
+from typing import Dict
 from pathlib import Path
 import time
 import numpy as np
-from aicssegmentation.core.pre_processing_utils import image_smoothing_gaussian_slice_by_slice
 
 from skimage.filters import scharr
-from skimage.measure import label
 
 from infer_subc.core.img import label_bool_as_uint16
-from infer_subc.constants import (
-    TEST_IMG_N,
-    NUC_CH,
-    LYSO_CH,
-    MITO_CH,
-    GOLGI_CH,
-    PEROX_CH,
-    ER_CH,
-    LD_CH,
-    RESIDUAL_CH,
-)
 from infer_subc.core.file_io import export_inferred_organelle, import_inferred_organelle
 from infer_subc.core.img import (
     masked_object_thresh,
     log_transform,
     min_max_intensity_normalization,
-    median_filter_slice_by_slice,
     scale_and_smooth,
     weighted_aggregate,
     masked_inverted_watershed,
@@ -57,7 +43,7 @@ def raw_cellmask_fromaggr(img_in: np.ndarray, scale_min_max: bool = True) -> np.
     else:
         return weighted_aggregate(img_in, *weights)
 
-
+### USED ###
 def non_linear_cellmask_transform(in_img):
     """non-linear distortion to fill out cellmask
     log + edge of smoothed composite
@@ -76,7 +62,7 @@ def non_linear_cellmask_transform(in_img):
     log_img = min_max_intensity_normalization(log_img)
     return min_max_intensity_normalization(scharr(log_img)) + log_img
 
-
+### USED ###
 def choose_max_label_cellmask_union_nucleus(cellmask_img: np.ndarray, 
                                             cellmask_obj: np.ndarray, 
                                             nuclei_labels: np.ndarray, 
@@ -117,7 +103,7 @@ def choose_max_label_cellmask_union_nucleus(cellmask_img: np.ndarray,
 
     return cellmask_out > 0
 
-
+### USED ###
 ##########################
 # 1. infer_cellmask
 ##########################
@@ -218,54 +204,54 @@ def infer_cellmask_fromcomposite(in_img: np.ndarray,
     return label_bool_as_uint16(cellmask_out)
 
 
-def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.ndarray) -> np.ndarray:
-    """
-    Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
+# def fixed_infer_cellmask_fromcomposite(in_img: np.ndarray, nuclei_labels: np.ndarray) -> np.ndarray:
+#     """
+#     Procedure to infer cellmask from linearly unmixed input, with a *fixed* set of parameters for each step in the procedure.  i.e. "hard coded"
 
-    Parameters
-    ------------
-    in_img: 
-        a 3d image containing all the channels
-    nuclei_labels: 
-        a 3d image containing the inferred nuclei
+#     Parameters
+#     ------------
+#     in_img: 
+#         a 3d image containing all the channels
+#     nuclei_labels: 
+#         a 3d image containing the inferred nuclei
 
-    Returns
-    -------------
-    cellmask_mask:
-        a logical/labels object defining boundaries of cellmask
-    """
+#     Returns
+#     -------------
+#     cellmask_mask:
+#         a logical/labels object defining boundaries of cellmask
+#     """
     
 
-    ###################
-    # PARAMETERS
-    ###################   
-    weights = [0,0,0,3,3,2]
-    median_sz = 10
-    gauss_sig = 1.34
-    mo_method = "med"
-    mo_adjust = 0.3
-    mo_cutoff_size = 150
-    hole_min_width = 0
-    hole_max_width = 50
-    small_obj_w = 45
-    fill_filter_method = '3D'
-    watershed_method = '3D'
+#     ###################
+#     # PARAMETERS
+#     ###################   
+#     weights = [0,0,0,3,3,2]
+#     median_sz = 10
+#     gauss_sig = 1.34
+#     mo_method = "med"
+#     mo_adjust = 0.3
+#     mo_cutoff_size = 150
+#     hole_min_width = 0
+#     hole_max_width = 50
+#     small_obj_w = 45
+#     fill_filter_method = '3D'
+#     watershed_method = '3D'
 
-    cellmask_out = infer_cellmask_fromcomposite(in_img,
-                                                weights,
-                                                nuclei_labels,
-                                                median_sz,
-                                                gauss_sig,
-                                                mo_method,
-                                                mo_adjust,
-                                                mo_cutoff_size,
-                                                hole_min_width,
-                                                hole_max_width,
-                                                small_obj_w,
-                                                fill_filter_method,
-                                                watershed_method) 
+#     cellmask_out = infer_cellmask_fromcomposite(in_img,
+#                                                 weights,
+#                                                 nuclei_labels,
+#                                                 median_sz,
+#                                                 gauss_sig,
+#                                                 mo_method,
+#                                                 mo_adjust,
+#                                                 mo_cutoff_size,
+#                                                 hole_min_width,
+#                                                 hole_max_width,
+#                                                 small_obj_w,
+#                                                 fill_filter_method,
+#                                                 watershed_method) 
     
-    return cellmask_out.astype(np.uint8)
+#     return cellmask_out.astype(np.uint8)
 
 
 ##########################
@@ -420,6 +406,7 @@ def get_cellmask(in_img: np.ndarray, nuclei_obj: np.ndarray, meta_dict: Dict, ou
 
     return cellmask
 
+### USED ###
 ##########################
 #  create the cell mask by adding the nuclei and cytoplasm masks together
 ##########################
@@ -451,7 +438,7 @@ def combine_cytoplasm_and_nuclei(cyto_seg: np.ndarray,
 
     return cell_area
 
-
+### USED ###
 def select_highest_intensity_cell(raw_image: np.ndarray,
                                    cell_seg: np.ndarray,
                                    nuc_seg: np.ndarray):
