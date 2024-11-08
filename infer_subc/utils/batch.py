@@ -1,40 +1,9 @@
-from typing import Union, Optional, Dict, List
-
+from typing import Union, Dict, List
 from pathlib import Path
-import numpy as np
 
-from infer_subc.core.file_io import export_inferred_organelle, read_czi_image, list_image_files, export_tiff, read_tiff_image
-
-
-from infer_subc.constants import (
-    TEST_IMG_N,
-    NUC_CH,
-    LYSO_CH,
-    MITO_CH,
-    GOLGI_CH,
-    PEROX_CH,
-    ER_CH,
-    LD_CH,
-    RESIDUAL_CH,
-)
-
-
+from infer_subc.core.file_io import list_image_files, export_tiff, read_tiff_image
 from infer_subc.core.img import label_uint16
 
-
-
-
-from infer_subc.organelles import (
-    # fixed_infer_cellmask_fromcomposite,
-    # fixed_infer_nuclei_fromlabel,
-    infer_cytoplasm,
-    # fixed_infer_lyso,
-    # fixed_infer_mito,
-    # fixed_infer_golgi,
-    # fixed_infer_ER,
-    # fixed_infer_perox,
-    # fixed_infer_LD,
-)
 
 
 def explode_mask(mask_path: Union[Path,str], postfix: str= "masks", im_type: str = ".tiff") -> bool:

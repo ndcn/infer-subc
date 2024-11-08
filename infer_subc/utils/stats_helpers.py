@@ -1,25 +1,19 @@
 import numpy as np
-from typing import List, Union #Any,
+from typing import List, Union
 from pathlib import Path
 import itertools 
 import time
-
-# from infer_subc.core.img import apply_mask
 
 import pandas as pd
 
 from infer_subc.utils.stats import (get_contact_metrics_3D, 
                     get_org_morphology_3D, 
-                    # get_simple_stats_3D, 
                     get_XY_distribution, 
                     get_Z_distribution, 
-                    # _assert_uint16_labels,
                     get_region_morphology_3D)
-
 from infer_subc.utils.batch import list_image_files, find_segmentation_tiff_files
 from infer_subc.core.file_io import read_czi_image, read_tiff_image
 
-# from infer_subc.constants import organelle_to_colname, NUC_CH, GOLGI_CH, PEROX_CH
 
 ### USED ### 
 def make_all_metrics_tables(source_file: str,
@@ -308,6 +302,7 @@ def batch_process_quantification(out_file_name: str,
         a tuple that contains the real world dimensions for each dimension in the image (Z, Y, X)
     seg_suffix:Union[str, None]=None
         any additional text that is included in the segmentation tiff files between the file stem and the segmentation suffix
+    
 
 
     Returns:
