@@ -46,11 +46,8 @@ dependencies = [
     'numpy',    #>=1.15.1
     'scikit-learn', #>=0.18.0,<0.19.0 
     'pandas',   #>=0.23.4 
-    'CellProfiler',
     'centrosome',
-    'aicspylibczi>=3.1.1',
-#    'vispy',
-#    'matlab'
+    'aicspylibczi>=3.1.1'
 ]
 
 
