@@ -424,11 +424,6 @@ def batch_summary_stats(csv_path_list: List[str],
     contact_tabs = []
     dist_tabs = []
     region_tabs = []
-    
-    org = "_organelles"
-    contacts = "_contacts"
-    dist = "_distributions"
-    regions = "_regions"
 
     for loc in csv_path_list:
         ds_count = ds_count + 1
@@ -437,6 +432,11 @@ def batch_summary_stats(csv_path_list: List[str],
         for file in files_store:
             fl_count = fl_count + 1
             stem = file.stem
+
+            org = "organelles"
+            contacts = "contacts"
+            dist = "distributions"
+            regions = "_regions"
 
             if org in stem:
                 test_orgs = pd.read_csv(file, index_col=0)
@@ -546,11 +546,12 @@ def batch_summary_stats(csv_path_list: List[str],
     ###################
     # organelle distributions
     hist_dfs = []
-    for ind in dist_df.index:
-        selection = dist_df.loc[[ind]]
+    for ind in range(0,len(dist_df.index)):
+        selection = dist_df.iloc[[ind]] #    selection = dist_df.loc[[ind]]
         bins_df = pd.DataFrame()
         wedges_df = pd.DataFrame()
         Z_df = pd.DataFrame()
+        CV_df = pd.DataFrame()
 
         bins_df[['bins', 'masks', 'obj']] = selection[['XY_bins', 'XY_mask_vox_cnt_perbin', 'XY_obj_vox_cnt_perbin']]
         wedges_df[['bins', 'masks', 'obj']] = selection[['XY_wedges', 'XY_mask_vox_cnt_perwedge', 'XY_obj_vox_cnt_perwedge']]
@@ -562,19 +563,24 @@ def batch_summary_stats(csv_path_list: List[str],
                                             df["obj"].values[0][1:-1].split(", "), 
                                             df["masks"].values[0][1:-1].split(", "))), columns =['bins', 'obj', 'mask']).astype(int)
             
-            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
-            single_df['obj_norm'] = (single_df["obj"]/single_df["mask_fract"]).fillna(0)
-            single_df['portion_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
-
             if "Z_" in prefix:
-                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*10).apply(np.floor)
+                single_df =  single_df.drop(single_df[single_df['mask'] == 0].index)
+                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*9.99).apply(np.floor)+1
+                single_df = single_df.groupby("bins").agg(['sum']).reset_index()
+                single_df.columns = ['bins',"obj","mask"]
+        
+            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
+            # single_df['obj_normed_tocell'] = (single_df["obj"]*single_df["mask_fract"]).fillna(0)
+            single_df['obj_perc_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
+            single_df['obj_portion_normed_tobin'] = (single_df["obj_perc_per_bin"]/single_df["mask_fract"]).fillna(0)
 
             sumstats_df = pd.DataFrame()
 
-            s = single_df['bins'].repeat(single_df['obj_norm'])
+            s = single_df['bins'].repeat(single_df['obj_portion_normed_tobin']*100)
+
             sumstats_df['hist_mean']=[s.mean()]
             sumstats_df['hist_median']=[s.median()]
-            if single_df['obj_norm'].sum() != 0: sumstats_df['hist_mode']=[s.mode()[0]]
+            if single_df['obj_portion_normed_tobin'].sum() != 0: sumstats_df['hist_mode']=[s.mode().iloc[0]]
             else: sumstats_df['hist_mode']=['NaN']
             sumstats_df['hist_min']=[s.min()]
             sumstats_df['hist_max']=[s.max()]
@@ -585,9 +591,18 @@ def batch_summary_stats(csv_path_list: List[str],
             sumstats_df['hist_var']=[s.var()]
             sumstats_df.columns = [prefix+col for col in sumstats_df.columns]
             dfs.append(sumstats_df.reset_index())
+
+        CV_df = pd.DataFrame(list(zip(selection["XY_obj_cv_perbin"].values[0][1:-1].split(", "))), columns =['CV']).astype(float)
+        sumstats_CV_df = pd.DataFrame()
+        sumstats_CV_df['XY_bin_CV_mean'] = CV_df.mean()
+        sumstats_CV_df['XY_bin_CV_median'] = CV_df.median()
+        sumstats_CV_df['XY_bin_CV_std'] = CV_df.std()
+        dfs.append(sumstats_CV_df.reset_index().drop(['index'], axis=1))
+
         combined_df = pd.concat(dfs, axis=1).drop(columns="index")
         hist_dfs.append(combined_df)
     dist_org_summary = pd.concat(hist_dfs, ignore_index=True)
+    dist_org_summary
 
     # nucleus distribution
     nuc_dist_df = dist_df[["dataset", "image_name", 
@@ -610,18 +625,25 @@ def batch_summary_stats(csv_path_list: List[str],
             single_df = pd.DataFrame(list(zip(df["bins"].values[0][1:-1].split(", "), 
                                             df["masks"].values[0][1:-1].split(", "),
                                             df["center"].values[0][1:-1].split(", "))), columns =['bins', 'mask', 'obj']).astype(int)
-            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
-            single_df['obj_norm'] = (single_df["obj"]/single_df["mask_fract"]).fillna(0)
-            single_df['portion_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
+
             if "Z_" in prefix:
-                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*10).apply(np.floor)
+                single_df =  single_df.drop(single_df[single_df['mask'] == 0].index)
+                single_df['bins'] = (single_df["bins"]/max(single_df.bins)*9.99).apply(np.floor)+1
+                single_df = single_df.groupby("bins").agg(['sum']).reset_index()
+                single_df.columns = ['bins',"mask","obj"]
+        
+            single_df['mask_fract'] = single_df['mask']/single_df['mask'].max()
+            # single_df['obj_normed_tocell'] = (single_df["obj"]*single_df["mask_fract"]).fillna(0)
+            single_df['obj_perc_per_bin'] = (single_df["obj"] / single_df["obj"].sum())*100
+            single_df['obj_portion_normed_tobin'] = (single_df["obj_perc_per_bin"]/single_df["mask_fract"]).fillna(0)
 
             sumstats_df = pd.DataFrame()
 
-            s = single_df['bins'].repeat(single_df['obj_norm'])
+            s = single_df['bins'].repeat(single_df['obj_portion_normed_tobin']*100)
+
             sumstats_df['hist_mean']=[s.mean()]
             sumstats_df['hist_median']=[s.median()]
-            if single_df['obj_norm'].sum() != 0: sumstats_df['hist_mode']=[s.mode()[0]]
+            if single_df['obj_portion_normed_tobin'].sum() != 0: sumstats_df['hist_mode']=[s.mode().iloc[0]]
             else: sumstats_df['hist_mode']=['NaN']
             sumstats_df['hist_min']=[s.min()]
             sumstats_df['hist_max']=[s.max()]
@@ -638,6 +660,7 @@ def batch_summary_stats(csv_path_list: List[str],
     dist_center_summary.insert(2, column="object", value="nuc")
 
     dist_summary = pd.concat([dist_org_summary, dist_center_summary], axis=0).set_index(group_by).sort_index()
+
 
     ###################
     # add normalization
