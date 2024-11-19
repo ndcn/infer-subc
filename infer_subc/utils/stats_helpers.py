@@ -326,7 +326,7 @@ def batch_process_quantification(out_file_name: str,
     img_file_list = list_image_files(raw_path, raw_file_type)
 
     # list of segmentation files to collect
-    segs_to_collect = organelle_names + [masks_file_name]
+    segs_to_collect = organelle_names + masks_file_name
 
     # containers to collect data tabels
     org_tabs = []
@@ -350,7 +350,10 @@ def batch_process_quantification(out_file_name: str,
             scale_tup = None
 
         # load regions as a list based on order in list (should match order in "masks" file)
-        masks = read_tiff_image(filez[masks_file_name]) 
+        masks = [] 
+        for m in masks_file_name:
+            mfile = read_tiff_image(filez[m])
+            masks.append(mfile)
         regions = [masks[r] for r, region in enumerate(region_names)]
 
         # store organelle images as list
@@ -429,15 +432,11 @@ def batch_summary_stats(csv_path_list: List[str],
 
     for loc in csv_path_list:
         ds_count = ds_count + 1
+        loc=Path(loc)
         files_store = sorted(loc.glob("*.csv"))
         for file in files_store:
             fl_count = fl_count + 1
             stem = file.stem
-
-            # org = "organelles" TODO: get rid of these (moved to the above)
-            # contacts = "contacts"
-            # dist = "distributions"
-            # regions = "_regions"
 
             if org in stem:
                 test_orgs = pd.read_csv(file, index_col=0)
