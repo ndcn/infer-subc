@@ -37,15 +37,14 @@ classifiers = [
 license = {file = "LICENSE"}
 
 dependencies = [
-    'numpy',
+    'numpy' >=1.15.1, <= 1.26.4,
     'napari',
     'napari-aicsimageio',
     'aicssegmentation',
     'aicsimageio >= 4.7.0',
-    'scipy',    #>=1.1.0
-    'numpy',    #>=1.15.1
-    'scikit-learn', #>=0.18.0,<0.19.0 
-    'pandas',   #>=0.23.4 
+    'scipy'    #>=1.1.0,
+    'scikit-learn' #>=0.18.0,<0.19.0, 
+    'pandas'   #>=0.23.4, 
     'centrosome',
     'aicspylibczi>=3.1.1'
 ]
