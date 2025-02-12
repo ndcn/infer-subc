@@ -1,0 +1,89 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "rescale": true,
+            "weight_ch0": 1,
+            "weight_ch1": 4,
+            "weight_ch2": 1,
+            "weight_ch3": 1,
+            "weight_ch4": 0,
+            "weight_ch5": 2,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0
+        },
+        "parent": 0
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "gauss_sigma": 0.0,
+            "median_size": 0
+        },
+        "parent": 1
+    },
+    "3": {
+        "category": "preprocessing",
+        "function": "non_linear_cellmask_transform",
+        "parent": 2
+    },
+    "4": {
+        "category": "core",
+        "function": "masked_object_thresh",
+        "parameter_values": {
+            "cutoff_size": 50,
+            "global_method": "ave_tri_med",
+            "local_adjust": 0.05
+        },
+        "parent": 3
+    },
+    "5": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_max": 30,
+            "hole_min": 0,
+            "method": "3D",
+            "min_size": 10
+        },
+        "parent": 4
+    },
+    "6": {
+        "category": "postpostprocessing",
+        "function": "infer_nuclei_fromcytoplasm",
+        "parameter_values": {
+            "fill_filter_method": "3D",
+            "nuc_max_width": 400,
+            "nuc_min_width": 0,
+            "small_obj_width": 20
+        },
+        "parent": 5
+    },
+    "7": {
+        "category": "postpostprocessing",
+        "function": "infer_cellmask_fromcytoplasm",
+        "parameter_values": {
+            "fill_filter_method": "3D",
+            "max_hole_width": 0,
+            "min_hole_width": 0,
+            "small_obj_width": 0
+        },
+        "parent": [
+            5,
+            6
+        ]
+    },
+    "8": {
+        "category": "export",
+        "function": "stack_masks",
+        "parent": [
+            5,
+            7,
+            6
+        ]
+    }
+}

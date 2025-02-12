@@ -1,0 +1,71 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "select_channel_from_raw",
+        "parameter_values": {
+            "chan": 3
+        },
+        "parent": 0
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "gauss_sigma": 0.0,
+            "median_size": 0
+        },
+        "parent": 1
+    },
+    "3": {
+        "category": "core",
+        "function": "dot_filter_3",
+        "parameter_values": {
+            "dot_cutoff_1": 0.2,
+            "dot_cutoff_2": 0.0,
+            "dot_cutoff_3": 0.0,
+            "dot_scale_1": 0.01,
+            "dot_scale_2": 0.0,
+            "dot_scale_3": 0.0,
+            "method": "3D"
+        },
+        "parent": 2
+    },
+    "4": {
+        "category": "core",
+        "function": "filament_filter_3",
+        "parameter_values": {
+            "filament_cutoff_1": 0.05,
+            "filament_cutoff_2": 0.0,
+            "filament_cutoff_3": 0.0,
+            "filament_scale_1": 1.0,
+            "filament_scale_2": 0.0,
+            "filament_scale_3": 0.0,
+            "method": "3D"
+        },
+        "parent": 2
+    },
+    "5": {
+        "category": "core",
+        "function": "logical_or",
+        "parent": [
+            3,
+            4
+        ]
+    },
+    "6": {
+        "category": "postprocessing",
+        "function": "fill_and_filter_linear_size",
+        "parameter_values": {
+            "hole_max": 0,
+            "hole_min": 0,
+            "method": "3D",
+            "min_size": 2
+        },
+        "parent": 5
+    },
+    "7": {
+        "category": "postpostprocessing",
+        "function": "label_uint16",
+        "parent": 6
+    }
+}
