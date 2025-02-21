@@ -47,7 +47,7 @@ We recommend that you use our `infer-subc` implementation for Napari called [`or
 
 ### <ins>Option A:</ins> [Napari Plugin](https://github.com/ndcn/organelle-segmenter-plugin) 🔌
 
-You must have installed `organelle-segmenter-plugin` as described above to use this method. The order in which you run the workflows is not important, but for down stream quantification, you must include at least one organelle and the cell mask.
+You must have installed `organelle-segmenter-plugin` as described above to use this method. The order in which you run the workflows is not important, but for down stream quantification, you must include at least one organelle and the cell mask. You can use the exact workflow for each cell type in the `settings` subfolders in the sample data folder.
 
 1. Open Napari. Then drag-and-drop or use the `File` > `Open File(s)...` controls to open a single- or multi-channel confocal microscopy image. This image will be used to test the segmentation settings you want to apply to many cells during batch processing.
 2. Start the plugin by navigating to `Plugin` > `Infer sub-Cellular Object Npe2 plugin` > `Workflow editor`. A right side panel will appear.
@@ -72,8 +72,8 @@ You must have installed `organelle-segmenter-plugin` as described above to use t
 
 
 ### <ins>Option B:</ins> [Notebooks](/docs/nbs/overview.md) 📚
-The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. 
-*The notesbooks below include sets to segment a single image. A batch processing workflow has not yet been created.*
+The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. The notebooks are also built to run segmentation and quantification on sample data, with more information being provided [here](sample_data\sample_data_info.md).
+*The notebooks below include sets to segment a single image. A batch processing workflow has not yet been created.*
 
 **Step 1️⃣: Identify a single cell of interest**
 
