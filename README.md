@@ -47,7 +47,7 @@ We recommend that you use our `infer-subc` implementation for Napari called [`or
 
 ### <ins>Option A:</ins> [Napari Plugin](https://github.com/ndcn/organelle-segmenter-plugin) 🔌
 
-You must have installed `organelle-segmenter-plugin` as described above to use this method. The order in which you run the workflows is not important, but for down stream quantification, you must include at least one organelle and the cell mask. You can use the exact workflow for each cell type in the `settings` subfolders in the sample data folder.
+You must have installed `organelle-segmenter-plugin` as described above to use this method. The order in which you run the workflows is not important, but for down stream quantification, you must include at least one organelle and the cell mask.
 
 1. Open Napari. Then drag-and-drop or use the `File` > `Open File(s)...` controls to open a single- or multi-channel confocal microscopy image. This image will be used to test the segmentation settings you want to apply to many cells during batch processing.
 2. Start the plugin by navigating to `Plugin` > `Infer sub-Cellular Object Npe2 plugin` > `Workflow editor`. A right side panel will appear.
@@ -70,9 +70,11 @@ You must have installed `organelle-segmenter-plugin` as described above to use t
 8. Load the saved workflow settings for all channels and specify the input (intensity images) and output (desired location for segmentation files) folders.
 9. Click `Run`. A progress bar will allow you track your processing.
 
+> If you would like to test out the Napari plugin using the **sample data**, first open the `sample_data` folder which is located within infer_subc. Next, travel to either the `example_astrocyte` or the `example_neuron` directories. Then open the `raw` subfolder where you will find the sample microscopy image. As stated above in step 2, back in Napari, open the plugin by navigating to `Plugin` > `Infer sub-Cellular Object Npe2 plugin` > `Workflow editor`. After selecting the image in the plugin, click `Add Workflow` and again navigate to the `sample_data` folder inside infer_subc. For either the `example_astrocyte` and `example_neuron` folders, you will find a `settings` subfolder that contains parameters preset to work with their matching sample images. As you would in step 4, select the workflow corresponding to your desired segmentation (make sure to use the settings that match the cell type of the example image). You can then follow steps 5 through 9 as stated above to create the segmentations. For further elaboration on the sample data, click **[here](sample_data\sample_data_info.md)**.
+
 
 ### <ins>Option B:</ins> [Notebooks](/docs/nbs/overview.md) 📚
-The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. The notebooks are also built to run segmentation and quantification on sample data, with more information being provided [here](sample_data\sample_data_info.md).
+The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. The notebooks are also built to run segmentation and quantification on sample data, with more information being provided **[here](sample_data\sample_data_info.md)**.
 *The notebooks below include sets to segment a single image. A batch processing workflow has not yet been created.*
 
 **Step 1️⃣: Identify a single cell of interest**

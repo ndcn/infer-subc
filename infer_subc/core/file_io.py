@@ -10,6 +10,7 @@ from collections import defaultdict
 from aicsimageio.writers import OmeTiffWriter
 from aicsimageio import AICSImage
 from tifffile import imwrite, imread
+import os
 
 from infer_subc.utils._aicsimage_reader import reader_function, export_ome_tiff
 
@@ -440,3 +441,84 @@ def export_tiff_AICS(
     print(f">>>>>>>>>>>> export_tiff_AICS ({(end - start):0.2f}) sec")
     print(f"saved file AICS {out_name}")
     return out_name
+
+def sample_input(cell_type: Union[str, None]) -> tuple[Path, str, Path, Path]:
+    """
+    automatically sets the necessary paths for sample data if cell_type is
+    set equal to "neuron" or "astrocyte" for the notebooks in part 1
+    """
+    cell_type_list = ["neuron", "astrocyte"]
+    
+    if cell_type in cell_type_list:
+        data_root_path = Path(os.getcwd()).parents[1] / "sample_data" /  f"example_{cell_type}"
+
+        # Specify the file type of the sample data
+        im_type = ".tiff"
+
+        ## Specify which subfolder that contains the input data and the input data file extension
+        in_data_path = data_root_path / "raw"
+
+        ## Specify the output folder to save the segmentation outputs if.
+        ## If its not already created, the code below will creat it for you
+        out_data_path = data_root_path / "seg"
+        
+        return data_root_path, im_type, in_data_path, out_data_path
+    
+    if cell_type != None and cell_type not in cell_type_list:
+        raise ValueError('cell_type must be either "neuron" or "astrocyte"')
+    
+    return None, None, None, None
+
+def sample_input_quant(cell_type: Union[str, None]) -> tuple[Path, str, str, Path, Path, Path]:
+    """
+    automatically sets the necessary paths for sample data if cell_type is
+    set equal to "neuron" or "astrocyte" for the notebooks in part 2
+    """
+    cell_type_list = ["neuron", "astrocyte"]
+    
+    if cell_type in cell_type_list:
+        data_root_path = Path(os.getcwd()).parents[1] / "sample_data" /  f"example_{cell_type}"
+
+        # Specify the file type of the sample data
+        im_type = ".tiff"
+
+
+        ## Specify which subfolder that contains the input data and the input data
+        in_data_path = data_root_path / "raw"
+
+        ## Specify which subfolder contains the segmentation outputs and their file type
+        seg_data_path = data_root_path / "seg"
+        seg_img_type = ".tiff"
+
+        ## Specify the name of the output folder where quantification results will be saved
+        out_data_path = data_root_path / "quant"
+        
+        return data_root_path, im_type, seg_img_type, in_data_path, seg_data_path, out_data_path
+    
+    if cell_type != None and cell_type not in cell_type_list:
+        raise ValueError('cell_type must be either "neuron" or "astrocyte"')
+    
+    return None, None, None, None, None, None
+
+def sample_input_batch() -> tuple[Path, List, List, Path,  Path, Path]:
+    """
+    automatically sets the necessary paths for sample data if cell_type is
+    set equal to "neuron" or "astrocyte" for the notebooks in part 2
+    """
+    # all the imaging data goes here
+    data_root_path = Path(os.getcwd()).parents[1] / "sample_data" /  "batch_example"
+
+    # linearly unmixed ".czi" files are here
+    raw_data_path = data_root_path / "raw"
+
+    # list of lineary unmixed ".czi" files
+    raw_file_list = list_image_files(raw_data_path,".tiff")
+
+    # adding an additional list of image paths for the matching segmentation files
+    seg_data_path = data_root_path / "seg"
+    seg_file_list = list_image_files(seg_data_path, ".tiff")
+
+    # changing output directory for this notebook to a new folder called "quant"
+    out_data_path = data_root_path / "quant"
+    
+    return data_root_path, raw_file_list, seg_file_list, raw_data_path, seg_data_path, out_data_path
