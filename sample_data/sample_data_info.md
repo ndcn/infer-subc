@@ -1,15 +1,96 @@
 # **Sample Data Folder** 📂
 
-Upon cloning the **infer-subc** repository and following the steps in [notebook 1.0_image_setup](/notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb), the Sample Data Folder will contain **two raw microscopy images** (.tiff) **workflow settings** and the **Sample Data Information Text**. With these documents, a user can successfully run the infer-subc notebooks, starting with notebooks [1.1a](/notebooks/part_1_segmentation_workflows/1.1a_infer_masks_from-composite_single_cell.ipynb) and [1.1b](/notebooks/part_1_segmentation_workflows/1.1b_infer_masks_from-composite_multiple-cells.ipynb), to produce quantification and segmentation. In order to run the infer-subc notebooks using the sample data, begin by running [1.1a](/notebooks/part_1_segmentation_workflows/1.1a_infer_masks_from-composite_single_cell.ipynb) and [1.1b](/notebooks/part_1_segmentation_workflows/1.1b_infer_masks_from-composite_multiple-cells.ipynb) to create the nucleus, cellmask and cytoplasm segmentations. Then run notebooks 1.2-7 twice (once per cell type). This can be done by user input in notebooks 1.2-7 after the imports section, by setting the `sample_data_type` variable equal to **"neuron"** or **"astrocyte"**. You may also set `sample_data_type` equal to **None** if you desire to use your own data. Following this, all the notebooks in part 2 (2.1-6 and the full quantification pipeline) can operate correctly, where you can again use the sample data via the same method. Please note that for the [full quantification pipeline](/notebooks/part_2_quantification/full_quantification_pipeline.ipynb) to run correctly, both raw sample images must be copied to the `sample_data/batch_example/raw` directory. This is done by default in Part 2: **Batch Process Quantification** of [Notebook 2.5](/notebooks/part_2_quantification/2.5_combined_and_batch_processing.ipynb), but if you wish, you can manually copy both files into the aforementioned directory. You may also use the sample data via the [organelle-segmenter-plugin](https://github.com/ndcn/organelle-segmenter-plugin) in Napari. For instructions, look under the Option A section in the **[ReadMe](/README.md)**. 
+We've included two sample images to use as input for **`infer-subc`**. The images and outputs are from experiments featured in this preprint [Neurons and astrocytes have distinct organelle signatures and responses to stress](https://www.biorxiv.org/content/10.1101/2024.10.30.621066v1). In this paper infer-subc was used to analyze differences between neurons and astrocytes at baseline and in response to stress.
+
+To access and use the sample data in the notebooks or Napari,
+follow the instructions below:
+
+**1.** Clone the **infer-subc** repository
+
+**2.** Follow the steps in [notebook 1.0_image_setup](/notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb) to download and correctly store the raw images in the [**sample_data**](../sample_data/) folder.
+
+**3.** Use workflow 1.1 to segment the masks for each example image. This can be done in the notebooks or Napari.
+
+- For the example **neuron** use workflow [1.1a](/notebooks/part_1_segmentation_workflows/1.1a_infer_masks_from-composite_single_cell.ipynb)
+- For the example **astrocyte** use workflow [1.1b](/notebooks/part_1_segmentation_workflows/1.1b_infer_masks_from-composite_multiple-cells.ipynb)
+
+**4.** Then run workflows 1.2-1.7 twice (once per cell type).
+
+- In the notebooks, you can switch between cell types by setting the `sample_data_type` variable equal to **"neuron"** or **"astrocyte"**.
+
+**5.** Carry out quantification of the sample neuron and astrocyte in part 2 using the notebooks.
+
+- ***Required***: Run the the [full quantification pipeline](/notebooks/part_2_quantification/full_quantification_pipeline.ipynb) to quantify the morpholgy, interaction and distributions of each organelle and summarize the data per cell
+
+- ***Optional***: You can use notebook 2.1-2.6 to understand the quantification process that is carried out in the [full quantification pipeline](/notebooks/part_2_quantification/full_quantification_pipeline.ipynb)
+
+##### You may also use the sample data via the [organelle-segmenter-plugin](https://github.com/ndcn/organelle-segmenter-plugin) in Napari. For instructions, look under the Option A section in the **[ReadMe](/README.md)**. 
 
 
-The original raw image files and segmentation settings are from experiments featured in the paper [Neurons and astrocytes have distinct organelle signatures and responses to stress](https://www.biorxiv.org/content/10.1101/2024.10.30.621066v1) authored by Shannon Rhoades et al. In this paper infer-subc output for neurons and astrocytes were analyzed to identify significant differences their responses to stress.
 
 ## Contents of Sample Data Folder 🗂️
-###### This section will detail the expected contents of the sample data folder after the infer-subc notebooks are run comprehensively. When applicable, each file will be linked the original stored in bioimage archive. However, there is no need to download the files (other than the two initial raw images) as the notebooks in part 1 and part 2 will create them as intended. If you wish to download the original files, this can be done by simply clicking the links.
+###### This section details the expected contents of the sample data folder after the infer-subc notebooks and/or Napari plugin are run as described above. A link to the expected output is included when applicable. Of note, these links are just a reference to the expected outocome if needed. There is no need to download them because ,the notebooks in part 1 and part 2 will create them as intended. If you wish to download the original files, this can be done simply by clicking the links.
+
+### example_astrocyte
+###### This folder contains all of the files related to the segmentation of the example astrocyte
+
+- #### raw
+    ###### The intended location of the downloaded astrocyte from bioimage archive
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_deconvolution/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome.tiff) (💾 1.14 GB)
+- #### seg
+    ###### This folder contains the resulting segmentations created in notebook 1.1b as well as the segmentation notebooks 1.2-1.7.
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-ER.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-ER.tiff) (💾 102.6 MB)
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-golgi.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-golgi.tiff) (💾 102.6 MB)
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-LD.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-LD.tiff) (💾 102.6 MB)
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-lyso.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-lyso.tiff) (💾 102.6 MB)
+    - 05052022_astro_control_2_Linear unmixing_0_cmle.ome-masks_B.tiff (originally seperated into nucleus and cellmask)
+        - [nucleus](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-nuc.tiff) (💾 205.2 MB)
+        - [cellmask](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-cell.tiff) (💾 205.2 MB)
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-mito.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-mito.tiff) (💾 102.6 MB)
+    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-perox.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-perox.tiff) (💾 102.6 MB)
+    
+
+- #### settings
+    ###### The settings (in JSON file type) used to create each of the corresponding segmentations in the seg folder. These settings can be used in napari to automatically apply the workflow settings. Each of the following files are already included in the repository, thus there is no need to download them.
+    
+    - ER.json
+    - golgi.json
+    - LD.json
+    - lyso.json
+    - masks_B.json
+    - mito.json
+    - perox.json
+
+### example_neuron
+###### This folder contains all of the files related to the segmentation of the example neuron
+
+- #### raw
+    ###### The intended location of the downloaded neuron from bioimage archive
+    - [20230727_C2-121_unconditioned_well 10_cell 4_25nM TG_Linear unmixing_0_cmle.ome.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_deconvolution/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome.tiff) (💾 2.16 GB)
+- #### seg
+    ###### This folder contains the resulting segmentations created in notebook 1.1a as well as the segmentation notebooks 1.2-1.7.
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-ER.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-ER.tiff) (💾 193.8 MB)
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-golgi.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-golgi.tiff) (💾 193.8 MB)
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-LD.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-LD.tiff) (💾 193.8 MB)
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-lyso.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-lyso.tiff) (💾 193.8 MB)
+    - 20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-masks_A.tiff (originally seperated into nucleus and cellmask)
+        - [nucleus](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-nuc.tiff) (💾 193.8 MB)
+        - [cellmask](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-cell.tiff) (💾 193.8 MB)
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-mito.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-mito.tiff) (💾 193.8 MB)
+    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-perox.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-perox.tiff) (💾 193.8 MB)
+- #### settings
+    ###### The settings (in JSON file type) used to create each of the corresponding segmentations in the seg folder. These settings can be used in napari to automatically apply the workflow settings. Each of the following files are already included in the repository, thus there is no need to download them.
+
+    - ER.json
+    - golgi.json
+    - LD.json
+    - lyso.json
+    - masks_A.json
+    - mito.json
+    - perox.json
 
 ### batch_example
-###### This folder contains all of the files related to batch processing, quantification and quality checking 
+###### This folder is used to batch process the quantification for the neuron and astrocyte data together.
 
 - #### edit_seg
     ###### This folder stores the segmentations edited in the **full_quantification_pipeline** notebook. Folder will be empty unless the user chooses to edit a segmentation.
@@ -70,7 +151,7 @@ The original raw image files and segmentation settings are from experiments feat
     - [20230727_C2-121_unconditioned_well 10_cell 4_25nM TG_Linear unmixing_0_cmle.ome.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_deconvolution/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome.tiff) (💾 2.16 GB)
 
 - #### seg
-    ###### This folder contains duplicates of the resulting segmentations created in the masks notebooks 1.1a & 1.1b as well as the segmentation notebooks 1.2-7.
+    ###### This folder contains duplicates of the resulting segmentations created in the masks notebooks 1.1a & 1.1b as well as the segmentation notebooks 1.2-1.7.
     - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-ER.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-ER.tiff) (💾 102.6 MB)
     - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-golgi.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-golgi.tiff) (💾 102.6 MB)
     - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-LD.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-LD.tiff) (💾 102.6 MB)
@@ -89,64 +170,4 @@ The original raw image files and segmentation settings are from experiments feat
         - [cellmask](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-cell.tiff) (💾 193.8 MB)
     - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-mito.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-mito.tiff) (💾 193.8 MB)
     - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-perox.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-perox.tiff) (💾 193.8 MB)
-
-### example_astrocyte
-###### This folder contains all of the files related to the segmentation of the example astrocyte
-
-- #### raw
-    ###### The intended location of the downloaded astrocyte from bioimage archive
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_deconvolution/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome.tiff) (💾 1.14 GB)
-- #### seg
-    ###### This folder contains the resulting segmentations created in notebook 1.1b as well as the segmentation notebooks 1.2-7.
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-ER.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-ER.tiff) (💾 102.6 MB)
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-golgi.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-golgi.tiff) (💾 102.6 MB)
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-LD.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-LD.tiff) (💾 102.6 MB)
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-lyso.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-lyso.tiff) (💾 102.6 MB)
-    - 05052022_astro_control_2_Linear unmixing_0_cmle.ome-masks_B.tiff (originally seperated into nucleus and cellmask)
-        - [nucleus](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-nuc.tiff) (💾 205.2 MB)
-        - [cellmask](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-cell.tiff) (💾 205.2 MB)
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-mito.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-mito.tiff) (💾 102.6 MB)
-    - [05052022_astro_control_2_Linear unmixing_0_cmle.ome-perox.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_segmentations/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome-perox.tiff) (💾 102.6 MB)
-    
-
-- #### settings
-    ###### The settings (in JSON file type) used to create each of the corresponding segmentations in the seg folder. These settings can be used in napari to automatically apply the workflow settings.
-    
-    - ER.json
-    - golgi.json
-    - LD.json
-    - lyso.json
-    - masks_B.json
-    - mito.json
-    - perox.json
-
-### example_neuron
-###### This folder contains all of the files related to the segmentation of the example neuron
-
-- #### raw
-    ###### The intended location of the downloaded neuron from bioimage archive
-    - [20230727_C2-121_unconditioned_well 10_cell 4_25nM TG_Linear unmixing_0_cmle.ome.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_deconvolution/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome.tiff) (💾 2.16 GB)
-- #### seg
-    ###### This folder contains the resulting segmentations created in notebook 1.1a as well as the segmentation notebooks 1.2-7.
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-ER.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-ER.tiff) (💾 193.8 MB)
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-golgi.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-golgi.tiff) (💾 193.8 MB)
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-LD.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-LD.tiff) (💾 193.8 MB)
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-lyso.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-lyso.tiff) (💾 193.8 MB)
-    - 20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-masks_A.tiff (originally seperated into nucleus and cellmask)
-        - [nucleus](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-nuc.tiff) (💾 193.8 MB)
-        - [cellmask](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-cell.tiff) (💾 193.8 MB)
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-mito.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-mito.tiff) (💾 193.8 MB)
-    - [20230727_C2-121_conditioned_well 4_cell 3_untreated_Linear unmixing_0_cmle.ome-perox.tiff](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_segmentations/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome-perox.tiff) (💾 193.8 MB)
-- #### settings
-    ###### The settings (in JSON file type) used to create each of the corresponding segmentations in the seg folder. These settings can be used in napari to automatically apply the workflow settings.
-
-    - ER.json
-    - golgi.json
-    - LD.json
-    - lyso.json
-    - masks_A.json
-    - mito.json
-    - perox.json
-
-
 
