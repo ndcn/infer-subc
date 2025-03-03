@@ -1,0 +1,88 @@
+{
+    "1": {
+        "category": "extraction",
+        "function": "make_aggregate",
+        "parameter_values": {
+            "rescale": true,
+            "weight_ch0": 2,
+            "weight_ch1": 2,
+            "weight_ch2": 3,
+            "weight_ch3": 1,
+            "weight_ch4": 4,
+            "weight_ch5": 2,
+            "weight_ch6": 0,
+            "weight_ch7": 0,
+            "weight_ch8": 0,
+            "weight_ch9": 0
+        },
+        "parent": 0
+    },
+    "2": {
+        "category": "preprocessing",
+        "function": "scale_and_smooth",
+        "parameter_values": {
+            "gauss_sigma": 0.0,
+            "median_size": 0
+        },
+        "parent": 1
+    },
+    "3": {
+        "category": "preprocessing",
+        "function": "non_linear_cellmask_transform",
+        "parent": 2
+    },
+    "4": {
+        "category": "core",
+        "function": "segment_cytoplasm_area",
+        "parameter_values": {
+            "cutoff_size": 200,
+            "fill_filter_method": "slice_by_slice",
+            "global_method": "median",
+            "local_adjust": 0.914286,
+            "max_hole_width": 50,
+            "min_hole_width": 0,
+            "small_obj_width": 50
+        },
+        "parent": 3
+    },
+    "5": {
+        "category": "core",
+        "function": "segment_nuclei_seeds",
+        "parameter_values": {
+            "max_nuclei_width": 350,
+            "small_obj_width": 15
+        },
+        "parent": 4
+    },
+    "6": {
+        "category": "core",
+        "function": "combine_cytoplasm_and_nuclei",
+        "parameter_values": {
+            "max_hole_width": 20
+        },
+        "parent": [
+            4,
+            5
+        ]
+    },
+    "7": {
+        "category": "postprocessing",
+        "function": "select_highest_intensity_cell",
+        "parent": [
+            0,
+            6,
+            5
+        ]
+    },
+    "8": {
+        "category": "postpostprocessing",
+        "function": "mask_cytoplasm_nuclei",
+        "parameter_values": {
+            "small_obj_width": 10
+        },
+        "parent": [
+            7,
+            4
+        ]
+    }
+}

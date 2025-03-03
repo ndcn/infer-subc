@@ -70,10 +70,14 @@ You must have installed `organelle-segmenter-plugin` as described above to use t
 8. Load the saved workflow settings for all channels and specify the input (intensity images) and output (desired location for segmentation files) folders.
 9. Click `Run`. A progress bar will allow you track your processing.
 
+> **Using sample data in Napari**
+> 
+> If you would like to test out the Napari plugin using the **sample data**, first download the raw astrocyte and neuron image from bioimage archive. To download the two raw microscopy images you may click [neuron](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20neuron%20data/Z-stacks/replicate3_C2-121/C2-121_deconvolution/20230727_C2-121_conditioned_well%204_cell%203_untreated_Linear%20unmixing_0_cmle.ome.tiff) and [astrocyte](https://www.ebi.ac.uk/biostudies/files/S-BIAD1445/Neuron%20and%20astrocyte%20organelle%20signatures%20dataset/Primary%20rat%20astrocyte%20data/Z-stacks/replicate2_VD-0505/VD-0505_deconvolution/05052022_astro_control_2_Linear%20unmixing_0_cmle.ome.tiff), refer to the [Sample Data Info document](sample_data\sample_data_info.md) or follow the instructions in the beginning of [notebook 1.0](notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb). Back in Napari, Drag-and-drop or use the `File` > `Open File(s)...` controls to open one of the raw sample images. As stated above in step 2, back in Napari, open the plugin by navigating to `Plugin` > `Infer sub-Cellular Object Npe2 plugin` > `Workflow editor`. After selecting the image in the plugin, click the space next to `Add Workflow` and navigate to the `sample_data` folder inside infer_subc. For either the `example_astrocyte` or `example_neuron` folders, you will find a `settings` subfolder that contains parameters in the form of .JSON files preset to work with their matching sample images. Select the .JSON file corresponding to your desired segmentation (make sure to use the settings that match the cell type of the example image). As you would in step 4, select the workflow that appears at the bottom of the list to apply the preset parameters. You can then follow steps 5 through 9 as stated above to create the segmentations. For further elaboration on the sample data, click **[here](sample_data\sample_data_info.md)**.
+
 
 ### <ins>Option B:</ins> [Notebooks](/docs/nbs/overview.md) 📚
-The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. 
-*The notesbooks below include sets to segment a single image. A batch processing workflow has not yet been created.*
+The primary purpose of the Juptyer notebooks are to walk step-by-step through each of the segementation workflows. We hope these notebooks provide a more easily accessible resource for those who are new to Python image analysis. The notebooks are built to run the segmentations using sample data if the appropriate setup is followed in [notebook 1.0](notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb). More information about the sample data is provided **[here](sample_data\sample_data_info.md)**.
+*The notebooks below include steps to segment a single image. A batch processing workflow has not yet been created.*
 
 **Step 1️⃣: Identify a single cell of interest**
 
@@ -103,7 +107,7 @@ After processing all cells in your dataset, we recommend you quality check your 
 
 ## Organelle Quantification 🧮📐
 
-After each of the organelles of interest are segmented, single or multi-organelle analysis can be carried out using Jupyter Notebook-based pipeline(s). Each of the following analysis types are modular and can be used in combination or separately.
+After each of the organelles of interest are segmented, single or multi-organelle analysis can be carried out using Jupyter Notebook-based pipeline(s). Each of the following analysis types are modular and can be used in combination or separately. The notebooks are built to run the quantification pipelines using sample data if the appropriate setup is followed in [notebook 1.0](notebooks/part_1_segmentation_workflows/1.0_image_setup.ipynb) and the segmentations the sample data is segmented using part 1 of infer-subc. More information about the sample data is provided **[here](sample_data\sample_data_info.md)**.
 
 **Combined Analysis:** 
 - [Full Quantification Pipeline](./notebooks\part_2_quantification\full_quantification_pipeline.ipynb):  quantification of the `morphology`, `interactions`, and `distribution` of any number of organelles within the same cell. This pipeline incorporates batch processing within a single experiment and summarizes the results across multiple experimental replicates.
