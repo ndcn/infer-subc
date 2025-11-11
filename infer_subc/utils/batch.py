@@ -1,8 +1,17 @@
 from typing import Union, Dict, List
 from pathlib import Path
+import time
 
-from infer_subc.core.file_io import list_image_files, export_tiff, read_tiff_image
-from infer_subc.core.img import label_uint16
+from infer_subc.core.file_io import list_image_files, export_tiff, read_tiff_image, read_czi_image, export_inferred_organelle
+from infer_subc.core.img import label_uint16, apply_mask, min_max_intensity_normalization, label, size_filter_linear_size
+
+from infer_subc.organelles.masks import infer_masks, infer_masks_A, infer_masks_B
+from infer_subc.organelles.er import infer_ER
+from infer_subc.organelles.golgi import infer_golgi
+from infer_subc.organelles.lipid import infer_LD
+from infer_subc.organelles.lysosome import infer_lyso
+from infer_subc.organelles.mitochondria import infer_mito
+from infer_subc.organelles.peroxisome import infer_perox
 
 
 
@@ -123,7 +132,345 @@ def find_segmentation_tiff_files(prototype:Union[Path,str],
 
 
 
+def batch_process_segmentation(raw_path: Union[Path,str],
+                               raw_file_type: str,
+                               seg_path: Union[Path, str],
+                               name_suffix: Union[str, None],
+                               masks_settings: Union[List, None],
+                               masks_A_settings: Union[List, None],
+                               masks_B_settings: Union[List, None],
+                               lyso_settings: Union[List, None],
+                               mito_settings: Union[List, None],
+                               golgi_settings: Union[List, None],
+                               perox_settings: Union[List, None],
+                               ER_settings: Union[List, None],
+                               LD_settings: Union[List, None]):
+    """
+    This function batch processes the segmentation workflows for multiple organelles and masks across multiple images.
 
+    Parameters:
+    ----------
+    raw_path: Union[Path,str]
+        A string or a Path object of the path to your raw (e.g., intensity) images that will be the input for segmentation
+    raw_file_type: str
+        The raw file type (e.g., ".tiff" or ".czi")
+    seg_path: Union[Path, str]
+        A string or a Path object of the path where the segmentation outputs will be saved 
+    name_suffix: str
+        An optional string to include before the segmentation suffix at the end of the output file. 
+        For example, if the name_suffix was "20240105", the segmentation file output from the 1.1_masks workflow would include:
+        "{base-file-name}-20240105-masks"
+    {}_settings: Union[List, None]
+        For each workflow that you wish to include in the batch processing, 
+        fill out the information in the associated settings list. 
+        The necessary settings for each function are included below.
+
+    For infer_masks:
+    `masks_settings` = [nuc_ch: Union[int,None],
+                    nuc_median_sz: int, 
+                    nuc_gauss_sig: float,
+                    nuc_thresh_factor: float,
+                    nuc_thresh_min: float,
+                    nuc_thresh_max: float,
+                    nuc_min_hole_w: int,
+                    nuc_max_hole_w: int,
+                    nuc_small_obj_w: int,
+                    nuc_fill_filter_method: str,
+                    cell_weights: list[int],
+                    cell_rescale: bool,
+                    cell_median_sz: int,
+                    cell_gauss_sig: float,
+                    cell_mo_method: str,
+                    cell_mo_adjust: float,
+                    cell_mo_cutoff_size: int,
+                    cell_min_hole_w: int,
+                    cell_max_hole_w: int,
+                    cell_small_obj_w: int,
+                    cell_fill_filter_method: str,
+                    cell_watershed_method: str,
+                    cyto_erode_nuclei = True]
+    
+    For infer_masks_A:
+    `masks_A_settings` = [cyto_weights: list[int],
+                        cyto_rescale: bool,
+                        cyto_median_sz: int,
+                        cyto_gauss_sig: float,
+                        cyto_mo_method: str,
+                        cyto_mo_adjust: float,
+                        cyto_mo_cutoff_size: int,
+                        cyto_min_hole_w: int,
+                        cyto_max_hole_w: int,
+                        cyto_small_obj_w: int,
+                        cyto_fill_filter_method: str,
+                        nuc_min_hole_w: int,
+                        nuc_max_hole_w: int,
+                        nuc_fill_method: str,
+                        nuc_small_obj_w: int,
+                        nuc_fill_filter_method: str,
+                        cell_min_hole_width: int,
+                        cell_max_hole_width: int,
+                        cell_small_obj_width: int,
+                        cell_fill_filter_method: str]
+
+    For infer_masks_B:
+    - `masks_B_settings` = [cyto_weights: list[int],
+                        cyto_rescale: bool,
+                        cyto_median_sz: int,
+                        cyto_gauss_sig: float,
+                        cyto_mo_method: str,
+                        cyto_mo_adjust: float,
+                        cyto_mo_cutoff_size: int,
+                        cyto_min_hole_w: int,
+                        cyto_max_hole_w: int,
+                        cyto_small_obj_w: int,
+                        cyto_fill_filter_method: str,
+                        max_nuclei_width: int,
+                        nuc_small_obj_width: int,
+                        cell_fillhole_max: int,
+                        cyto_small_object_width2: int]
+
+
+    For infer_lyso:
+    - `lyso_settings` = [lyso_ch: int,
+                    median_sz: int,
+                    gauss_sig: float,
+                    dot_scale_1: float,
+                    dot_cut_1: float,
+                    dot_scale_2: float,
+                    dot_cut_2: float,
+                    dot_scale_3: float,
+                    dot_cut_3: float,
+                    dot_method: str,
+                    fil_scale_1: float,
+                    fil_cut_1: float,
+                    fil_scale_2: float, 
+                    fil_cut_2: float, 
+                    fil_scale_3: float, 
+                    fil_cut_3: float,
+                    fil_method: str,
+                    min_hole_w: int,
+                    max_hole_w: int,
+                    small_obj_w: int,
+                    fill_filter_method: str]
+
+    For infer_mito:
+    - `mito_settings` = [mito_ch: int,
+                        median_sz: int,
+                        gauss_sig: float,
+                        dot_scale_1: float,
+                        dot_cut_1: float,
+                        dot_scale_2: float,
+                        dot_cut_2: float,
+                        dot_scale_3: float,
+                        dot_cut_3: float,
+                        dot_method: str,
+                        fil_scale_1: float,
+                        fil_cut_1: float,
+                        fil_scale_2: float, 
+                        fil_cut_2: float, 
+                        fil_scale_3: float, 
+                        fil_cut_3: float,
+                        fil_method: str,
+                        min_hole_w: int,
+                        max_hole_w: int,
+                        small_obj_w: int,
+                        fill_filter_method: str]
+
+    For infer_golgi:
+    - `golgi_settings` = [golgi_ch: int,
+                        median_sz: int,
+                        gauss_sig: float,
+                        mo_method: str,
+                        mo_adjust: float,
+                        mo_cutoff_size: int,
+                        min_thickness: int,
+                        thin_dist: int,
+                        dot_scale_1: float,
+                        dot_cut_1: float,
+                        dot_scale_2: float,
+                        dot_cut_2: float,
+                        dot_scale_3: float,
+                        dot_cut_3: float,
+                        dot_method: str,
+                        min_hole_w: int,
+                        max_hole_w: int,
+                        small_obj_w: int,
+                        fill_filter_method: str]
+
+    For infer_perox:
+    - `perox_settings` = [perox_ch: int,
+                        median_sz: int,
+                        gauss_sig: float,
+                        dot_scale_1: float,
+                        dot_cut_1: float,
+                        dot_scale_2: float,
+                        dot_cut_2: float,
+                        dot_scale_3: float,
+                        dot_cut_3: float,
+                        dot_method: str,
+                        hole_min_width: int,
+                        hole_max_width: int,
+                        small_object_width: int,
+                        fill_filter_method: str]
+
+    For infer_ER:
+    - `ER_settings` = [ER_ch: int,
+                median_sz: int,
+                gauss_sig: float,
+                MO_thresh_method: str,
+                MO_cutoff_size: float,
+                MO_thresh_adj: float,
+                fil_scale_1: float,
+                fil_cut_1: float,
+                fil_scale_2: float, 
+                fil_cut_2: float, 
+                fil_scale_3: float, 
+                fil_cut_3: float,
+                fil_method: str,
+                min_hole_w: int,
+                max_hole_w: int,
+                small_obj_w: int,
+                fill_filter_method: str]
+
+    For infer_LD:
+    - `LD_settings` = [LD_ch: str,
+                    median_sz: int,
+                    gauss_sig: float,
+                    method: str,
+                    thresh_factor: float,
+                    thresh_min: float,
+                    thresh_max: float,
+                    min_hole_w: int,
+                    max_hole_w: int,
+                    small_obj_w: int,
+                    fill_filter_method: str]
+    
+
+
+    Returns:
+    ----------
+
+    """
+    start = time.time()
+    count = 0
+
+    if isinstance(raw_path, str): raw_path = Path(raw_path)
+    if isinstance(seg_path, str): seg_path = Path(seg_path)
+
+    if not Path.exists(seg_path):
+        Path.mkdir(seg_path)
+        print(f"The specified 'seg_path' was not found. Creating {seg_path}.")
+    
+    if not name_suffix:
+        name_suffix=""
+
+    # reading list of files from the raw path
+    img_file_list = list_image_files(raw_path, raw_file_type)
+
+    for img in img_file_list:
+        count = count + 1
+        print(f"Beginning segmentation of: {img}")
+        seg_list = []
+        mask = None
+
+        # read in raw file and metadata
+        img_data, meta_dict = read_czi_image(img)
+
+        # run masks function
+        if masks_settings:
+            masks = infer_masks(img_data, *masks_settings)
+            export_inferred_organelle(masks, name_suffix+"masks", meta_dict, seg_path)
+            seg_list.append("masks")
+            if mask is None:
+                mask = masks
+            else:
+                print("multiple mask segmentations made for same image")
+        
+        # run masks_A function
+        if masks_A_settings:
+            masks_A =  infer_masks_A(img_data, *masks_A_settings)
+            export_inferred_organelle(masks_A, name_suffix+"masks_A", meta_dict, seg_path)
+            seg_list.append("masks_A")
+            if mask is None:
+                mask = masks_A
+            else:
+                print("multiple mask segmentations made for same image")
+            
+        # run masks_B function
+        if masks_B_settings:
+            masks_B = infer_masks_B(img_data, *masks_B_settings)
+            export_inferred_organelle(masks_B, name_suffix+"masks_B", meta_dict, seg_path)
+            seg_list.append("masks_B")
+            if mask is None:
+                mask = masks_B
+            else:
+                print("multiple mask segmentations made for same image")
+
+        # # run masks_C function
+        # if masks_C_settings:
+        #     masks_C = infer_masks_C(img_data, *masks_C_settings)
+        #     export_inferred_organelle(masks_C, name_suffix+"masks_C", meta_dict, seg_path)
+        #     seg_list.append("masks_C")
+        #     if mask is None:
+        #         mask = masks_C
+        #     else:
+        #         print("multiple mask segmentations made for same image")
+        
+        # # run masks_D function
+        # if masks_D_settings:
+        #     masks_D = infer_masks_D(img_data, *masks_D_settings)
+        #     export_inferred_organelle(masks_D, name_suffix+"masks_D", meta_dict, seg_path)
+        #     seg_list.append("masks_D")
+        #     if mask is None:
+        #         mask = masks_D
+        #     else:
+        #         print("multiple mask segmentations made for same image")
+
+        # run 1.2_infer_lysosomes function
+        if lyso_settings:
+            lyso_seg = infer_lyso(img_data, *lyso_settings)
+            export_inferred_organelle(lyso_seg, name_suffix+"lyso", meta_dict, seg_path)  
+            seg_list.append("lyso")          
+
+        if mito_settings:
+            mito_seg = infer_mito(img_data, *mito_settings)
+            export_inferred_organelle(mito_seg, name_suffix+"mito", meta_dict, seg_path)  
+            seg_list.append("mito")
+            
+        if golgi_settings:
+            golgi_seg = infer_golgi(img_data, *golgi_settings)
+            export_inferred_organelle(golgi_seg, name_suffix+"golgi", meta_dict, seg_path)  
+            seg_list.append("golgi")
+
+        if perox_settings:
+            perox_seg = infer_perox(img_data, *perox_settings)
+            export_inferred_organelle(perox_seg, name_suffix+"perox", meta_dict, seg_path)  
+            seg_list.append("perox")
+            
+        if ER_settings:
+            ER_seg = infer_ER(img_data, *ER_settings)
+            export_inferred_organelle(ER_seg, name_suffix+"ER", meta_dict, seg_path)  
+            seg_list.append("ER")
+            
+        if LD_settings:
+            LD_seg = infer_LD(img_data, *LD_settings)
+            export_inferred_organelle(LD_seg, name_suffix+"LD", meta_dict, seg_path)
+            seg_list.append("LD")
+        
+        # if som_neu_settings:
+        #     som_neu_seg = infer_soma_neurites(in_seg=mask, multichannel_input=True, chan=1, *som_neu_settings)
+        #     export_inferred_organelle(som_neu_seg, name_suffix+"soma_neurites", meta_dict, seg_path)  
+        #     seg_list.append("soma_neurites")
+
+        # if som_neu_settings:
+        #     som_neu_seg = infer_soma_neurites(in_seg=mask, multichannel_input=True, chan=0, method=som_neu_seg[0])
+        #     export_inferred_organelle(som_neu_seg, name_suffix+"soma_neurites", meta_dict, seg_path)  
+        #     seg_list.append("soma_neurites")
+
+        end = time.time()
+        print(f"Processing for {img} completed in {(end - start)/60} minutes.")
+
+    return print(f"Batch processing complete: {count} images segmented in {(end-start)/60} minutes.")
 
 
 
