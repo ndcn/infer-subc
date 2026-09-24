@@ -1,6 +1,9 @@
 # infer-subc
 ### A python-based image analysis tool to segment and quantify the morphology, interactions, and distribution of organelles.
 
+## ** This repository has been archived, but development for this project continues in [SCohenLab/infer-subc](https://github.com/SCohenLab/infer-subc) **
+
+
 <img src="infer_subc\assets\README.png" width="800">
 <p>
 
